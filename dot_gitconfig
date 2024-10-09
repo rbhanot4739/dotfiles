@@ -1,0 +1,98 @@
+[user]
+    name = Rohit Bhanot
+    email = rbhanot4739@gmail.com
+[alias]
+    a = add
+    # Checkout shortcuts
+    co = checkout
+    cb = checkout -b
+    com = checkout master
+    # commit commands
+    cm = commit -a
+    cma = commit --amend
+    # branching
+    b = branch
+    bl = branch -l
+    ba = branch -a
+    # rebase
+    rb = rebase
+    rbm = rebase master
+    rbi = rebase -i
+    rbc = rebase --continue
+    rba = rebase --abort
+
+    # reset/revert
+    res= restore
+    rst = reset
+
+    # push/pull
+    ps = push
+    pl = pull
+
+    st = status
+    d = diff
+    df = diff --name-status
+    cp = cherry-pick
+    rc = review create
+    dc = review dcommit
+    ru = review update
+    fc = diff --name-only --diff-filter=U
+
+    # log/reflog
+    lg = log --pretty=format:'%C(auto)%h%d%Creset %s %C(cyan) [%aN] %Creset %C(green)(%ci)%Creset'
+    lga = log --pretty=format:'%C(auto)%h%d%Creset %s %C(cyan) [%aN] %Creset %C(green)(%ci)%Creset' --graph --all
+    rf = reflog
+    rfp = reflog --date=local
+
+    whatadded = log --diff-filter=A
+    find = "!f() { git ls-files |grep $1; }; f"
+    count-lines = "! git log --author=\"$1\" --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf \"added lines: %s, removed lines: %s, total lines: %s\\n\", add, subs, loc }' #"
+[core]
+    excludesfile = ~/.global_gitignore
+    editor = nvim
+    pager = delta
+    sshCommand = "ssh -i ~/.ssh/personal_gh_key"
+
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    ; side-by-side = true
+    line-numbers = true
+    ; line-numbers-left-format = ""
+    ; line-numbers-right-format = "│ "
+
+    # delta detects terminal colors automatically; set one of these to disable auto-detection
+    # dark = true
+    # light = true
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
+
+[merge]
+	tool = "nvim"
+
+[mergetool]
+	keepBackup = false
+	prompt = false
+
+[mergetool "nvim"]
+  cmd = "nvim -d -c \"wincmd l\" -c \"norm ]c\" \"$LOCAL\" \"$MERGED\" \"$REMOTE\""
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+# work config
+[includeIf "gitdir/i:~/development/work/"]
+    path= ~/.linkedin-gitconfig
+
+[rerere]
+	enabled = true
+[push]
+	autoSetupRemote = true
+[sequence]
