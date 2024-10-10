@@ -135,7 +135,8 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 
 # ======== Load tools ========
-source ~/.temporal.zsh
+eval "$(devbox global shellenv)" 2> /dev/null
+[[ -f "~/.temporal.zsh" ]] && source ~/.temporal.zsh
 source <(fzf --zsh)
 # eval "$(direnv hook zsh)"
 eval "$(zoxide init zsh)"
@@ -143,10 +144,11 @@ alias zi=__zoxide_zi
 
 [ -f "$HOME/fzf_config.zsh" ] && source "$HOME/"fzf_config.zsh
 [ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
-export PATH="$PATH:/Users/rbhanot/.local/bin:/Users/Shared/DBngin/mysql/8.0.19/bin"
-export VOLTA_HOME="$HOME/.volta"
-export PATH="$PATH:$HOME/.cargo/bin:$VOLTA_HOME/bin"
 
-eval "$(devbox global shellenv)" 2> /dev/null
+export PATH="$PATH:$HOME/.local/bin:"
+[[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
+[[ -d $HOME/.volta ]] && export VOLTA_HOME="$HOME/.volta/bin"
+[[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
+
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
