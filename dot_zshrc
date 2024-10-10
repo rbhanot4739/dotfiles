@@ -79,7 +79,7 @@ load_plugins() {
     zsh-users/zsh-completions 
     zsh-users/zsh-history-substring-search 
     Aloxaf/fzf-tab
-    # jeffreytse/zsh-vi-mode
+    jeffreytse/zsh-vi-mode
   )
   for plugin in $PLUGINS
   do
