@@ -36,7 +36,6 @@ mx() {
   # manage_tmux_sessions $@
 }
 
-TM_ARGS=""
 tm() {
   /bin/bash ~/tmux-manager.sh "$@"
 }
@@ -45,19 +44,29 @@ zle -N tm
 bindkey '^O' tm
 # alias mm='__tmux_mgr'
 
-cd_up() {
-  # some comment
+# cd_up() {
+#   # some comment
+#
+#   local num_dots=${#1}
+#   # build a pth like ../../../ using a loop based on num_dots
+#   local pth=""
+#   for ((i = 1; i <= num_dots; i++)); do
+#     pth="../$pth"
+#   done
+#   debug_print $(which cd)
+#   debug_print "moving up by $num_dots directories to pth $pth"
+#   cd $pth
+# }
 
-  local num_dots=${#1}
-  # build a pth like ../../../ using a loop based on num_dots
-  local pth=""
-  for ((i = 1; i <= num_dots; i++)); do
-    pth="../$pth"
-  done
-  debug_print $(which cd)
-  debug_print "moving up by $num_dots directories to pth $pth"
-  cd $pth
+cd_up_widget() {
+  echo "cd_up called"
+  cd ..
+  zle reset-prompt
+  zle accept-line
 }
+
+zle -N cd_up_widget
+bindkey '' cd_up_widget
 
 #  =================================== Aliases ===================================
 
@@ -170,10 +179,11 @@ alias vrel='vagrant reload'
 
 alias dk=docker
 alias dkc=docker-compose
-alias .='cd_up .'
-alias ..='cd_up ..'
-alias ...='cd_up ...'
-alias ....='cd_up .....'
-alias .....='cd_up .....'
+# alias .='cd_up .'
+# alias ..='cd_up ..'
+# alias ...='cd_up ...'
+# alias ....='cd_up .....'
+# alias .....='cd_up .....'
 alias zz='z -'
 alias cm='chezmoi'
+alias cmcd='chezmoi cd'

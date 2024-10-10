@@ -89,7 +89,6 @@ return {
         "<leader>sG",
         function()
           require("telescope").extensions.live_grep_args.live_grep_args({
-            -- require("telescope.builtin").live_grep({
             cwd = require("utils").get_root_dir,
             additional_args = { "--follow" },
             prompt_title = "Live Grep (Args [ Git root])",
@@ -100,6 +99,7 @@ return {
       },
     },
   },
+  -- smart open
   {
     "danielfalk/smart-open.nvim",
     branch = "0.2.x",
@@ -109,14 +109,20 @@ return {
     },
     config = function()
       require("telescope").load_extension("smart_open")
-      vim.keymap.set("n", "<space><space>", function()
-        require("telescope").extensions.smart_open.smart_open({
-          cwd_only = true,
-          -- show_scores = true,
-          match_algorithm = "fzf",
-          open_buffer_indicators = { previous = "•", others = "∘" },
-        })
-      end, { desc = "Telescope find files(Smart)" })
     end,
+    keys = {
+      {
+        "<space><space>",
+        function()
+          require("telescope").extensions.smart_open.smart_open({
+            cwd_only = true,
+            -- show_scores = true,
+            match_algorithm = "fzf",
+            open_buffer_indicators = { previous = "•", others = "∘" },
+          })
+        end,
+        desc = "Smart open files",
+      },
+    },
   },
 }

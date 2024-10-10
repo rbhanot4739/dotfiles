@@ -8,16 +8,26 @@ fi
 (( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
 
 
+cd_up_widget() {
+  cd ..
+  zle reset-prompt
+  zle accept-line
+}
+
+# Create the widget
+zle -N cd_up_widget
+bindkey '^U' cd_up_widget
+
 CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
 
 # Add the custom completion directory to fpath
 fpath=($CUSTOM_COMPLETION_DIR $fpath)
 autoload -Uz compinit
 compinit
-# Define the completion function
+
 # _vim_completion() {
 #   # Use the _files builtin to generate file completions only, excluding directories
-#   _path_files -W "$PWD"
+#   _path_files -W "$PWD" "*(.)"
 # }
 #
 # # Associate the completion function with the vim command
@@ -69,7 +79,7 @@ load_plugins() {
     zsh-users/zsh-completions 
     zsh-users/zsh-history-substring-search 
     Aloxaf/fzf-tab
-    jeffreytse/zsh-vi-mode
+    # jeffreytse/zsh-vi-mode
   )
   for plugin in $PLUGINS
   do
