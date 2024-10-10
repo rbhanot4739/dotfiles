@@ -1,0 +1,9 @@
+.vim/
+.mypy_cache/
+.ideaDataSources/
+dataSources/
+.coverage*
+*.neoconf.json
+*lcov*
+*pyrightconfig.json
+.git-blame-ignore-revs

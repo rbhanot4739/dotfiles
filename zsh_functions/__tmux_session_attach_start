@@ -1,0 +1,14 @@
+# vim: ft=sh
+echo "inside attach Shell vars [$-"
+tmux_action=$([[ -n ${TMUX} ]] && echo "switch-client" || echo "attach-session")
+session=$1
+tmux_sessions="tmux list-sessions -F '#{session_name}' 2>/dev/null"
+# check if its a tmuxinator project and start it
+tmuxinator_projects="tmuxinator list | tail -n +2"
+if [[ $(eval "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+  tmux "$tmux_action" -t "$session"
+elif [[ $(eval "$tmuxinator_projects") =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+  tmuxinator start "$session"
+else
+  tmux new-session -d -s "$1" && tmux "$tmux_action" -t "$session"
+fi
