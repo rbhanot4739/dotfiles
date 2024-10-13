@@ -68,8 +68,6 @@ return {
   },
   {
     "williamboman/mason.nvim",
-    opts = function(_, opts)
-      vim.tbl_extend("force", opts.ensure_installed, { "flake8", "mypy" })
-    end,
+    opts = { ensure_installed = { "flake8", "mypy" } },
   },
 }
