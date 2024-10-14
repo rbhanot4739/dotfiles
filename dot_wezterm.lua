@@ -42,6 +42,7 @@ config.keys = {
 	{ key = "RightArrow", mods = "SHIFT|CTRL", action = wezterm.action.DisableDefaultAssignment },
 	{ key = "RightArrow", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
 	{ key = "LeftArrow", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
+	{ key = "Enter", mods = "ALT", action = wezterm.action.DisableDefaultAssignment },
 	{
 		key = "Enter",
 		mods = "SHIFT|CTRL",

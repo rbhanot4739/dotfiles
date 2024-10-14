@@ -1,20 +1,6 @@
 -- load simple utility plugins
 return {
   {
-    "aserowy/tmux.nvim",
-    opts = {
-      copy_sync = {
-        enable = false,
-        sync_clipboard = true,
-      },
-    },
-  },
-  -- {
-  --   -- auto add fstrings
-  --   "chrisgrieser/nvim-puppeteer",
-  --   ft = { "python" },
-  -- },
-  {
     "okuuva/auto-save.nvim",
 
     cmd = "ASToggle", -- optional for lazy loading on command

@@ -18,14 +18,6 @@ if not vim.g.vscode then
   map("n", "[<Space>", "O<Esc>j", { desc = "add blank line above keeping cursor on original place" })
   map("n", "]<Space>", "o<Esc>k", { desc = "add blank line below keeping cursor on original line" })
 
-  -- buffer movements
-  -- map("n", "L", ":bnext<CR>")
-  -- map("n", "H", ":bprev<CR>")
-
-  -- window management
-  -- map("n", "<leader>\\", ":vsp<CR>")
-  -- map("n", "<leader>-", ":sp<CR>")
-
   map("n", "$", "g$", { desc = "move with wrapped lines" })
   map("n", "^", "g^", { desc = "move with wrapped lines" })
 
@@ -33,17 +25,6 @@ if not vim.g.vscode then
   map("n", "gl", "g_", { desc = "move to end of line with L" })
   map("n", "G", "Gzz", { desc = "move to end of file and center the contents" })
   map("n", "Y", "y$", { desc = "copy to end of line" })
-
-  -- Tmux Nvim Navgigation
-  map("n", "<C-h>", "<cmd>lua require'tmux'.move_left()<cr>", { desc = "Go to left window" })
-  map("n", "<C-j>", "<cmd>lua require'tmux'.move_bottom()<cr>", { desc = "Go to lower window" })
-  map("n", "<C-k>", "<cmd>lua require'tmux'.move_top()<cr>", { desc = "Go to upper window" })
-  map("n", "<C-l>", "<cmd>lua require'tmux'.move_right()<cr>", { desc = "Go to right window" })
-
-  map("n", "<C-Up>", [[<cmd>lua require("tmux").resize_top()<cr>]], { desc = "Increase Window Height" })
-  map("n", "<C-Down>", [[<cmd>lua require("tmux").resize_bottom()<cr>]], { desc = "Decrease Window Height" })
-  map("n", "<C-Left>", [[<cmd>lua require("tmux").resize_left()<cr>]], { desc = "Decrease Window Width" })
-  map("n", "<C-Right>", [[<cmd>lua require("tmux").resize_right()<cr>]], { desc = "Increase Window Width" })
 
   -- disable arrow  keys
   map({ "n", "v", "i" }, "<Up>", "<Nop>", { desc = "disable arrow keys" })
