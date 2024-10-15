@@ -1,0 +1,308 @@
+" String Manipulation actions
+
+" StringManipulation.AlignCenterAction
+" StringManipulation.AlignLeftAction
+" StringManipulation.AlignRightAction
+" StringManipulation.AlignToColumns
+" StringManipulation.CreateSequenceAction
+" StringManipulation.DiacriticsToAsciiAction
+" StringManipulation.EditorPopupMenu
+" StringManipulation.IncrementDuplicateNumbersAction
+" StringManipulation.KeepOnlyDuplicateLines
+" StringManipulation.RemoveDuplicateLines
+" StringManipulation.RemoveNewLinesAction
+" StringManipulation.ReverseAction
+" StringManipulation.ShuffleLinesAction
+" StringManipulation.Sort
+" StringManipulation.SortLinesBySubSelectionAction
+" StringManipulation.SwitchFilePathSeparators
+" StringManipulation.SwitchStyleAction
+" StringManipulation.ToDotStyleAction
+" StringManipulation.ToHyphenCaseAction
+" StringManipulation.ToHyphenCaseOrCamelCase
+" StringManipulation.ToPascalCaseOrCamelCase
+" StringManipulation.ToSnakeCaseOrCamelCase
+" Ensure the file doesn't have leading whitespaces
+let mapleader=" "
+
+set gdefault                      " substitute all occurrences in line per default
+set history=10000                  " keep x lines of command line history
+set hlsearch                      " highlight search occurrences
+set ignorecase                    " ignore case in search patterns
+set smartcase                     " no ignore case when pattern is uppercase
+set ideajoin                     "join lines by removing spaces"
+set ideamarks
+set incsearch                     " show search results while typing
+set relativenumber
+set wrapscan                      " searches wrap around the end of the file
+set number                        " line numbers
+set scrolloff=5 sidescrolloff=10  " keep some lines before and after the cursor visible
+set clipboard=unnamedplus,unnamed " integrate with system clipboard
+set clipboard+=ideaput
+set undolevels=1
+set idearefactormode=keep
+
+set surround
+set commentary
+
+set easymotion
+" easymotion mappings
+" s motion is bidrectional, f by default is not
+let g:EasyMotion_do_mapping = 0
+let g:EasyMotion_do_shade = 0
+let g:EasyMotion_smartcase = 1
+let g:EasyMotion_use_upper = 1
+let g:EasyMotion_keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+let g:EasyMotion_prompt = 'Search for {n} >>> '
+
+" map , <Plug>(easymotion-prefix)
+map t <Plug>(easymotion-bd-tl)
+map T <Plug>(easymotion-bd-t)
+
+map f <Plug>(easymotion-bd-fl)
+map F <Plug>(easymotion-bd-f)
+
+map <leader><leader>n <plug>(easymotion-bd-n)
+"  move to line
+map <leader><leader>k <Plug>(easymotion-k)
+map <leader><leader>j <Plug>(easymotion-j)
+map <leader><leader>l <plug>(easymotion-bd-jk)
+"move to word
+map  <leader><leader>w <Plug>(easymotion-bd-wl)
+map  <leader><leader>W <Plug>(easymotion-bd-w)
+
+set highlightedyank
+
+" Navigate properly when lines are wrapped
+nnoremap j gj
+nnoremap k gk
+nnoremap $ g$
+nnoremap ^ g^
+nnoremap L g_
+omap L g_
+nnoremap H ^
+omap H ^
+nnoremap Y y$
+nnoremap G Gzz
+
+" Keep a block highlighted while shifting
+vnoremap < <gv
+vnoremap > >gv
+vnoremap = =gv
+
+" clear highlighted search with Escape
+nnoremap <silent> <Esc> <Esc>:nohlsearch<CR><Esc>
+
+" Prevent x from overriding what's in the clipboard.
+noremap x "_x
+noremap X "_X
+
+:command Q q
+:command W w
+:command WQ wq
+:command Wq wq
+:command wQ wq
+
+" save files as root
+:command w!! w !sudo tee > /dev/null %
+
+" Better movement with { }
+nnoremap } }w
+nnoremap <expr><silent> { (col('.')==1 && len(getline(line('.')-1))==0? '2{j' : '{j')
+
+nnoremap <leader>sv :source ~/.ideavimrc<CR>
+nnoremap <leader>ev :e ~/.ideavimrc<CR>
+nnoremap <leader>j L
+nnoremap <leader>k H
+
+nnoremap [<space> O<ESC>j
+nnoremap ]<space> o<ESC>k
+
+"copy/paste to system buffer
+nnoremap <Leader>y "*yy
+nnoremap <Leader>p "*p
+
+"copy/move lines to end of file
+nnoremap <leader>me :m$<cr>:normal! g;<cr>
+vnoremap <leader>me :m$<cr>:normal! g;<cr>
+nnoremap <leader>te :t$<cr>:normal! g;<cr>
+vnoremap <leader>te :t$<cr>:normal! g;<cr>
+
+" Move b/w tabs using ctrl-left/right
+nnoremap <C-left> :action PreviousTab<CR>
+nnoremap <C-right> :action NextTab<CR>
+inoremap <C-left> <ESC>:action PreviousTab<CR>a
+inoremap <C-right>  <ESC>:action NextTab<CR>a
+
+" move around panes with <alt->hjkl
+inoremap <a-j> <ESC><c-w>ja
+inoremap <a-k> <ESC><c-w>ka
+inoremap <a-l> <ESC><c-w>la
+inoremap <a-h> <ESC><c-w>ha
+
+nnoremap <a-j> <c-w>j
+nnoremap <a-k> <c-w>k
+nnoremap <a-l> <c-w>l
+nnoremap <a-h> <c-w>h
+" ================== IDE specific stuff ==================
+
+" see all actions with :actionlist
+nnoremap <a-.> :action Forward<CR>
+nnoremap <a-,> :action Back<CR>
+inoremap <a-.> <ESC>:action Forward<CR>a
+inoremap <a-,> <ESC>:action Back<CR>a
+vnoremap <a-.> :action Forward<CR>
+vnoremap <a-,> :action Back<CR>
+
+" Move tabs down and right/ Create splits
+nnoremap <A--> :action MoveTabDown<CR>
+nnoremap <A-\> :action MoveTabRight<CR>
+inoremap <A--> <ESC>:action MoveTabDown<CR>a
+inoremap <A-\> <ESC>:action MoveTabRight<CR>a
+vnoremap <A--> :action MoveTabDown<CR>
+vnoremap <A-\> :action MoveTabRight<CR>
+nnoremap <A-=> <ESC>:action Unsplit<CR>a
+vnoremap <A-=> <ESC>:action Unsplit<CR>a
+inoremap <A-=> <ESC>:action Unsplit<CR>a
+
+nnoremap <C-A--> :action SplitHorizontally<CR>
+nnoremap <C-A-\> :action SplitVertically<CR>
+inoremap <C-A-->  <ESC>:action SplitHorizontally<CR>a
+inoremap <C-A-\>  <ESC>:action SplitVertically<CR>a
+vnoremap <C-A--> :action SplitHorizontally<CR>
+vnoremap <C-A-\> :action SplitVertically<CR>
+
+nnoremap <A-Up> :action MoveLineUp<CR>
+nnoremap <A-Down> :action MoveLineDown<CR>
+vnoremap <A-Up> :action MoveLineUp<CR>
+vnoremap <A-Down> :action MoveLineDown<CR>
+inoremap <A-Up> <ESC>:action MoveLineUp<CR>a
+inoremap <A-Down> <ESC>:action MoveLineDown<CR>a
+
+nnoremap <C-Up> :action EditorCloneCaretAbove<cr>
+nnoremap <C-Down> :action EditorCloneCaretBelow<cr>
+inoremap <C-Up> <ESC>:action EditorCloneCaretAbove<cr>a
+inoremap <C-Down> <ESC>:action EditorCloneCaretBelow<cr>a
+
+nnoremap + :action EditorIncreaseFontSize<CR>
+nnoremap - :action EditorDecreaseFontSize<CR>
+nnoremap = :action EditorResetFontSize<CR>
+
+nnoremap <C-A-l> :action Tool_External Tools_black<CR> :action OptimizeImports<CR> :action Tool_External Tools_isort<CR>
+inoremap <C-A-l> <ESC>:action Tool_External Tools_black<CR><ESC>:action OptimizeImports<CR><ESC>:action Tool_External Tools_isort<CR><ESC>i
+
+" nnoremap <C-A-l> :action ReformatCode<CR>:action OptimizeImports<CR>:w<CR>
+" inoremap <C-A-l> <ESC>:action ReformatCode<CR><ESC>:action OptimizeImports<CR><ESC>:w<CR>
+
+nnoremap <leader>fu :action FindUsages<cr>
+nnoremap <leader>su :action ShowUsages<cr>
+nnoremap <leader>re :action RenameElement<cr>
+vnoremap <leader>re :action RenameElement<cr>
+nnoremap <leader>rm :action RefactoringMenu<cr>
+vnoremap <leader>rm :action RefactoringMenu<cr>
+nnoremap <leader>rf :action RenameFile<cr>
+vnoremap <leader>rf :action RenameFile<cr>
+
+" Navigation
+nnoremap <leader>gf :action GotoFile<CR>
+nnoremap <leader>gF :action RecentFiles<CR>
+nnoremap <leader>gc :action GotoClass<CR>
+nnoremap <leader>gs :action GotoSymbol<CR>
+nnoremap <leader>gi :action GotoImplementation<cr>
+nnoremap <leader>gd :action GotoDeclaration<cr>
+nnoremap <leader>gl :action RecentLocations<CR>
+nnoremap <leader>gb :action ShowTypeBookmarks<CR>
+
+nnoremap <C-s> :action FileStructurePopup<CR>
+inoremap <C-s> <ESC>:action FileStructurePopup<CR>a
+
+nnoremap <C-S-g> :action UnselectPreviousOccurrence<CR>
+vnoremap <C-S-g> :action UnselectPreviousOccurrence<CR>
+inoremap <C-S-g> <ESC>:action UnselectPreviousOccurrence<CR>
+
+nnoremap <C-g> :action SelectNextOccurrence<CR>
+vnoremap <C-g> :action SelectNextOccurrence<CR>
+inoremap <C-g> <ESC>:action SelectNextOccurrence<CR>
+
+nnoremap <A-g> :action FindNext<CR>
+vnoremap <A-g> :action FindNext<CR>
+inoremap <A-g> <ESC>:action FindNext<CR>
+
+nnoremap <A-S-g> :action FindPrevious<CR>
+vnoremap <A-S-g> :action FindPrevious<CR>
+inoremap <A-S-g> <ESC>:action FindPrevious<CR>
+
+nnoremap <leader>ff viw:action Find<CR>
+vnoremap <leader>ff :action Find<CR>
+nnoremap <leader>fr viw:action Replace<CR>
+vnoremap <leader>fr :action Replace<CR>
+nnoremap <leader>fp viw:action FindInPath<CR>
+vnoremap <leader>fp :action FindInPath<CR>
+nnoremap <leader>F  viw:action FindWordAtCaret<CR>
+vnoremap <leader>F  :action FindWordAtCaret<CR>
+
+nnoremap <leader>bb :action ToggleLineBreakpoint<cr>
+"nnoremap <leader>br :action ViewBreakpoints<cr>
+nnoremap <leader>dd :action Debug<cr>
+nnoremap <leader>rr :action RunClass<cr>
+nnoremap <leader>, :action CloseEditor<CR>
+" nnoremap <leader>qq :action CloseAllEditors<CR>
+
+nnoremap <C-A-t> :action ActivateTerminalToolWindow<CR>
+inoremap <C-A-t> <ESC>:action ActivateTerminalToolWindow<CR>
+vnoremap <C-A-t> :action ActivateTerminalToolWindow<CR>
+
+nnoremap <C-A-e> :action ActivateEndpointsToolWindow<CR>
+inoremap <C-A-e> <ESC>:action ActivateEndpointsToolWindow<CR>
+vnoremap <C-A-e> :action ActivateEndpointsToolWindow<CR>
+
+nnoremap <C-A-g> :action ActivateVersionControlToolWindow<CR>
+inoremap <C-A-g> <ESC>:action ActivateVersionControlToolWindow<CR>
+vnoremap <C-A-g> :action ActivateVersionControlToolWindow<CR>
+
+map <C-A-p> :<Action>(ActivateProjectToolWindow)
+" inoremap <C-A-p> <ESC>:action ActivateProjectToolWindow<CR>
+" vnoremap <C-A-p> :action ActivateProjectToolWindow<CR>
+
+nnoremap <C-A-s> :action ActivateStructureToolWindow<CR>
+inoremap <C-A-s> <ESC>:action ActivateStructureToolWindow<CR>
+vnoremap <C-A-s> :action ActivateStructureToolWindow<CR>
+
+nnoremap <C-A-h> :action HideAllWindows<CR>
+inoremap <C-A-h> <ESC>:action HideAllWindows<CR>
+vnoremap <C-A-h> :action HideAllWindows<CR>
+
+"nnoremap <C-A-;> :action MaximizeToolWindow<CR>
+"inoremap <C-A-m> <ESC>:action MaximizeToolWindow<CR>
+"vnoremap <C-A-m> :action MaximizeToolWindow<CR>
+
+sethandler <A-Left> a:vim
+sethandler <A-Up> a:vim
+sethandler <A-Right> a:vim
+sethandler <A-Down> a:vim
+sethandler <C-2> a:vim
+sethandler <C-;> a:vim
+sethandler <C-S-;> a:vim
+sethandler <C-D> a:vim
+sethandler <C-V> a:vim
+sethandler <C-F> a:vim
+sethandler <C-G> a:vim
+sethandler <C-S-G> a:vim
+sethandler <A-S-G> a:vim
+sethandler <A-C-G> a:vim
+sethandler <C-H> a:vim
+sethandler <C-J> a:vim
+sethandler <C-L> a:ide
+sethandler <C-O> a:vim
+sethandler <C-V> a:vim
+sethandler <A-\> a:vim
+sethandler <C-P> a:vim
+sethandler <C-T> a:vim
+sethandler <C-S> a:vim
+sethandler <A-C-P> a:vim
+sethandler <A-C-S> a:vim
+sethandler <A-C-T> a:vim
+sethandler <A-C-H> a:vim
+sethandler <A-C-m> a:vim
+sethandler <A-C-c> a:vim
+sethandler <A-C-e> a:vim

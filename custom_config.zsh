@@ -42,21 +42,6 @@ tm() {
 
 zle -N tm
 bindkey '^O' tm
-# alias mm='__tmux_mgr'
-
-# cd_up() {
-#   # some comment
-#
-#   local num_dots=${#1}
-#   # build a pth like ../../../ using a loop based on num_dots
-#   local pth=""
-#   for ((i = 1; i <= num_dots; i++)); do
-#     pth="../$pth"
-#   done
-#   debug_print $(which cd)
-#   debug_print "moving up by $num_dots directories to pth $pth"
-#   cd $pth
-# }
 
 cd_up_widget() {
   echo "cd_up called"
@@ -70,9 +55,6 @@ bindkey '' cd_up_widget
 
 #  =================================== Aliases ===================================
 
-# fi
-
-# alias fman="fd -t f . --follow /usr/share/man/ /opt/homebrew/share/man/ | fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --delimiter '/' --with-nth=-1 --height 40% --border=double | xargs man"
 alias m="mint "
 alias mf="mint format"
 alias mb="mint build"

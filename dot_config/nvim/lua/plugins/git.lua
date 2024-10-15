@@ -1,18 +1,18 @@
+is_git_worktree = require("utils").is_git_worktree
+
 return {
   {
     "NeogitOrg/neogit",
     dependencies = {
       "nvim-lua/plenary.nvim", -- required
       "sindrets/diffview.nvim", -- optional - Diff integration
-
-      -- Only one of these is needed.
       "nvim-telescope/telescope.nvim", -- optional
-      -- "ibhagwan/fzf-lua", -- optional
     },
     -- cmd = "Neogit",
     opts = {
       kind = "auto",
     },
+    cond = is_git_worktree,
     keys = { { "<leader>gg", "<cmd>Neogit<cr>", desc = "Open Neogit" } },
   },
   {
@@ -29,6 +29,7 @@ return {
         end,
       },
     },
+    cond = is_git_worktree,
     keys = {
       { "<leader>gd", "<cmd>DiffviewOpen<CR>", desc = "Open Diffview" },
       { "<leader>gf", "<cmd>DiffviewFileHistory %<cr>", desc = "Open history for current File" },
@@ -45,6 +46,7 @@ return {
     "linrongbin16/gitlinker.nvim",
     cmd = "GitLink",
     opts = {},
+    cond = is_git_worktree,
     keys = {
       { "<leader>gy", "<cmd>GitLink<cr>", mode = { "n", "v" }, desc = "Yank git link" },
       { "<leader>gY", "<cmd>GitLink!<cr>", mode = { "n", "v" }, desc = "Open git link" },
@@ -52,6 +54,7 @@ return {
   },
   {
     "lewis6991/gitsigns.nvim",
+    cond = is_git_worktree,
     opts = {
       current_line_blame = true,
     },

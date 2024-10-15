@@ -1,13 +1,18 @@
 local M = {}
 
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local conf = require("telescope.config").values
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local themes = require("telescope.themes")
-
 M.git_root = ""
+
+function M.is_git_worktree()
+  local handle = io.popen("git rev-parse --is-inside-work-tree 2>/dev/null")
+  local result = handle:read("*a")
+  handle:close()
+
+  if result:match("true") then
+    return true
+  else
+    return false
+  end
+end
 
 -- get project git root if its a git repo else use cwd
 local function get_project_root()

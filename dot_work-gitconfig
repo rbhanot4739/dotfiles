@@ -1,0 +1,8 @@
+# vim: set ft=gitconfig:
+
+[user]
+    user = Rohit Bhanot
+    email = rbhanot@linkedin.com
+
+[core]
+    sshCommand = "ssh -i ~/.ssh/rbhanot_at_linkedin.com_ssh_key"

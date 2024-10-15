@@ -89,7 +89,7 @@
 
 # work config
 [includeIf "gitdir/i:~/development/work/"]
-    path= ~/.linkedin-gitconfig
+    path= ~/.work-gitconfig
 
 [rerere]
 	enabled = true

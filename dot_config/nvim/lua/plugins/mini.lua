@@ -29,22 +29,25 @@ return {
   },
   {
     "echasnovski/mini.files",
-    opts = {
-      -- mappings = {
-      --   go_in = "<Right>",
-      --   go_out = "<Left>",
-      -- },
-      windows = {
-        preview = true,
-        width_nofocus = 20,
-        width_focus = 50,
-        width_preview = 100,
-      },
-      options = {
-        use_as_default_explorer = true,
-      },
-      permanent_delete = false,
-    },
+    opts = function(_, opts)
+      return vim.tbl_deep_extend("force", opts, {
+        mappings = {
+          go_in = "<Right>",
+          go_out = "<Left>",
+          go_in_plus = "<Cr>",
+        },
+        windows = {
+          preview = true,
+          width_nofocus = 20,
+          width_focus = 50,
+          width_preview = 80,
+        },
+        options = {
+          use_as_default_explorer = true,
+        },
+        permanent_delete = false,
+      })
+    end,
     keys = {
       {
         "<leader>e",
