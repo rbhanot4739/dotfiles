@@ -143,6 +143,7 @@ eval "$(devbox global shellenv)" 2> /dev/null
 source <(fzf --zsh)
 # eval "$(direnv hook zsh)"
 eval "$(zoxide init zsh)"
+eval "$(atuin init zsh)"
 alias zi=__zoxide_zi
 
 [ -f "$HOME/fzf_config.zsh" ] && source "$HOME/"fzf_config.zsh
