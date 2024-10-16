@@ -66,31 +66,32 @@ ZVM_INIT_MODE=sourcing
 ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
 
 load_plugins() {
-# install zsh plugins
-PLUGIN_DIR="$HOME/.zsh/plugins"
-if [[ ! -d "$PLUGIN_DIR" ]]; then
-  mkdir -p "$PLUGIN_DIR"
-fi
+  # install/load plugins
+  PLUGIN_DIR="$HOME/.zsh/plugins"
+  if [[ ! -d "$PLUGIN_DIR" ]]; then
+    mkdir -p "$PLUGIN_DIR"
+  fi
 
-PLUGINS=(
-  zdharma-continuum/fast-syntax-highlighting
-  zsh-users/zsh-autosuggestions
-  zsh-users/zsh-completions
-  zsh-users/zsh-history-substring-search
-  Aloxaf/fzf-tab
-  jeffreytse/zsh-vi-mode
-)
-for plugin in "${PLUGINS[@]}"; do
-  local plugin_name=$(basename "$plugin")
-  local plugin_path="${PLUGIN_DIR}/$plugin_name"
+  PLUGINS=(
+    zdharma-continuum/fast-syntax-highlighting 
+    zsh-users/zsh-autosuggestions 
+    zsh-users/zsh-completions 
+    zsh-users/zsh-history-substring-search 
+    Aloxaf/fzf-tab
+    jeffreytse/zsh-vi-mode
+  )
+  for plugin in $PLUGINS
+  do
+    local plugin_name=`basename $plugin`
+    local plugin_path="${PLUGIN_DIR}/$plugin_name"
   if [[ ! -d "$plugin_path" ]]; then
     # echo "will clone https://github.com/$plugin at $plugin_path"
-    git clone https://github.com/"$plugin" "$plugin_path"
+    git clone https://github.com/$plugin  "$plugin_path"
   else
     # echo "$plugin is already installed...at $plugin_path"
     source "$plugin_path/$plugin_name.plugin.zsh"
   fi
-done
+  done
 }
 load_plugins
 
