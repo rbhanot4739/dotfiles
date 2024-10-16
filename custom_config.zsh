@@ -37,7 +37,7 @@ mx() {
 }
 
 tm() {
-  /bin/bash ~/tmux-manager.sh "$@"
+  /bin/bash -i ~/tmux-manager.sh "$@"
 }
 
 zle -N tm

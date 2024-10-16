@@ -7,7 +7,7 @@
 # THIS IS THE WORKING VERSION OF THE SCRIPT
 
 del_confirm_header="--header 'Are you sure you want to kill session {}'"
-del_bind="del:become:([[ \\\$(echo 'Yes\nNo' | fzf  $del_confirm_header) == 'Yes' ]] && tmux kill-session -t {} )"
+del_bind="del:become:([[ \\\$(echo 'Yes\nNo' | fzf --tmux  $del_confirm_header) == 'Yes' ]] && tmux kill-session -t {} )"
 fzf_binds='enter:accept-or-print-query'
 info="--info=hidden"
 border_label="--border-label='Tmux Session Manager'"
@@ -28,7 +28,7 @@ fzf_transform="--bind '?:transform:[[ ! \$FZF_PROMPT =~ Sessions ]] && \
 
 layout=$([[ -n ${TMUX} ]] && echo "--tmux --layout=reverse" || echo "--height 50% --layout=reverse --margin 15%,25%")
 # fzf_cmd="fzf $info $border_label $color_label $color_border $header_first $header $color_header $binds $prompt $fzf_transform $layout"
-fzf_cmd="fzf $info $border_label $color_label $color_border $header_first $header $color_header $binds $prompt $fzf_transform $layout"
+fzf_cmd="fzf --tmux $info $border_label $color_label $color_border $header_first $header $color_header $binds $prompt $fzf_transform $layout"
 
 tmux_attach_start() {
   local session="$1"
@@ -38,7 +38,8 @@ tmux_attach_start() {
   local tmux_sessions="tmux list-sessions -F '#{session_name}' 2>/dev/null"
   local tmuxinator_projects="tmuxinator list | tail -n +2"
 
-  # check if its a tmux session and switch to it
+  ccklekdiihgkjgevtkivevjtkbbciftjkilkubvu
+
   if [[ $(eval "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
     tmux "$tmux_action" -t "$session"
   # check if its a tmuninator project and start it
