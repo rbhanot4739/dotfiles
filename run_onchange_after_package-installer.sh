@@ -12,8 +12,6 @@ fi
 #done
 
 eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
-# cp devbox.json ~/.local/share/devbox/global/default/
-# eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
 
 if [[ ! -d $HOME/.nvim-env ]]; then
   if [[ -f /export/apps/python/3.10/bin/python3 ]]; then
