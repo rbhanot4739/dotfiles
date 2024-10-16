@@ -38,8 +38,6 @@ tmux_attach_start() {
   local tmux_sessions="tmux list-sessions -F '#{session_name}' 2>/dev/null"
   local tmuxinator_projects="tmuxinator list | tail -n +2"
 
-  ccklekdiihgkjgevtkivevjtkbbciftjkilkubvu
-
   if [[ $(eval "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
     tmux "$tmux_action" -t "$session"
   # check if its a tmuninator project and start it

@@ -5,8 +5,6 @@ if [[ ! $(command -v devbox 2>/dev/null) ]]; then
   curl -fsSL https://get.jetify.com/devbox | bash
 fi
 
-#eval "$(devbox global shellenv)"
-
 # install packages
 #packages=("neovim" "ripgrep" "fd" "lazygit" "zoxide" "eza" "delta" "bat" "tealdeer" "tmux" "tmuxinator" "direnv" "jq" "yq" "sqlite" "lua" "luajit" "luarocks")
 #for package in "${packages[@]}"; do
@@ -14,8 +12,8 @@ fi
 #done
 
 eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
-cp devbox.json ~/.local/share/devbox/global/default/
-eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
+# cp devbox.json ~/.local/share/devbox/global/default/
+# eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
 
 if [[ ! -d $HOME/.nvim-env ]]; then
   if [[ -f /export/apps/python/3.10/bin/python3 ]]; then
@@ -49,11 +47,7 @@ setup_shell() {
     local plugin_name=$(basename "$plugin")
     local plugin_path="${PLUGIN_DIR}/$plugin_name"
     if [[ ! -d "$plugin_path" ]]; then
-      # echo "will clone https://github.com/$plugin at $plugin_path"
       git clone https://github.com/"$plugin" "$plugin_path"
-    else
-      # echo "$plugin is already installed...at $plugin_path"
-      source "$plugin_path/$plugin_name.plugin.zsh"
     fi
   done
 }
