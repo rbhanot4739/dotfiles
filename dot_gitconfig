@@ -47,14 +47,20 @@
     whatadded = log --diff-filter=A
     find = "!f() { git ls-files |grep $1; }; f"
     count-lines = "! git log --author=\"$1\" --pretty=tformat: --numstat | awk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf \"added lines: %s, removed lines: %s, total lines: %s\\n\", add, subs, loc }' #"
+
+[pull]
+  rebase = true
+
 [core]
     excludesfile = ~/.global_gitignore
     editor = nvim
     pager = delta
     sshCommand = "ssh -i ~/.ssh/personal_gh_key"
 
+
 [interactive]
     diffFilter = delta --color-only
+
 [delta]
     navigate = true    # use n and N to move between diff sections
     ; side-by-side = true
@@ -87,12 +93,12 @@
 	process = git-lfs filter-process
 	required = true
 
-# work config
-[includeIf "gitdir/i:~/development/work/"]
-    path= ~/.work-gitconfig
-
 [rerere]
 	enabled = true
 [push]
 	autoSetupRemote = true
+
 [sequence]
+# work config
+[includeIf "gitdir/i:~/development/work/"]
+    path= ~/.work-gitconfig

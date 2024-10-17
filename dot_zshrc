@@ -143,15 +143,19 @@ eval "$(devbox global shellenv)" 2> /dev/null
 source <(fzf --zsh)
 # eval "$(direnv hook zsh)"
 eval "$(zoxide init zsh)"
-eval "$(atuin init zsh)"
 alias zi=__zoxide_zi
+
+export ATUIN_NOBIND="true"
+eval "$(atuin init zsh)"
+bindkey '^r' atuin-search
+bindkey '^[[1;2A' atuin-up-search    # bind shift + up to atuin-up-search
 
 [ -f "$HOME/fzf_config.zsh" ] && source "$HOME/"fzf_config.zsh
 [ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
 
 export PATH="$PATH:$HOME/.local/bin:"
 [[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
-[[ -d $HOME/.volta ]] && export VOLTA_HOME="$HOME/.volta/bin"
+# [[ -d $HOME/.volta ]] && export VOLTA_HOME="$HOME/.volta/bin"
 [[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
 
 source ~/powerlevel10k/powerlevel10k.zsh-theme

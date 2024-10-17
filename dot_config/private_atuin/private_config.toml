@@ -102,6 +102,7 @@ history_filter = [
   "^ .*",
   "^secret-cmd",
   "^innocuous-cmd .*--secret=.+",
+  "^mysql.*-p.+ .*$"
 ]
 
 ## prevent commands run with cwd matching any of these regexes from being written
