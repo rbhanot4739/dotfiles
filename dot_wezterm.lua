@@ -21,7 +21,7 @@ config.color_scheme = "tokyonight_moon"
 -- config.color_scheme = "catppuccin-mocha"
 
 config.font = wezterm.font("FiraCode Nerd Font Mono")
-config.font_size = 16
+config.font_size = 18
 
 -- Tabbar settings
 config.enable_tab_bar = true
