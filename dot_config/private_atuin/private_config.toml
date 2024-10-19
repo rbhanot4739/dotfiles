@@ -100,20 +100,19 @@ inline_height = 20
 ## https://docs.rs/regex/latest/regex/#syntax
 history_filter = [
   "^ .*",   # any command starting with a space
-  "^mysql.+-p.+.*$",  # command containing `-p` flag which usually means a password inline
+  # "^mysql.+-p.+.*$",  # command containing `-p` flag which usually means a password inline
   "^#.*",    # commented commands
-  "z",  # zoxide go to home
-  "zi", # interactive zoxide
-  "ll",
-  "r",
-  "ee",
-  "cm apply",
-  "gs",
-  "gpl",
-  "gps",
-  "git status",
-  "git pull",
-  "git push"
+  "^z",  # zoxide go to home
+  "^zi", # interactive zoxide
+  "^r",
+  "^ee",
+  "^cm apply",
+  "^gs",
+  "^gpl",
+  "^gps",
+  "^git status",
+  "^git pull",
+  "^git push"
 ]
 
 ## prevent commands run with cwd matching any of these regexes from being written

@@ -115,9 +115,6 @@ if [[ $(command -v gh) ]]; then
   alias ghc='gh copilot explain '
   alias ghcs='gh copilot suggest '
 fi
-if [[ $(command -v devbox) ]]; then
-  alias refresh-global=eval "$(devbox global shellenv --preserve-path-stack -r)"
-fi
 
 # git aliases
 alias lg='lazygit'
