@@ -34,7 +34,11 @@ return {
         mappings = {
           go_in = "<Right>",
           go_out = "<Left>",
-          go_in_plus = "<Cr>",
+          go_in_plus = "<CR>",
+          go_in_horizontal = "-",
+          go_in_horizontal_plus = "_",
+          go_in_vertical = "\\",
+          go_in_vertical_plus = "|",
         },
         windows = {
           preview = true,

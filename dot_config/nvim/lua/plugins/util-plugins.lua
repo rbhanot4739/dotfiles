@@ -29,8 +29,21 @@ return {
     },
     opts = {
       show_icons = true,
-      leader_key = ";", -- Recommended to be a single key
+      leader_key = "\\", -- Recommended to be a single key
       buffer_leader_key = "m", -- Per Buffer Mappings
+    },
+  },
+  {
+    "ysmb-wtsg/in-and-out.nvim",
+    keys = {
+      {
+        "<M-Right>",
+        function()
+          require("in-and-out").in_and_out()
+        end,
+        mode = { "i" },
+        desc = "In and Out",
+      },
     },
   },
   -- Session mgmt plugins
@@ -52,60 +65,45 @@ return {
       },
     },
   },
-  -- {
-  --   "olimorris/persisted.nvim",
-  --   lazy = false, -- make sure the plugin is always loaded at startup
-  --   config = function(_, opts)
-  --     local persisted = require("persisted")
-  --     persisted.branch = function()
-  --       local branch = vim.fn.systemlist("git branch --show-current")[1]
-  --       return vim.v.shell_error == 0 and branch or nil
-  --     end
-  --     persisted.setup(opts)
-  --     require("telescope").setup({
-  --       extensions = {
-  --         persisted = {
-  --           -- layout_config = { width = 0.55, height = 0.40 },
-  --         },
-  --       },
-  --     })
-  --     require("telescope").load_extension("persisted")
-  --     vim.api.nvim_create_autocmd("User", {
-  --       pattern = "PersistedTelescopeLoadPre",
-  --       callback = function(session)
-  --         -- Save the currently loaded session using the global variable
-  --         require("persisted").save({ session = vim.g.persisted_loaded_session })
-  --
-  --         -- Delete all of the open buffers
-  --         vim.api.nvim_input("<ESC>:silent! %bd!<CR>")
-  --       end,
-  --     })
-  --   end,
-  --   opts = {
-  --     autoload = true,
-  --     use_git_branch = true,
-  --     on_autoload_no_session = function()
-  --       vim.notify("No existing session to load.")
-  --     end,
-  --     ignored_dirs = { "~/.config", "~/.local", { "~/", exact = true } },
-  --   },
-  -- },
-  -- {
-  --   "echasnovski/mini.sessions",
-  --   version = false,
-  --   config = function()
-  --     require("mini.sessions").setup({ autoread = true, verbose = { read = true, write = true, delete = true } })
-  --   end,
-  -- },
-  -- {
-  --   "Bekaboo/deadcolumn.nvim",
-  --   opts = {
-  --     mode = { "n", "i", "v" },
-  --     warning = {
-  --       alpha = 0.4,
-  --       colorcode = "#FF0000",
-  --       hlgroup = { "Error", "bg" },
-  --     },
-  --   },
-  -- },
+  {
+    "chrisgrieser/nvim-rip-substitute",
+    cmd = "RipSubstitute",
+    opts = {
+      keymaps = { abort = "<Esc>" },
+    },
+    keys = {
+      {
+        "<leader>fs",
+        function()
+          require("rip-substitute").sub()
+        end,
+        mode = { "n", "x" },
+        desc = " rip substitute",
+      },
+    },
+  },
+  {
+    "chrisgrieser/nvim-spider",
+    opts = {},
+    keys = {
+      {
+        "w",
+        "<cmd>lua require('spider').motion('w')<CR>",
+        mode = { "n", "o", "x" },
+        desc = "Move to end of word",
+      },
+      {
+        "e",
+        "<cmd>lua require('spider').motion('e')<CR>",
+        mode = { "n", "o", "x" },
+        desc = "Move to start of next word",
+      },
+      {
+        "b",
+        "<cmd>lua require('spider').motion('b')<CR>",
+        mode = { "n", "o", "x" },
+        desc = "Move to start of previous word",
+      },
+    },
+  },
 }

@@ -31,16 +31,14 @@ if not vim.g.vscode then
   map({ "n", "v", "i" }, "<Down>", "<Nop>", { desc = "disable arrow keys" })
   map({ "n", "v", "i" }, "<Left>", "<Nop>", { desc = "disable arrow keys" })
   map({ "n", "v", "i" }, "<Right>", "<Nop>", { desc = "disable arrow keys" })
-
   -- delete lazyVim builtin keymaps
   -- vim.keymap.del({ "n", "t" }, "<c-_>")
   -- vim.keymap.del("n", "<leader>ft")
-  -- vim.keymap.del("n", "<leader>fT")
 
   -- add a mapping to replace visual selection in file
-  vim.keymap.set("v", "<leader>*", 'y:%s/\\V<c-r>"//g<left><left>', { desc = "replace visual selection" })
+  -- vim.keymap.set("v", "<leader>*", 'y:%s/\\V<c-r>"//g<left><left>', { desc = "replace visual selection" })
   -- replace word under cursor
-  map({ "n" }, "<leader>*", ":%s/\\<<C-r><C-w>\\>//g<left><left>", { desc = "replace word under cursor" })
+  -- map({ "n" }, "<leader>*", ":%s/\\<<C-r><C-w>\\>//g<left><left>", { desc = "replace word under cursor" })
 
   -- lazygit
   map("n", "<leader>gG", function()

@@ -55,7 +55,7 @@ return {
     return opts
   end,
   keys = {
-    { "<leader<space>", false },
+    { "<leader><space>", false },
     {
       "<leader>sW",
       function()

@@ -21,7 +21,7 @@ return {
     --   priority = 100,
     -- })
 
-    -- --------------------------------------cmdline setup start-----------------------------------------------------------------------------------------------------
+    -- --------------------------------------cmdline setup start--------------------------------------
     -- `/` cmdline setup.
     cmp.setup.cmdline("/", {
       mapping = cmp.mapping.preset.cmdline(),
@@ -57,20 +57,6 @@ return {
       } })
     end
     -- dap repl completion done
-
-    -- table.insert(opts.sources, {
-    --   name = "spell",
-    --   option = {
-    --     keep_all_entries = false,
-    --     enable_in_context = function()
-    --       return true
-    --     end,
-    --     preselect_correct_word = true,
-    --   },
-    --   group_index = 3,
-    --   priority = 100,
-    -- })
-
     opts.mapping = vim.tbl_extend("force", opts.mapping, {
       ["<Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
@@ -101,22 +87,22 @@ return {
       ["<C-j>"] = cmp.mapping.scroll_docs(-4),
       ["<C-k>"] = cmp.mapping.scroll_docs(4),
     })
-    -- opts.sorting = {
-    --   priority_weight = 2,
-    --   comparators = {
-    --     cmp.config.compare.exact,
-    --     require("copilot_cmp.comparators").prioritize,
-    --     -- Below is the default comparitor list and order for nvim-cmp
-    --     cmp.config.compare.offset,
-    --     -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
-    --     cmp.config.compare.score,
-    --     cmp.config.compare.recently_used,
-    --     cmp.config.compare.locality,
-    --     cmp.config.compare.kind,
-    --     cmp.config.compare.sort_text,
-    --     cmp.config.compare.length,
-    --     cmp.config.compare.order,
-    --   },
-    -- }
+    opts.sorting = {
+      priority_weight = 2,
+      comparators = {
+        cmp.config.compare.exact,
+        require("copilot_cmp.comparators").prioritize,
+        -- Below is the default comparitor list and order for nvim-cmp
+        cmp.config.compare.offset,
+        -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
+        cmp.config.compare.score,
+        cmp.config.compare.recently_used,
+        cmp.config.compare.locality,
+        cmp.config.compare.kind,
+        cmp.config.compare.sort_text,
+        cmp.config.compare.length,
+        cmp.config.compare.order,
+      },
+    }
   end,
 }
