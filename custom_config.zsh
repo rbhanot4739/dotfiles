@@ -32,12 +32,13 @@ debug_print() {
 }
 
 mx() {
-  /bin/bash $HOME/tmux-sessions.sh $@
-  # manage_tmux_sessions $@
+  /bin/bash $HOME/scripts/tmux-sessions.sh $@
+  # /bin/bash $HOME/tmux-sessions.sh $@
 }
 
 tm() {
-  /bin/bash ~/tmux-manager.sh "$@"
+  /bin/bash $HOME/scripts/tmux-manager.sh $@
+  # /bin/bash ~/tmux-manager.sh "$@"
 }
 
 zle -N tm
