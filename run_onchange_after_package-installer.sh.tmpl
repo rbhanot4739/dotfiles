@@ -1,17 +1,21 @@
 #!/bin/bash
 
-#
+# ensure its a rdev machine
+{{ if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
+curl -fsSL https://pixi.sh/install.sh | bash
+packages=("nvim" "ripgrep" "fzf" "fd-find" "lazygit" "zoxide" "eza" "git-delta" "bat" "tldr" "jq" "yq" "sqlite" "lua" "luajit" "luarocks")
+for package in "${packages[@]}"; do
+  $HOME/.pixi/bin/pixi global install "$package"
+done
+
+{{ else }}
+# use devox only on mac or linux but not on rdev
 if [[ ! $(command -v devbox 2>/dev/null) ]]; then
   curl -fsSL https://get.jetify.com/devbox | bash
 fi
-
-# install packages
-#packages=("neovim" "ripgrep" "fd" "lazygit" "zoxide" "eza" "delta" "bat" "tealdeer" "tmux" "tmuxinator" "direnv" "jq" "yq" "sqlite" "lua" "luajit" "luarocks")
-#for package in "${packages[@]}"; do
-#  devbox global add "$package"
-#done
-
 eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
+{{ end }}
+
 
 if [[ ! -d $HOME/.nvim-env ]]; then
   if [[ -f /export/apps/python/3.10/bin/python3 ]]; then
@@ -50,3 +54,4 @@ setup_shell() {
   done
 }
 setup_shell
+
