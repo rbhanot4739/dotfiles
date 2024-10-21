@@ -1,3 +1,4 @@
+# vim:ft=zsh
 echo -ne '\e[5 q'    # use beam shape cursor instead of a block
 
 # install powerlevel10k
@@ -132,7 +133,7 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 
 # ======== Load tools ========
-[[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH""
+[[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
 [[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
 
 if [[ $(command -v devbox) ]]; then
