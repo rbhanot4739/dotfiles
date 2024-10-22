@@ -10,7 +10,7 @@
         },
         "rules": [
           {
-            "description": "Left-Ctrl : (HYPER) SHIFT+COMMAND+OPTION+CONTROL or ESCAPE (If Alone)",
+            "description": "Left-Ctrl : (HYPER) SHIFT+COMMAND+OPTION+CONTROL or Left-Ctrl (If Alone)",
             "manipulators": [
               {
                 "from": {

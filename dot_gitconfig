@@ -57,7 +57,6 @@
     pager = delta
     sshCommand = "ssh -i ~/.ssh/personal_gh_key"
 
-
 [interactive]
     diffFilter = delta --color-only
 
