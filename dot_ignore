@@ -19,7 +19,6 @@ local-repo/
 .zsh/
 .config/
 .ssh/
-*.log
 *.itermcolors
 *.html
 node_modules/

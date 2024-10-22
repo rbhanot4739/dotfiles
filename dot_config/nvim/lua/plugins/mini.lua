@@ -32,8 +32,8 @@ return {
     opts = function(_, opts)
       return vim.tbl_deep_extend("force", opts, {
         mappings = {
-          go_in = "<Right>",
-          go_out = "<Left>",
+          -- go_in = "<Right>",
+          -- go_out = "<Left>",
           go_in_plus = "<CR>",
           go_in_horizontal = "-",
           go_in_horizontal_plus = "_",
