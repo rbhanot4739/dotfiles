@@ -66,6 +66,20 @@ return {
       python = { "flake8", "mypy" },
     },
   },
+  -- Todo: Maybe do this some time later
+  -- {
+  --   "stevearc/conform.nvim",
+  --   opts = function(_, opts)
+  --     format_on_save = function(bufnr)
+  --       -- Disable with a global or buffer-local variable
+  --       if vim.g.autoformat or vim.b[bufnr].autoformat then
+  --         return { timeout_ms = 500, lsp_format = "fallback" }
+  --       else
+  --         return
+  --       end
+  --     end
+  --   end,
+  -- },
   {
     "williamboman/mason.nvim",
     opts = { ensure_installed = { "flake8", "mypy" } },
