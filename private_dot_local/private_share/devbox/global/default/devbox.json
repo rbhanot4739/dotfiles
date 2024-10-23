@@ -20,7 +20,8 @@
     "sqlite@latest",
     "lua@latest",
     "luajit@latest",
-    "luarocks@latest"
+    "luarocks@latest",
+    "sd@latest"
   ],
   "shell": {
     "init_hook": [

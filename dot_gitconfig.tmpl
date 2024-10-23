@@ -1,6 +1,10 @@
 [user]
     name = Rohit Bhanot
-    email = rbhanot4739@gmail.com
+    {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
+      email = rbhanot@linkedin.com
+    {{- else }}
+      email = rbhanot4739@gmail.com
+    {{- end }}
 [alias]
     a = add
     # Checkout shortcuts
@@ -54,7 +58,10 @@
 [core]
     excludesfile = ~/.global_gitignore
     editor = nvim
+    {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
+    {{- else }}
     sshCommand = "ssh -i ~/.ssh/personal_gh_key"
+    {{- end }}
 
 [pager]
     diff = delta
