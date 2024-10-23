@@ -54,16 +54,28 @@
 [core]
     excludesfile = ~/.global_gitignore
     editor = nvim
-    pager = delta
     sshCommand = "ssh -i ~/.ssh/personal_gh_key"
+
+[pager]
+    diff = delta
+    log = delta
+    reflog = delta
+    show = delta
 
 [interactive]
     diffFilter = delta --color-only
 
+[include]
+  path = ~/delta-themes
+
 [delta]
+    ; features = woolly-mammoth
+    plus-style = "syntax #012800"
+    minus-style = "syntax #340001"
+    syntax-theme = Monokai Extended
     navigate = true    # use n and N to move between diff sections
-    ; side-by-side = true
     line-numbers = true
+    ; side-by-side = true
     ; line-numbers-left-format = ""
     ; line-numbers-right-format = "│ "
 
@@ -98,6 +110,7 @@
 	autoSetupRemote = true
 
 [sequence]
+
 # work config
 [includeIf "gitdir/i:~/development/work/"]
     path= ~/.work-gitconfig

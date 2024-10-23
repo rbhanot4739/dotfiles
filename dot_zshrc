@@ -138,6 +138,7 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 if [[ $(command -v devbox) ]]; then
 eval "$(devbox global shellenv)" 2> /dev/null
+alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
 fi
 if [[ $(command -v pixi) ]]; then
 eval "$(pixi completion --shell zsh)"

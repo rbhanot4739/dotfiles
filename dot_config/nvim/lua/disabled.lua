@@ -5,4 +5,5 @@ return {
   { "glepnir/dashboard-nvim", enabled = false },
   { "MagicDuck/grug-far.nvim", enabled = false },
   { "folke/persistence.nvim", enabled = false },
+  { "gbprod/yanky.nvim", enabled = false },
 }
