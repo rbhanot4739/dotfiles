@@ -21,7 +21,10 @@
     "lua@latest",
     "luajit@latest",
     "luarocks@latest",
-    "sd@latest"
+    "sd@latest",
+    "yazi@latest",
+    "poppler@latest",
+    "p7zip@latest"
   ],
   "shell": {
     "init_hook": [

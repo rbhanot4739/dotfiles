@@ -23,11 +23,10 @@ color_header="--color=header:blue"
 binds="--bind \"$fzf_binds\" --bind \"$del_bind\""
 prompt="--prompt 'Tmux Sessions> '"
 fzf_transform="--bind '?:transform:[[ ! \$FZF_PROMPT =~ Sessions ]] && \
-        echo \"change-prompt(Sessions> )+reload(tmux list-sessions -F \\\"#{session_name}\\\")\" || \
+  echo \"change-prompt(Sessions> )+reload(tmux list-sessions -F \\\"#{session_name}\\\" | grep -v $(tmux display-message -p '#S'))\" || \
         echo \"change-prompt(Tmuxinator Projects> )+reload(tmuxinator list | tail -n +2 | tr \\\" \\\" \\\"\\n\\\" | awk \\\"NF\\\")\"'"
 
 layout=$([[ -n ${TMUX} ]] && echo "--tmux --layout=reverse" || echo "--height 50% --layout=reverse --margin 15%,25%")
-# fzf_cmd="fzf $info $border_label $color_label $color_border $header_first $header $color_header $binds $prompt $fzf_transform $layout"
 fzf_cmd="fzf --tmux $info $border_label $color_label $color_border $header_first $header $color_header $binds $prompt $fzf_transform $layout"
 
 tmux_attach_start() {
@@ -35,6 +34,7 @@ tmux_attach_start() {
   local mode="$2"
   local tmux_action=""
   tmux_action=$([[ -n ${TMUX} ]] && echo "switch-client" || echo "attach-session")
+  sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
   local tmux_sessions="tmux list-sessions -F '#{session_name}' 2>/dev/null"
   local tmuxinator_projects="tmuxinator list | tail -n +2"
 
@@ -67,7 +67,9 @@ handler_request() {
     tmux_attach_start "$1" "term"
     return
   else
-    sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
+    # exclude the current session from the session list
+    curr_session=$(tmux display-message -p | sed -e 's/^\[//' -e 's/\].*//')
+    sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v "^$curr_session")
     session=$(echo -n -e "$sess_list" | eval "$fzf_cmd")
     if [[ -n $session ]]; then
       tmux_attach_start "$session" "fzf"
