@@ -54,6 +54,8 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.editor.mini-move" },
     { import = "lazyvim.plugins.extras.util.chezmoi" },
     { import = "lazyvim.plugins.extras.util.startuptime" },
+    -- { import = "lazyvim.plugins.extras.coding.blink" },
+    { import = "lazyvim.plugins.extras.lsp.none-ls" },
     { import = "disabled" },
     -- import/override with your plugins
     { import = "plugins" },

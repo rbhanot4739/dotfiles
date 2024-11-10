@@ -78,3 +78,5 @@ fi
 #               echo "change-prompt(Sessions> )+reload(tmux list-sessions -F \"#{session_name}\")" ||
 #               echo "change-prompt(zoxide> )+reload(zoxide query -l)"'
 # }
+
+

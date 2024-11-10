@@ -2,57 +2,58 @@
 
 #  =================================== Functions ===================================
 get_hidden_files() {
-  if [[ $1 == "long" ]]; then
-    local params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--icons' '--header')
-    if [[ $2 ]]; then
-      OLDDIR=$(pwd)
-      cd $2
-      eza $params --group-directories-first -snew -dl .* 2>/dev/null
-      cd $OLDDIR
-    else
-      eza $params --group-directories-first -snew -dl .* 2>/dev/null
-    fi
-  else
-    if [[ $1 ]]; then
-      OLDDIR=$(pwd)
-      cd $1
-      eza --group-directories-first -snew -d .* 2>/dev/null
-      cd $OLDDIR
-    else
-      eza --group-directories-first -snew -d .* 2>/dev/null
-    fi
+	if [[ $1 == "long" ]]; then
+		local params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--icons' '--header')
+		if [[ $2 ]]; then
+			OLDDIR=$(pwd)
+			cd $2
+			eza $params --group-directories-first -snew -dl .* 2>/dev/null
+			cd $OLDDIR
+		else
+			eza $params --group-directories-first -snew -dl .* 2>/dev/null
+		fi
+	else
+		if [[ $1 ]]; then
+			OLDDIR=$(pwd)
+			cd $1
+			eza --group-directories-first -snew -d .* 2>/dev/null
+			cd $OLDDIR
+		else
+			eza --group-directories-first -snew -d .* 2>/dev/null
+		fi
 
-  fi
+	fi
 }
 
 debug_print() {
-  if [[ "$DEBUG" -eq 1 ]]; then
-    echo "DEBUG: $@"
-  fi
+	if [[ "$DEBUG" -eq 1 ]]; then
+		echo "DEBUG: $@"
+	fi
 }
 
 mx() {
-  /bin/bash $HOME/scripts/tmux-sessions.sh $@
-  # /bin/bash $HOME/tmux-sessions.sh $@
+	/bin/bash $HOME/scripts/tmux-sessions.sh $@
+	# /bin/bash $HOME/tmux-sessions.sh $@
 }
 
 tm() {
-  /bin/bash $HOME/scripts/tmux-manager.sh $@
-  # /bin/bash ~/tmux-manager.sh "$@"
+	/bin/bash $HOME/scripts/tmux-manager.sh $@
+	# /bin/bash ~/tmux-manager.sh "$@"
 }
 
 zle -N tm
 bindkey '^O' tm
 
 cd_up_widget() {
-  echo "cd_up called"
-  cd ..
-  zle reset-prompt
-  zle accept-line
+	echo "cd_up called"
+	cd ..
+	zle reset-prompt
+	zle accept-line
 }
 
 zle -N cd_up_widget
 bindkey '' cd_up_widget
+# bindkey '^[[D' cd_up_widget
 
 #  =================================== Aliases ===================================
 
@@ -71,25 +72,25 @@ alias rdep="rexec mint deploy"
 
 # create folowing aliases only if eza is installed else use ls
 if [[ $(command -v eza) ]]; then
-  local eza_params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--icons')
-  alias ls='eza -I "*pyc*" $eza_params'
-  alias lsa='ls --all'
-  # alias l='ls --git-ignore'
-  # print tree format
-  alias lst='ls -T -L=3'
-  alias ll='ls --header --long --sort=modified'
-  alias l='ll'
-  alias lla='ll --all'
-  # sort by size
-  alias lS='ll --sort=size'
-  alias lSa='lla --sort=size'
-  alias llA='eza -lbhHigUmuSa'
-  alias lsd='ls -D'
-  alias lsf='ls -F'
-  alias llf='ll -F'
-  alias lld='ll -D'
-  alias lsh='get_hidden_files '
-  alias llh='get_hidden_files long '
+	local eza_params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--icons')
+	alias ls='eza -I "*pyc*" $eza_params'
+	alias lsa='ls --all'
+	# alias l='ls --git-ignore'
+	# print tree format
+	alias lst='ls -T -L=3'
+	alias ll='ls --header --long --sort=modified'
+	alias l='ll'
+	alias lla='ll --all'
+	# sort by size
+	alias lS='ll --sort=size'
+	alias lSa='lla --sort=size'
+	alias llA='eza -lbhHigUmuSa'
+	alias lsd='ls -D'
+	alias lsf='ls -F'
+	alias llf='ll -F'
+	alias lld='ll -D'
+	alias lsh='get_hidden_files '
+	alias llh='get_hidden_files long '
 fi
 
 # some utility aliases
@@ -109,12 +110,12 @@ alias wich='which '
 [[ $(command -v rg) ]] && alias grep='rg' && alias gr='rg'
 [[ $(command -v tmuxinator) ]] && alias mux="tmuxinator "
 if [[ $(command -v eza) ]]; then
-  alias less='bat'
-  alias cat='bat --color always'
+	alias less='bat'
+	alias cat='bat --color always'
 fi
 if [[ $(command -v gh) ]]; then
-  alias ghc='gh copilot explain '
-  alias ghcs='gh copilot suggest '
+	alias ghc='gh copilot explain '
+	alias ghcs='gh copilot suggest '
 fi
 
 # git aliases

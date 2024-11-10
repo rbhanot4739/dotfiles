@@ -96,7 +96,7 @@ return {
 
     -- git
     {
-      "<leader>gB",
+      "<leader>gn",
       function()
         require("telescope.builtin").git_branches({
           show_remote_tracking_branches = false,

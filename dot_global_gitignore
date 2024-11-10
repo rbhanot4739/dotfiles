@@ -6,5 +6,6 @@ dataSources/
 *.neoconf.json
 *lcov*
 pyrightconfig.json
+cspell.json
 !base_pyrightconfig.json
 .git-blame-ignore-revs

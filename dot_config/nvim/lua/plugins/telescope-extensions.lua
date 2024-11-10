@@ -91,7 +91,7 @@ return {
           require("telescope").extensions.live_grep_args.live_grep_args({
             cwd = require("utils").get_root_dir,
             additional_args = { "--follow" },
-            prompt_title = "Live Grep (Args [ Git root])",
+            prompt_title = "Live Grep (Args Git root)",
           })
         end,
         -- mode = { "n", "v" },

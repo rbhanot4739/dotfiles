@@ -42,10 +42,10 @@ if not vim.g.vscode then
 
   -- lazygit
   map("n", "<leader>gG", function()
-    LazyVim.lazygit({ cwd = LazyVim.root.git() })
+    Snacks.lazygit({ cwd = LazyVim.root.git() })
   end, { desc = "Lazygit (Root Dir)" })
 
   map("n", "<leader>gL", function()
-    LazyVim.lazygit({ args = { "log" }, cwd = LazyVim.root.git() })
+    Snacks.lazygit({ args = { "log" }, cwd = LazyVim.root.git() })
   end, { desc = "Lazygit Log" })
 end

@@ -8,7 +8,6 @@
     "ripgrep@latest",
     "fzf@latest",
     "fd@latest",
-    "lazygit@latest",
     "zoxide@latest",
     "eza@latest",
     "delta@latest",
@@ -24,7 +23,8 @@
     "sd@latest",
     "yazi@latest",
     "poppler@latest",
-    "p7zip@latest"
+    "p7zip@latest",
+    "lazygit@latest"
   ],
   "shell": {
     "init_hook": [

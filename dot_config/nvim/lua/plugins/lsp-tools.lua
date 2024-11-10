@@ -82,7 +82,25 @@ return {
     end,
   },
   {
+    "nvimtools/none-ls.nvim",
+    dependencies = {
+      "mason.nvim",
+      -- "nvimtools/none-ls-extras.nvim",
+      "davidmh/cspell.nvim",
+    },
+    opts = function(_, opts)
+      local cspell = require("cspell")
+      local null_ls = require("null-ls")
+
+      opts.sources = vim.list_extend(opts.sources, {
+        cspell.diagnostics,
+        cspell.code_actions,
+        -- null_ls.builtins.code_actions.refactoring,
+      })
+    end,
+  },
+  {
     "williamboman/mason.nvim",
-    opts = { ensure_installed = { "flake8", "mypy" } },
+    opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
   },
 }
