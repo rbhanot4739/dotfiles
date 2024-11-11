@@ -92,7 +92,7 @@ return {
       local cspell = require("cspell")
       local null_ls = require("null-ls")
 
-      opts.sources = vim.list_extend(opts.sources, {
+      opts.sources = vim.list_extend(opts.sources or {}, {
         cspell.diagnostics,
         cspell.code_actions,
         -- null_ls.builtins.code_actions.refactoring,
