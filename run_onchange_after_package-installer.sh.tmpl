@@ -3,7 +3,7 @@
 # ensure its a rdev machine
 {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
 curl -fsSL https://pixi.sh/install.sh | bash
-packages=("nvim" "ripgrep" "fzf" "fd-find" "lazygit" "zoxide" "eza" "git-delta" "bat" "tldr" "jq" "yq" "sqlite" "lua" "luajit" "luarocks")
+packages=("tmux" "tealdeer" "nvim" "ripgrep" "fzf" "fd-find" "zoxide" "eza" "git-delta" "bat" "direnv" "jq" "yq" "atuin" "sqlite" "lua" "luajit" "luarocks" "sd" "yazi" "poppler" "p7zip" "lazygit")
 for package in "${packages[@]}"; do
   $HOME/.pixi/bin/pixi global install "$package"
 done
