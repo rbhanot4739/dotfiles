@@ -6,7 +6,7 @@ return {
       function()
         require("telescope").extensions.refactoring.refactors()
       end,
-      { "n", "x" },
+      { "n", "x", "v" },
     },
   },
 }

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # ensure its a rdev machine
 {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
@@ -32,26 +32,32 @@ setup_shell() {
   fi
 
   # install zsh plugins
-  PLUGIN_DIR="$HOME/.zsh/plugins"
-  if [[ ! -d "$PLUGIN_DIR" ]]; then
-    mkdir -p "$PLUGIN_DIR"
-  fi
+PLUGIN_DIR="$HOME/.zsh/plugins"
+if [[ ! -d "$PLUGIN_DIR" ]]; then
+  mkdir -p "$PLUGIN_DIR"
+fi
 
-  PLUGINS=(
-    zdharma-continuum/fast-syntax-highlighting
-    zsh-users/zsh-autosuggestions
-    zsh-users/zsh-completions
-    zsh-users/zsh-history-substring-search
-    Aloxaf/fzf-tab
-    jeffreytse/zsh-vi-mode
-  )
-  for plugin in "${PLUGINS[@]}"; do
-    local plugin_name=$(basename "$plugin")
-    local plugin_path="${PLUGIN_DIR}/$plugin_name"
-    if [[ ! -d "$plugin_path" ]]; then
-      git clone https://github.com/"$plugin" "$plugin_path"
-    fi
-  done
+declare -A PLUGINS=(["fast-syntax-highlighting"]="https://github.com/zdharma-continuum/fast-syntax-highlighting,"
+  ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions,"
+  ["zsh-completions"]="https://github.com/zsh-users/zsh-completions,"
+  ["zsh-history-substring-search"]="https://github.com/zsh-users/zsh-history-substring-search,"
+  ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab,"
+  ["zsh-vi-mode"]="https://github.com/jeffreytse/zsh-vi-mode,"
+  ["zsh-abbr"]="https://github.com/olets/zsh-abbr,--recurse-submodules --single-branch --branch main --depth 1")
+
+for plugin_name in "${!PLUGINS[@]}"; do
+  plugin_info="${PLUGINS[$plugin_name]}"
+  plugin_path="${PLUGIN_DIR}/$plugin_name"
+  # Split plugin_info into plugin_url and plugin_args
+  IFS=',' read -r plugin_url plugin_args <<<"$plugin_info"
+  plugin_path="${PLUGIN_DIR}/$plugin_name"
+  if [[ ! -d "$plugin_path" ]]; then
+    echo "Installing $plugin_name"
+    cmd="git clone $plugin_url $plugin_args  $plugin_path"
+    eval $cmd
+  # else
+  #   echo "$plugin_name is already installed...at $plugin_path/$plugin_name.plugin.zsh"
+  fi
+done
 }
 setup_shell
-

@@ -66,36 +66,25 @@ return {
       python = { "flake8", "mypy" },
     },
   },
-  -- Todo: Maybe do this some time later
-  {
-    "stevearc/conform.nvim",
-    opts = function(_, opts)
-      local format_on_save = function(bufnr)
-        if vim.g.autoformat or vim.b[bufnr].autoformat then
-          return { timeout_ms = 500, lsp_format = "fallback" }
-        else
-          return
-        end
-      end
-      opts.format_on_save = format_on_save
-      return opts
-    end,
-  },
   {
     "nvimtools/none-ls.nvim",
     dependencies = {
       "mason.nvim",
-      -- "nvimtools/none-ls-extras.nvim",
       "davidmh/cspell.nvim",
     },
     opts = function(_, opts)
       local cspell = require("cspell")
       local null_ls = require("null-ls")
 
+      local config = {
+        config_file_preferred_name = "cspell.json",
+        cspell_config_dirs = { "~/.config/" },
+        read_config_synchronously = false,
+      }
       opts.sources = vim.list_extend(opts.sources or {}, {
-        cspell.diagnostics,
-        cspell.code_actions,
-        -- null_ls.builtins.code_actions.refactoring,
+        cspell.diagnostics.with({ config = config }),
+        cspell.code_actions.with({ config = config }),
+        null_ls.builtins.code_actions.refactoring,
       })
     end,
   },

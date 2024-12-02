@@ -112,8 +112,8 @@ return {
     --   end,
     --   desc = "Git Branches (All)",
     -- },
-    -- { "<leader>gc", "<cmd>Telescope git_bcommits<cr>", desc = "Buffer commits" },
-    -- { "<leader>gC", "<cmd>Telescope git_commits<cr>", desc = "All commits" },
+    { "<leader>gc", false },
+    { "<leader>gC", "<cmd>Telescope git_commits<cr>", desc = "All commits" },
 
     { "<leader>sc", "<cmd>Telescope commands<cr>", desc = "Commands" },
     -- telescope picker for files in current file's parent directory

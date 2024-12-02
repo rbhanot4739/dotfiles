@@ -67,28 +67,33 @@ load_plugins() {
     mkdir -p "$PLUGIN_DIR"
   fi
 
-  PLUGINS=(
-    zdharma-continuum/fast-syntax-highlighting 
-    zsh-users/zsh-autosuggestions 
-    zsh-users/zsh-completions 
-    zsh-users/zsh-history-substring-search 
-    Aloxaf/fzf-tab
-    jeffreytse/zsh-vi-mode
-  )
-  for plugin in $PLUGINS
-  do
-    local plugin_name=`basename $plugin`
-    local plugin_path="${PLUGIN_DIR}/$plugin_name"
-  if [[ ! -d "$plugin_path" ]]; then
-    # echo "will clone https://github.com/$plugin at $plugin_path"
-    git clone https://github.com/$plugin  "$plugin_path"
-  else
-    # echo "$plugin is already installed...at $plugin_path"
-    source "$plugin_path/$plugin_name.plugin.zsh"
-  fi
-  done
+  
+typeset -A PLUGINS
+PLUGINS=(
+  ["fast-syntax-highlighting"]="https://github.com/zdharma-continuum/fast-syntax-highlighting,"
+  ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions,"
+  ["zsh-completions"]="https://github.com/zsh-users/zsh-completions,"
+  ["zsh-history-substring-search"]="https://github.com/zsh-users/zsh-history-substring-search,"
+  ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab,"
+  ["zsh-vi-mode"]="https://github.com/jeffreytse/zsh-vi-mode,"
+  ["zsh-abbr"]="https://github.com/olets/zsh-abbr,--recurse-submodules --single-branch --branch main --depth 1"
+)
+
+for plugin_name plugin_info in ${(kv)PLUGINS}; do
+    # Split plugin_info into plugin_url and plugin_args
+    IFS=',' read -r plugin_url plugin_args <<< "$plugin_info"
+    
+    plugin_path="${PLUGIN_DIR}/$plugin_name"
+    if [[ ! -d "$plugin_path" ]]; then
+        eval "git clone $plugin_url $plugin_args  $plugin_path"
+    else
+        # echo "$plugin_name is already installed...at $plugin_path/$plugin_name.plugin.zsh"
+        source "$plugin_path/$plugin_name.plugin.zsh"
+    fi
+done
 }
 load_plugins
+
 
 # ======== Completion ========
 # setup directory colors
@@ -159,6 +164,7 @@ fi
 
 [ -f "$HOME/fzf_config.zsh" ] && source "$HOME/"fzf_config.zsh
 [ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
+# yazi setup
 function y() {
   local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
   yazi "$@" --cwd-file="$tmp"
@@ -181,3 +187,11 @@ export BAT_THEME="ansi"
 
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# zsh abbr config
+ABBR_EXPAND_PUSH_ABBREVIATION_TO_HISTORY=1
+# show hints for abbrereviations
+ABBR_GET_AVAILABLE_ABBREVIATION=1
+ABBR_LOG_AVAILABLE_ABBREVIATION=1
+ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
+# abbr file
+ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"

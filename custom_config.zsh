@@ -106,10 +106,11 @@ alias md='mkdir'
 alias hg="h | rg"
 alias wh='which '
 alias wich='which '
+alias wch='which '
 [[ $(command -v nvim) ]] && alias vim='nvim'
 [[ $(command -v rg) ]] && alias grep='rg' && alias gr='rg'
 [[ $(command -v tmuxinator) ]] && alias mux="tmuxinator "
-if [[ $(command -v eza) ]]; then
+if [[ $(command -v bat) ]]; then
 	alias less='bat'
 	alias cat='bat --color always'
 fi
@@ -129,8 +130,7 @@ alias gcm='git commit -a -m '
 alias gcma='git commit --amend '
 alias gs='git status'
 alias gb='git branch '
-alias gbl='gb -l'
-alias gba='gb -a'
+alias gba='git branch -a'
 # diff commands
 alias gd='git diff'
 alias gdf='git diff --name-status'
@@ -141,11 +141,10 @@ alias gpl='git pull'
 alias gps='git push '
 
 # log/reflog
-alias glg='git log'
 alias gl="git log --pretty=format:'%C(auto)%h%d%Creset %s %C(cyan) [%aN] %Creset %C(green)(%ci)%Creset'"
 alias gla="git log --pretty=format:'%C(auto)%h%d%Creset %s %C(cyan) [%aN] %Creset %C(green)(%ci)%Creset' --graph --all"
-alias grf='git reflog '
-alias grfp='git reflog --date=local'
+# alias grf='git reflog '
+alias grf='git reflog --date=local'
 
 # rebase commmands
 alias grb='git rebase '
@@ -171,3 +170,4 @@ alias dkc=docker-compose
 alias zz='z -'
 alias cm='chezmoi'
 alias cmcd='chezmoi cd'
+alias nvim-minimal="NVIM_APPNAME=nvim-minimal nvim"
