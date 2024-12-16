@@ -66,28 +66,28 @@ return {
       python = { "flake8", "mypy" },
     },
   },
-  {
-    "nvimtools/none-ls.nvim",
-    dependencies = {
-      "mason.nvim",
-      "davidmh/cspell.nvim",
-    },
-    opts = function(_, opts)
-      local cspell = require("cspell")
-      local null_ls = require("null-ls")
-
-      local config = {
-        config_file_preferred_name = "cspell.json",
-        cspell_config_dirs = { "~/.config/" },
-        read_config_synchronously = false,
-      }
-      opts.sources = vim.list_extend(opts.sources or {}, {
-        cspell.diagnostics.with({ config = config }),
-        cspell.code_actions.with({ config = config }),
-        null_ls.builtins.code_actions.refactoring,
-      })
-    end,
-  },
+  -- {
+  --   "nvimtools/none-ls.nvim",
+  --   dependencies = {
+  --     "mason.nvim",
+  --     "davidmh/cspell.nvim",
+  --   },
+  --   opts = function(_, opts)
+  --     local cspell = require("cspell")
+  --     local null_ls = require("null-ls")
+  --
+  --     local config = {
+  --       config_file_preferred_name = "cspell.json",
+  --       cspell_config_dirs = { "~/.config/" },
+  --       read_config_synchronously = false,
+  --     }
+  --     opts.sources = vim.list_extend(opts.sources or {}, {
+  --       cspell.diagnostics.with({ config = config }),
+  --       cspell.code_actions.with({ config = config }),
+  --       null_ls.builtins.code_actions.refactoring,
+  --     })
+  --   end,
+  -- },
   {
     "williamboman/mason.nvim",
     opts = { ensure_installed = { "flake8", "mypy", "cspell" } },

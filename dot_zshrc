@@ -76,7 +76,7 @@ PLUGINS=(
   ["zsh-history-substring-search"]="https://github.com/zsh-users/zsh-history-substring-search,"
   ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab,"
   ["zsh-vi-mode"]="https://github.com/jeffreytse/zsh-vi-mode,"
-  ["zsh-abbr"]="https://github.com/olets/zsh-abbr,--recurse-submodules --single-branch --branch main --depth 1"
+  # ["zsh-abbr"]="https://github.com/olets/zsh-abbr,--recurse-submodules --single-branch --branch main --depth 1"
 )
 
 for plugin_name plugin_info in ${(kv)PLUGINS}; do
@@ -195,4 +195,4 @@ ABBR_GET_AVAILABLE_ABBREVIATION=1
 ABBR_LOG_AVAILABLE_ABBREVIATION=1
 ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
 # abbr file
-ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"
+# ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"
