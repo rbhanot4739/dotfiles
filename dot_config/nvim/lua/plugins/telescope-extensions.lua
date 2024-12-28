@@ -64,10 +64,7 @@ return {
                 ["<C-space>"] = actions.to_fuzzy_refine,
               },
             },
-            -- ... also accepts theme settings, for example:
-            -- theme = "dropdown", -- use dropdown theme
-            -- theme = { }, -- use own theme spec
-            -- layout_config = { mirror=true }, -- mirror preview pane
+            -- theme = "ivy", -- use dropdown theme
           },
         },
       })
@@ -97,6 +94,27 @@ return {
         -- mode = { "n", "v" },
         desc = "Live grep (Args [Git root])",
       },
+      {
+        "<leader>sw",
+        function()
+          require("telescope-live-grep-args.shortcuts").grep_word_under_cursor({
+            additional_args = { "--follow" },
+            prompt_title = "Grep word under cursor",
+          })
+        end,
+        desc = "Grep word under cursor",
+      },
+      {
+        "<leader>sW",
+        function()
+          require("telescope-live-grep-args.shortcuts").grep_word_under_cursor({
+            additional_args = { "--follow" },
+            cwd = require("utils").get_root_dir,
+            prompt_title = "Grep word under cursor(Git root)",
+          })
+        end,
+        desc = "Grep word under cursor(Git root)",
+      },
     },
   },
   -- smart open
@@ -123,18 +141,6 @@ return {
         end,
         desc = "Smart open files",
       },
-    },
-  },
-  {
-    "prochri/telescope-all-recent.nvim",
-    dependencies = {
-      "nvim-telescope/telescope.nvim",
-      "kkharji/sqlite.lua",
-      -- optional, if using telescope for vim.ui.select
-      "stevearc/dressing.nvim",
-    },
-    opts = {
-      -- your config goes here
     },
   },
 }

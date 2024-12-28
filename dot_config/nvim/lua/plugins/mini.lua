@@ -43,7 +43,7 @@ return {
         windows = {
           preview = true,
           width_nofocus = 20,
-          width_focus = 50,
+          width_focus = 40,
           width_preview = 80,
         },
         options = {
@@ -58,15 +58,15 @@ return {
         function()
           require("mini.files").open(vim.api.nvim_buf_get_name(0), true)
         end,
-        desc = "Open mini.files (directory of current file)",
+        desc = "Explorer Mini.files",
       },
-      {
-        "<leader>E",
-        function()
-          require("mini.files").open(vim.loop.cwd(), true)
-        end,
-        desc = "Open mini.files (cwd)",
-      },
+      -- {
+      --   "<leader>E",
+      --   function()
+      --     require("mini.files").open(vim.loop.cwd(), true)
+      --   end,
+      --   desc = "Open mini.files (cwd)",
+      -- },
       {
         "<leader>fm",
         function()

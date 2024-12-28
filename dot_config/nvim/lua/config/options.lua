@@ -8,6 +8,8 @@ vim.opt.spell = false
 vim.opt.spelllang = { "en_us" }
 vim.opt.laststatus = 3
 vim.o.cursorlineopt = "number,line"
+-- vim.g.snacks_animate = false
+vim.g.autoformat = false
 
 -- Clipboard https://github.com/LazyVim/LazyVim/discussions/4602#discussioncomment-10995917
 if vim.env.SSH_TTY then

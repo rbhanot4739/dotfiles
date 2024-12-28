@@ -12,14 +12,7 @@ return {
         defer_save = { "InsertLeave", "TextChanged" }, -- vim events that trigger a deferred save (saves after `debounce_delay`)
         cancel_deferred_save = { "InsertEnter" }, -- vim events that cancel a pending deferred save
       },
-      debounce_delay = 2000,
-    },
-  },
-  {
-    "karb94/neoscroll.nvim",
-    event = "VeryLazy",
-    opts = {
-      easing = "cube",
+      debounce_delay = 1000,
     },
   },
   {
@@ -50,10 +43,13 @@ return {
   {
     "rmagatti/auto-session",
     lazy = false,
+    enabled = true,
     opts = {
+      bypass_save_filetypes = { "alpha", "dashboard", "snacks_dashboard" },
       suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
       use_git_branch = true,
       cwd_change_handling = true,
+      auto_restore = false,
       session_lens = {
         theme_conf = {
           border = true,
@@ -84,7 +80,10 @@ return {
   },
   {
     "chrisgrieser/nvim-spider",
-    opts = {},
+    config = function()
+      require("spider").setup()
+      vim.keymap.set("n", "cw", "ce", { remap = true })
+    end,
     keys = {
       {
         "w",

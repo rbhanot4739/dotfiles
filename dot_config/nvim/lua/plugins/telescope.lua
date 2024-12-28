@@ -49,26 +49,28 @@ return {
         },
       },
     })
-    opts.extensions = {
-      smart_open = {},
-    }
+    -- opts.extensions = {
+    --   smart_open = {},
+    -- }
     return opts
   end,
   keys = {
     { "<leader><space>", false },
-    {
-      "<leader>sW",
-      function()
-        require("telescope.builtin").grep_string(
-          -- themes.get_ivy({
-          --   previewer = true,
-          -- }),
-          { cwd = require("utils").get_root_dir, additional_args = { "--follow" } }
-        )
-      end,
-      mode = { "n", "v" },
-      desc = "Grep word under cursor (Git Root)",
-    },
+    { "<leader>sw", false },
+    { "<leader>sW", false },
+    -- {
+    --   "<leader>sW",
+    --   function()
+    --     require("telescope.builtin").grep_string(
+    --       -- themes.get_ivy({
+    --       --   previewer = true,
+    --       -- }),
+    --       { cwd = require("utils").get_root_dir, additional_args = { "--follow" } }
+    --     )
+    --   end,
+    --   mode = { "n", "v" },
+    --   desc = "Grep word under cursor (Git Root)",
+    -- },
     -- {
     --   "<leader>sG",
     --   function()

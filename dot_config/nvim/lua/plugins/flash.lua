@@ -33,7 +33,7 @@ return {
           },
         })
       end,
-      desc = "Treesitter Search",
+      desc = "Remote Treesitter Search",
     },
     {
       ",,",

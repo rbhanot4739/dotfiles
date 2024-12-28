@@ -1,4 +1,5 @@
 -- first: disable default <tab> and <s-tab> behavior in LuaSnip
+local config_utils = require("config.utils")
 return {
   {
     "L3MON4D3/LuaSnip",
@@ -11,8 +12,8 @@ return {
     dependencies = {
       "rcarriga/cmp-dap",
       "hrsh7th/cmp-cmdline",
+      "lukas-reineke/cmp-rg"
     },
-    ---@param opts cmp.ConfigSchema
     opts = function(_, opts)
       local has_words_before = function()
         unpack = unpack or table.unpack
@@ -21,7 +22,8 @@ return {
       end
       local cmp = require("cmp")
       local luasnip = require("luasnip")
-
+      table.insert(opts.sources, { name = "render-markdown" })
+      table.insert(opts.sources, { name = "rg" })
       -- insert copilot completions after lsp
       -- table.remove(opts.sources, 1)
       -- table.insert(opts.sources, { name = "copilot",

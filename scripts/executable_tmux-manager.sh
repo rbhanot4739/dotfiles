@@ -67,9 +67,12 @@ handler_request() {
     tmux_attach_start "$1" "term"
     return
   else
-    # exclude the current session from the session list
-    curr_session=$(tmux display-message -p | sed -e 's/^\[//' -e 's/\].*//')
-    sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v "^$curr_session")
+    sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
+    if [[ -n "$TMUX" ]]; then
+      # if we are inside a tmux session then exclude the current session from the session list
+      curr_session=$(tmux display-message -p | sed -e 's/^\[//' -e 's/\].*//')
+      sess_list=$(echo -n -e "$sess_list" | grep -v "^$curr_session")
+    fi
     session=$(echo -n -e "$sess_list" | eval "$fzf_cmd")
     if [[ -n $session ]]; then
       tmux_attach_start "$session" "fzf"

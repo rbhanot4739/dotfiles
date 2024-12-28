@@ -6,9 +6,11 @@
 --     vim.opt.formatoptions:remove({ "c", "r", "o" })
 --   end,
 -- })
+
+-- Enable autoformat for specific filetypes
 vim.api.nvim_create_autocmd({ "FileType" }, {
-  pattern = { "python", "json" },
+  pattern = {"lua", "markdown"},
   callback = function()
-    vim.b.autoformat = false
+    vim.b.autoformat = true
   end,
 })
