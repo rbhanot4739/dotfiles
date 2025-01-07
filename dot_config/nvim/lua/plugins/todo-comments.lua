@@ -10,8 +10,6 @@ return {
       TODO = { icon = " ", color = "info", alt = { "Todo", "todo" } },
     },
   },
-  keys = {
-    { "<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo" },
-    { "<leader>sT", false },
-  },
+  -- keys = {
+  -- },
 }

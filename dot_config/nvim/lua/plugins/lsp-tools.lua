@@ -1,6 +1,12 @@
 return {
-  -- {
-  --   "neovim/nvim-lspconfig",
+  {
+    "neovim/nvim-lspconfig",
+    opts = function()
+      local keys = require("lazyvim.plugins.lsp.keymaps").get()
+      keys[#keys + 1] = { "<C-k>", mode = { "i" }, false }
+    end,
+  },
+  -- { "neovim/nvim-lspconfig",
   --   event = "LazyFile",
   --   opts = function(_, opts)
   --     -- https://www.lazyvim.org/plugins/lsp#%EF%B8%8F-customizing-lsp-keymaps

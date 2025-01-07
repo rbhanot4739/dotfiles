@@ -10,6 +10,7 @@ vim.opt.laststatus = 3
 vim.o.cursorlineopt = "number,line"
 -- vim.g.snacks_animate = false
 vim.g.autoformat = false
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 
 -- Clipboard https://github.com/LazyVim/LazyVim/discussions/4602#discussioncomment-10995917
 if vim.env.SSH_TTY then

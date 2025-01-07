@@ -32,7 +32,7 @@ if not vim.g.vscode then
   map({ "n", "v", "i" }, "<Left>", "<Nop>", { desc = "disable arrow keys" })
   map({ "n", "v", "i" }, "<Right>", "<Nop>", { desc = "disable arrow keys" })
   -- delete lazyVim builtin keymaps
-  -- vim.keymap.del({ "n", "t" }, "<c-_>")
+  vim.keymap.del({ "n", "t" }, "<c-_>")
   -- vim.keymap.del("n", "<leader>ft")
 
   -- add a mapping to replace visual selection in file

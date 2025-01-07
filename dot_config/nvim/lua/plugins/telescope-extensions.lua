@@ -15,15 +15,18 @@ return {
       require("telescope").setup({
         extensions = {
           undo = {
-            side_by_side = true,
+            side_by_side = false,
             layout_strategy = "vertical",
-            layout_config = {
-              preview_height = 0.8,
-            },
+            -- layout_config = {
+            --   preview_height = 0.8,
+            -- },
             mappings = {
               i = {
                 ["<cr>"] = require("telescope-undo.actions").yank_additions,
                 ["<S-cr>"] = require("telescope-undo.actions").yank_deletions,
+                ["<C-CR>"] = require("telescope-undo.actions").restore,
+                ["<C-y>"] = require("telescope-undo.actions").yank_additions,
+                ["<C-x>"] = require("telescope-undo.actions").yank_deletions,
                 ["<C-r>"] = require("telescope-undo.actions").restore,
               },
               n = {
@@ -64,7 +67,8 @@ return {
                 ["<C-space>"] = actions.to_fuzzy_refine,
               },
             },
-            -- theme = "ivy", -- use dropdown theme
+            theme = "dropdown", -- use dropdown theme
+            -- layout_config = { mirror = true }, -- mirror preview pane
           },
         },
       })
