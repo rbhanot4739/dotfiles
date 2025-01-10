@@ -19,7 +19,10 @@ return {
       "nvim-lua/plenary.nvim",
     },
     keys = {
-      { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true }, desc = "Open ObsidianSearch" },
+      { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
+      { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
+      { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
+      { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Open ObsidianTags" } },
     },
     opts = {
       ui = {

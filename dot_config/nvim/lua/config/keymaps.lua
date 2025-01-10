@@ -48,4 +48,5 @@ if not vim.g.vscode then
   map("n", "<leader>gL", function()
     Snacks.lazygit({ args = { "log" }, cwd = LazyVim.root.git() })
   end, { desc = "Lazygit Log" })
+  map("n", "<leader>lx", "<cmd>LazyExtras<cr>")
 end

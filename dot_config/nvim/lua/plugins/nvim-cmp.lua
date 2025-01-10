@@ -1,4 +1,3 @@
--- first: disable default <tab> and <s-tab> behavior in LuaSnip
 local config_utils = require("config.utils")
 return {
   {
@@ -12,7 +11,20 @@ return {
     dependencies = {
       "rcarriga/cmp-dap",
       "hrsh7th/cmp-cmdline",
-      "lukas-reineke/cmp-rg"
+      "lukas-reineke/cmp-rg",
+      -- { "uga-rosa/cmp-dictionary", opts = { paths = { "/usr/share/dict/words" }, exact_length = 2 } },
+      {
+        "uga-rosa/cmp-dictionary",
+        opts = {
+          paths = { vim.fn.expand("~") .. "/words.txt" },
+          exact_length = 2,
+          first_case_insensitive = true,
+          document = {
+            enable = true,
+            command = { "wn", "${label}", "-over" },
+          },
+        },
+      },
     },
     opts = function(_, opts)
       local has_words_before = function()
@@ -21,9 +33,18 @@ return {
         return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
       end
       local cmp = require("cmp")
+      local cmd_mapping = cmp.mapping.preset.cmdline()
+      -- make <s-cr> select the entry, prevents redundant <Tab> & <S-Tab> presses
+      cmd_mapping["<s-cr>"] = {
+        c = cmp.mapping.confirm({ select = false }),
+      }
       local luasnip = require("luasnip")
       table.insert(opts.sources, { name = "render-markdown" })
       table.insert(opts.sources, { name = "rg" })
+      table.insert(opts.sources, {
+        name = "dictionary",
+        keyword_length = 2,
+      })
       -- insert copilot completions after lsp
       -- table.remove(opts.sources, 1)
       -- table.insert(opts.sources, { name = "copilot",
@@ -34,14 +55,16 @@ return {
       -- --------------------------------------cmdline setup start--------------------------------------
       -- `/` cmdline setup.
       cmp.setup.cmdline("/", {
-        mapping = cmp.mapping.preset.cmdline(),
+        -- mapping = cmp.mapping.preset.cmdline(),
+        mapping = cmd_mapping,
         sources = {
           { name = "buffer" },
         },
       })
       -- `:` cmdline setup.
       cmp.setup.cmdline(":", {
-        mapping = cmp.mapping.preset.cmdline(),
+        mapping = cmd_mapping,
+        -- mapping = cmp.mapping.preset.cmdline(),
         sources = cmp.config.sources({
           { name = "path" },
         }, {
@@ -93,13 +116,13 @@ return {
         end, { "i", "s" }),
         ["<C-j>"] = cmp.mapping.scroll_docs(-4),
         ["<C-k>"] = cmp.mapping.scroll_docs(4),
-        ["<Esc>"] = cmp.mapping(function(fallback)
-          if cmp.visible() then
-            cmp.close()
-          else
-            fallback()
-          end
-        end, { "i", "s" }),
+        -- ["<Esc>"] = cmp.mapping(function(fallback)
+        --   if cmp.visible() then
+        --     cmp.close()
+        --   else
+        --     fallback()
+        --   end
+        -- end, { "i", "s" }),
       })
       opts.sorting = {
         priority_weight = 2,

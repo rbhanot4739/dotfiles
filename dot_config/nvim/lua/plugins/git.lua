@@ -82,7 +82,6 @@ return {
   },
   {
     "lewis6991/gitsigns.nvim",
-    cond = is_git_worktree,
     opts = {
       current_line_blame = true,
     },

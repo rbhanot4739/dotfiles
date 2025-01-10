@@ -29,11 +29,11 @@ return {
       kind_icons = require("config.utils").icons.kinds,
     },
     completion = {
-      list = {
-        selection = function(ctx)
-          return ctx.mode == "cmdline" and "manual" or "manual"
-        end,
-      },
+      -- list = {
+      --   selection = function(ctx)
+      --     return ctx.mode == "cmdline" and "manual" or "manual"
+      --   end,
+      -- },
       menu = { border = "rounded" },
       documentation = { window = { border = "rounded" } },
     },

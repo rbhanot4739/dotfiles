@@ -4,7 +4,7 @@
 
 vim.opt.wrap = true
 vim.g.lazyvim_python_lsp = "basedpyright"
-vim.opt.spell = false
+vim.opt.spell = true
 vim.opt.spelllang = { "en_us" }
 vim.opt.laststatus = 3
 vim.o.cursorlineopt = "number,line"
