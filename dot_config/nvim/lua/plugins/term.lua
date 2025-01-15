@@ -22,6 +22,7 @@ function ft_repl_toggle(ft)
   else
     local ft_cmds = { python = "ipython", lua = "lua" }
     local ft_repl = Terminal:new({
+      display_name = (ft_cmds[ft] .. "-" or "") .. "repl",
       cmd = ft_cmds[ft] or nil,
       hidden = false,
       direction = "float",
@@ -42,10 +43,14 @@ return {
   opts = {
     winbar = {
       enabled = true,
+      name_formatter = function(term) --  term: Terminal
+        return term.name
+      end,
     },
     -- open_mapping = "<c-//>", -- use <c-/>
     open_mapping = "", -- use <c-/>
     insert_mappings = true,
     terminal_mappings = true,
   },
+  keys = {},
 }

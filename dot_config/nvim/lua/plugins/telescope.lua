@@ -130,22 +130,22 @@ return {
               ["<C-n>"] = { action = require("toggleterm-manager").actions.create_term, exit_on_action = false }, -- creates a new terminal buffer
               ["<C-d>"] = { action = require("toggleterm-manager").actions.delete_term, exit_on_action = false }, -- deletes a terminal buffer
               ["<C-r>"] = { action = require("toggleterm-manager").actions.rename_term, exit_on_action = false }, -- provides a prompt to rename a terminal
-              ["<Tab>"] = {action = require("telescope.actions").move_selection_next },
-              ["<S-Tab>"] = {action = require("telescope.actions").move_selection_previous }
+              ["<Tab>"] = { action = require("telescope.actions").move_selection_next },
+              ["<S-Tab>"] = { action = require("telescope.actions").move_selection_previous },
             },
             n = {
               ["<CR>"] = { action = require("toggleterm-manager").actions.toggle_term, exit_on_action = true }, -- toggles terminal open/closed
               ["<C-n>"] = { action = require("toggleterm-manager").actions.create_term, exit_on_action = false }, -- creates a new terminal buffer
               ["D"] = { action = require("toggleterm-manager").actions.delete_term, exit_on_action = false }, -- deletes a terminal buffer
               ["C"] = { action = require("toggleterm-manager").actions.rename_term, exit_on_action = false }, -- provides a prompt to rename a terminal
-              ["<Tab>"] = {action = require("telescope.actions").move_selection_next },
-              ["<S-Tab>"] = {action = require("telescope.actions").move_selection_previous}
+              ["<Tab>"] = { action = require("telescope.actions").move_selection_next },
+              ["<S-Tab>"] = { action = require("telescope.actions").move_selection_previous },
             },
           },
         })
       end,
       keys = {
-        { "<leader>ft", "<cmd>Telescope toggleterm_manager theme=dropdown<cr>", desc = "Find terminals" },
+        { "<leader>ft", "<cmd>Telescope toggleterm_manager theme=ivy<cr>", desc = "Find terminals" },
       },
     },
   },
@@ -271,7 +271,7 @@ return {
           },
         },
         theme = "dropdown", -- use dropdown theme
-        -- layout_config = { mirror = true }, -- mirror preview pane
+        layout_config = { mirror = false, width = 0.8 }, -- mirror preview pane
       },
     }
     return opts
@@ -280,6 +280,29 @@ return {
     { "<leader><space>", false },
     { "<leader>sw", false },
     { "<leader>sW", false },
+    { "<leader>:", false },
+    {
+      "<leader>ss",
+      function()
+        local symbols = LazyVim.config.get_kind_filter()
+        table.insert(symbols, "Constant")
+        require("telescope.builtin").lsp_document_symbols({
+          symbols = symbols,
+        })
+      end,
+      desc = "Goto Symbol",
+    },
+    {
+      "<leader>sS",
+      function()
+        local symbols = LazyVim.config.get_kind_filter()
+        table.insert(symbols, "Constant")
+        require("telescope.builtin").lsp_dynamic_workspace_symbols({
+          symbols = symbols,
+        })
+      end,
+      desc = "Goto Symbol (Workspace)",
+    },
     {
       "<leader>fr",
       function()
@@ -293,7 +316,7 @@ return {
 
     -- git
     {
-      "<leader>gn",
+      "<leader>gB",
       function()
         require("telescope.builtin").git_branches({
           show_remote_tracking_branches = false,
@@ -322,7 +345,8 @@ return {
     },
     { "zf", "<cmd>Telescope spell_suggest theme=cursor<cr>", desc = "Spell suggest" },
     { "<leader>/", "<cmd>Telescope search_history theme=dropdown<cr>", desc = "Search history" },
-    { "<leader>,", "<cmd>Telescope vim_options<cr>", desc = "Search Vim options" },
+    { "<leader>?", "<cmd>Telescope command_history theme=dropdown<cr>", desc = "Command history" },
+    -- { "<leader>,", "<cmd>Telescope vim_options<cr>", desc = "Search Vim options" },
     { "<leader>st", "<cmd>TodoTelescope keywords=TODO,Todo,todo<cr>", desc = "Todos" },
     { "<leader>sT", "<cmd>TodoTelescope<cr>", desc = "All Todos" },
     {

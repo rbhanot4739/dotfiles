@@ -66,10 +66,40 @@ return {
   --   end,
   -- },
   {
+    "williamboman/mason.nvim",
+    opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
+  },
+  -- linter/formatter
+  {
     "mfussenegger/nvim-lint",
     linters_by_ft = {
       -- ruff isn't checking some of the stuff
       python = { "flake8", "mypy" },
+    },
+  },
+  {
+    "stevearc/conform.nvim",
+    opts = {
+      log_level = vim.log.levels.DEBUG,
+      formatters_by_ft = {
+        json = { "fixjson" },
+        python = { "ruff_fix", "ruff_format" },
+      },
+      formatters = {
+        injected = {
+          options = {
+            ignore_errors = true,
+            lang_to_ft = {
+              python = "python",
+              json = "json",
+            },
+            lang_to_ext = {
+              python = "py",
+              json = "json",
+            },
+          },
+        },
+      },
     },
   },
   -- {
@@ -94,8 +124,4 @@ return {
   --     })
   --   end,
   -- },
-  {
-    "williamboman/mason.nvim",
-    opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
-  },
 }

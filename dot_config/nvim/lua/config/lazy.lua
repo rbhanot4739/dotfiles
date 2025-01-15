@@ -23,13 +23,15 @@ require("lazy").setup({
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
       opts = {
-        colorscheme = "catppuccin",
+        colorscheme = "nightfox",
+        -- colorscheme = "catppuccin",
         -- colorscheme = "tokyonight",
         icons = {
           kinds = config_utils.icons.kinds,
         },
       },
     },
+    { "EdenEast/nightfox.nvim" },
     { import = "disabled" },
     -- import/override with your plugins
     { import = "plugins" },
@@ -45,7 +47,7 @@ require("lazy").setup({
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
   checker = {
-    enabled = true, -- check for plugin updates periodically
+    enabled = false, -- check for plugin updates periodically
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
   ui = { border = "single" },

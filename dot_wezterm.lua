@@ -17,20 +17,21 @@ function scheme_for_appearance(appearance)
 end
 
 -- config.color_scheme = scheme_for_appearance(get_appearance())
-config.color_scheme = "tokyonight_moon"
+-- config.color_scheme = "tokyonight_moon"
+config.color_scheme = "nightfox"
 -- config.color_scheme = "catppuccin-mocha"
 
 config.font = wezterm.font("FiraCode Nerd Font Mono")
-config.font_size = 18
+config.font_size = 16
 
--- Tabbar settings
+-- Tab bar settings
 config.enable_tab_bar = true
 config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = true
 
 config.window_decorations = "RESIZE"
 config.window_background_opacity = 1
-config.macos_window_background_blur = 35
+config.macos_window_background_blur = 5
 config.keys = {
 	-- Disable some default keys,
 	{ key = "UpArrow", mods = "SHIFT|CTRL", action = wezterm.action.DisableDefaultAssignment },

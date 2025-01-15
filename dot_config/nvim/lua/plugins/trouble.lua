@@ -20,27 +20,43 @@ return {
     icons = {
       kinds = config_utils.icons.kinds,
     },
-    -- auto_close = true, -- auto close when there are no items
-    -- auto_open = false, -- auto open when there are items
-    -- auto_preview = false, -- automatically open preview when on an item
-    -- auto_refresh = true, -- auto refresh when open
-    -- auto_jump = false, -- auto jump to the item when there's only one
-    -- focus = false, -- Focus the window when opened
-    -- restore = true, -- restores the last location in the list when opening
-    -- follow = true, -- Follow the current item
-    -- indent_guides = false, -- show indent guides
-    -- modes = {
-    --   symbols = { win = { position = "left", size = 0.2 } },
-    --   lsp = {
-    --     mode = "lsp",
-    --     preview = get_preview_opts({ size = { width = 0.4, height = 0.8 } }),
-    --     win = { position = "right", size = 0.25 },
-    --   },
-    --   diagnostics = {
-    --     mode = "diagnostics",
-    --     preview = get_preview_opts({ position = { 0, -2 } }),
-    --   },
-    -- },
+    modes = {
+      symbols = {
+        desc = "document symbols",
+        mode = "lsp_document_symbols",
+        focus = true,
+        win = { position = "right", size = 50 },
+        format = "{kind_icon} {symbol.name}",
+        filter = {
+          ["not"] = { ft = "lua", kind = "Package" },
+          any = {
+            -- all symbol kinds for help / markdown files
+            ft = { "help", "markdown" },
+            -- default set of symbol kinds
+            kind = {
+              "Class",
+              "Constant",
+              "Constructor",
+              "Enum",
+              "Field",
+              "Function",
+              "Interface",
+              "Method",
+              "Module",
+              "Namespace",
+              "Package",
+              "Property",
+              "Struct",
+              "Trait",
+            },
+          },
+        },
+      },
+      --   diagnostics = {
+      --     mode = "diagnostics",
+      --     preview = get_preview_opts({ position = { 0, -2 } }),
+      --   },
+    },
   },
   keys = {
     { "<leader>XX", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" },

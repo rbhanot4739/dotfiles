@@ -69,7 +69,7 @@ return {
     },
     keys = {
       {
-        "<leader>fs",
+        "<leader>:",
         function()
           require("rip-substitute").sub()
         end,

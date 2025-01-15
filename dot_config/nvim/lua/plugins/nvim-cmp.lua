@@ -1,12 +1,6 @@
 local config_utils = require("config.utils")
 return {
   {
-    "L3MON4D3/LuaSnip",
-    keys = function()
-      return {}
-    end,
-  },
-  {
     "hrsh7th/nvim-cmp",
     dependencies = {
       "rcarriga/cmp-dap",
@@ -27,17 +21,26 @@ return {
       },
     },
     opts = function(_, opts)
+      -- local has_words_before = function()
+      --   unpack = unpack or table.unpack
+      --   local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+      --   return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+      -- end
       local has_words_before = function()
-        unpack = unpack or table.unpack
+        if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then
+          return false
+        end
         local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-        return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+        return col ~= 0 and vim.api.nvim_buf_get_text(0, line - 1, 0, line - 1, col, {})[1]:match("^%s*$") == nil
       end
       local cmp = require("cmp")
+      local neogen = require("neogen")
       local cmd_mapping = cmp.mapping.preset.cmdline()
       -- make <s-cr> select the entry, prevents redundant <Tab> & <S-Tab> presses
-      cmd_mapping["<s-cr>"] = {
-        c = cmp.mapping.confirm({ select = false }),
+      cmd_mapping["<cr>"] = {
+        c = cmp.mapping.confirm({ select = true }),
       }
+      cmd_mapping["<C-a>"] = { c = cmp.mapping.abort() }
       local luasnip = require("luasnip")
       table.insert(opts.sources, { name = "render-markdown" })
       table.insert(opts.sources, { name = "rg" })
@@ -92,37 +95,44 @@ return {
       -- dap repl completion done
 
       opts.mapping = vim.tbl_extend("force", opts.mapping, {
-        ["<Tab>"] = cmp.mapping(function(fallback)
-          if cmp.visible() then
-            cmp.select_next_item()
-          -- You could replace the expand_or_jumpable() calls with expand_or_locally_jumpable()
-          -- they way you will only jump inside the snippet region
+        -- ["<Tab>"] = cmp.mapping(function(fallback)
+        --   if cmp.visible() then
+        --     cmp.select_next_item()
+        --   -- You could replace the expand_or_jumpable() calls with expand_or_locally_jumpable()
+        --   -- they way you will only jump inside the snippet region
+        --   elseif luasnip.expand_or_jumpable() then
+        --     luasnip.expand_or_jump()
+        --   elseif has_words_before() then
+        --     cmp.complete()
+        --   else
+        --     fallback()
+        --   end
+        -- end, { "i", "s" }),
+        ["<Tab>"] = vim.schedule_wrap(function(fallback)
+          if cmp.visible() and has_words_before() then
+            cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
           elseif luasnip.expand_or_jumpable() then
             luasnip.expand_or_jump()
-          elseif has_words_before() then
-            cmp.complete()
+          elseif neogen.jumpable() then
+            neogen.jump_next()
           else
             fallback()
           end
-        end, { "i", "s" }),
+        end),
         ["<S-Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_prev_item()
           elseif luasnip.jumpable(-1) then
             luasnip.jump(-1)
+          elseif neogen.jumpable(true) then
+            neogen.jump_prev()
           else
             fallback()
           end
         end, { "i", "s" }),
         ["<C-j>"] = cmp.mapping.scroll_docs(-4),
         ["<C-k>"] = cmp.mapping.scroll_docs(4),
-        -- ["<Esc>"] = cmp.mapping(function(fallback)
-        --   if cmp.visible() then
-        --     cmp.close()
-        --   else
-        --     fallback()
-        --   end
-        -- end, { "i", "s" }),
+        ["<C-a>"] = cmp.mapping.abort(),
       })
       opts.sorting = {
         priority_weight = 2,
@@ -141,6 +151,7 @@ return {
           cmp.config.compare.order,
         },
       }
+      -- opts.completion.autocomplete = false
     end,
   },
 }

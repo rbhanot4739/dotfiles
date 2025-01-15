@@ -1,4 +1,3 @@
---
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
@@ -49,4 +48,5 @@ if not vim.g.vscode then
     Snacks.lazygit({ args = { "log" }, cwd = LazyVim.root.git() })
   end, { desc = "Lazygit Log" })
   map("n", "<leader>lx", "<cmd>LazyExtras<cr>")
+  map("n", "<BS>", "<C-6>", { remap = true })
 end
