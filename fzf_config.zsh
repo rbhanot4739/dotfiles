@@ -55,7 +55,7 @@ bindkey '^T' fzf_all
 fman() {
   local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
   fd_cmd="fd -t f . --follow $paths"
-  eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' | fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --height 70% --border=double --preview 'tldr --color=always {} 2>/dev/null' | xargs man
+  eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u| fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --height 70% --border=double --preview 'tldr --color=always {} 2>/dev/null' | xargs man
 }
 
 # fuzzy searching functions

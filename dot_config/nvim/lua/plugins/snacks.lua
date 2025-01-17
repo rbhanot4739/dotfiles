@@ -2,7 +2,46 @@ return {
   "folke/snacks.nvim",
   priority = 1000,
   lazy = false,
+  keys = {
+    {
+      "<leader>oo",
+      function()
+        local vault = vim.fn.expand("~/obsidian-vault/")
+        require("snacks").picker.grep({ dirs = { vault } })
+      end,
+    },
+    {
+      "<leader>fP",
+      function()
+        require("snacks").picker.files({
+          cwd = vim.fn.stdpath("data"),
+          find_command = { "fd", "--type", "f", ".lua$" },
+        })
+      end,
+      desc = "Find Plugin files",
+    },
+  },
   opts = {
+    indent = { enabled = true },
+    scroll = { enabled = true },
+    gitbrowse = {
+      enabled = true,
+      remote_patterns = {
+        { "^(https://).+@(.*):(.*)", "%1%2/%3" },
+        { "^https://%w*@(.*)", "https://%1" },
+        { "^(https?://.*)%.git$", "%1" },
+        { "^git@(.+):(.+)%.git$", "https://%1/%2" },
+        { "^git@(.+):(.+)$", "https://%1/%2" },
+        { "^git@(.+)/(.+)$", "https://%1/%2" },
+        { "^ssh://git@(.*)$", "https://%1" },
+        { "^ssh://([^:/]+)(:%d+)/(.*)$", "https://%1/%3" },
+        { "^ssh://([^/]+)/(.*)$", "https://%1/%2" },
+        { "ssh%.dev%.azure%.com/v3/(.*)/(.*)$", "dev.azure.com/%1/_git/%2" },
+        { "^git@(.*)", "https://%1" },
+        { ":%d+", "" },
+        { "%.git$", "" },
+      },
+    },
     dashboard = {
       enabled = true,
       preset = {
@@ -11,7 +50,7 @@ return {
             icon = " ",
             key = "f",
             desc = "Find File",
-            action = [[:lua require("telescope").extensions.smart_open.smart_open({})]],
+            action = [[:lua require("telescope").extensions.smart_open.smart_open({cwd_only=true})]],
           },
           -- { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
           -- { icon = " ", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },

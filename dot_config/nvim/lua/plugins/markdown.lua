@@ -2,28 +2,36 @@ return {
   {
     "epwalsh/obsidian.nvim",
     version = "*", -- recommended, use latest release instead of latest commit
-    lazy = true,
+    lazy = false,
     event = {
-      "BufReadPre " .. vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
-      "BufNewFile " .. vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
+      -- "BufReadPre " .. vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
+      -- "BufNewFile " .. vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
+      "BufReadPre "
+        .. vim.fn.expand("~")
+        .. "/obsidian-vault/",
+      "BufNewFile " .. vim.fn.expand("~") .. "/obsidian-vault",
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
     keys = {
-      { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
-      { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
-      { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
-      { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Open ObsidianTags" } },
+      -- { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
+      -- { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
+      -- { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
+      -- { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Open ObsidianTags" } },
     },
     opts = {
+      completion = {
+        nvim_cmp = false,
+      },
       ui = {
         enable = false,
       },
+      -- picker = { name = "fzf-lua" },
       workspaces = {
         {
           name = "personal",
-          path = vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
+          path = vim.fn.expand("~") .. "/obsidian-vault",
         },
       },
       notes_subdir = "Main",
