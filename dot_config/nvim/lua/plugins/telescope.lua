@@ -1,8 +1,7 @@
-local themes = require("telescope.themes")
+-- local themes = require("telescope.themes")
 
 return {
-  "nvim-telescope/telescope.nvim",
-  enabled = false,
+  -- "nvim-telescope/telescope.nvim",
   -- dependencies = {
   --   "nvim-lua/plenary.nvim",
   --   -- undo
@@ -61,11 +60,11 @@ return {
   --         "<leader>sg",
   --         function()
   --           require("telescope").extensions.live_grep_args.live_grep_args({
-  --             prompt_title = "Live Grep (Args)",
+  --             prompt_title = "Live Grep",
   --           })
   --         end,
   --         -- mode = { "n", "v" },
-  --         desc = "Live grep (Args)",
+  --         desc = "Live grep",
   --       },
   --       {
   --         "<leader>sG",
@@ -73,11 +72,11 @@ return {
   --           require("telescope").extensions.live_grep_args.live_grep_args({
   --             cwd = require("utils").get_root_dir,
   --             additional_args = { "--follow" },
-  --             prompt_title = "Live Grep (Args Git root)",
+  --             prompt_title = "Live Grep (Git root)",
   --           })
   --         end,
   --         -- mode = { "n", "v" },
-  --         desc = "Live grep (Args [Git root])",
+  --         desc = "Live grep ([Git root])",
   --       },
   --       {
   --         "<leader>sP",
@@ -317,16 +316,16 @@ return {
   --   },
   --
   --   -- git
-  --   -- {
-  --   --   "<leader>gB",
-  --   --   function()
-  --   --     require("telescope.builtin").git_branches({
-  --   --       show_remote_tracking_branches = false,
-  --   --       prompt_title = "Git branches (local)",
-  --   --     })
-  --   --   end,
-  --   --   desc = "Git Branches (Local)",
-  --   -- },
+  --   {
+  --     "<leader>gB",
+  --     function()
+  --       require("telescope.builtin").git_branches({
+  --         show_remote_tracking_branches = false,
+  --         prompt_title = "Git branches (local)",
+  --       })
+  --     end,
+  --     desc = "Git Branches (Local)",
+  --   },
   --   { "<leader>gc", false },
   --   { "<leader>gC", "<cmd>Telescope git_commits<cr>", desc = "All commits" },
   --
