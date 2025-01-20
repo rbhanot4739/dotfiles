@@ -6,6 +6,10 @@ if [[ ! -d $HOME/powerlevel10k ]]; then
   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
 fi
 
+if [[ $(command -v devbox) ]]; then
+eval "$(devbox global shellenv)" 2> /dev/null
+alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+fi
 (( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
 
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
@@ -138,13 +142,13 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 
 # ======== Load tools ========
-[[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
+# [[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
 [[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
 
-if [[ $(command -v devbox) ]]; then
-eval "$(devbox global shellenv)" 2> /dev/null
-alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
-fi
+# if [[ $(command -v devbox) ]]; then
+# eval "$(devbox global shellenv)" 2> /dev/null
+# alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+# fi
 
 if [[ $(command -v pixi) ]]; then
 eval "$(pixi completion --shell zsh)"

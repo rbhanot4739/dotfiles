@@ -12,7 +12,7 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim", -- required
       "sindrets/diffview.nvim", -- optional - Diff integration
-      "nvim-telescope/telescope.nvim", -- optional
+      -- "nvim-telescope/telescope.nvim", -- optional
     },
     cmd = "Neogit",
     opts = {
@@ -46,23 +46,23 @@ return {
   {
     "sindrets/diffview.nvim",
     dependencies = {
-      {
-        "paopaol/telescope-git-diffs.nvim",
-        requires = {
-          "nvim-lua/plenary.nvim",
-          "sindrets/diffview.nvim",
-        },
-        config = function()
-          require("telescope").load_extension("git_diffs")
-        end,
-      },
+      -- {
+      --   "paopaol/telescope-git-diffs.nvim",
+      --   requires = {
+      --     "nvim-lua/plenary.nvim",
+      --     "sindrets/diffview.nvim",
+      --   },
+      --   config = function()
+      --     require("telescope").load_extension("git_diffs")
+      --   end,
+      -- },
     },
     command = "DiffviewOpen",
     keys = {
       { "<leader>gd", "<cmd>DiffviewOpen<CR>", desc = "Diff Index" },
       { "<leader>gD", "<cmd>DiffviewOpen HEAD..master<CR>", desc = "Diff master" },
       { "<leader>gf", "<cmd>DiffviewFileHistory %<cr>", desc = "Open diffs for current File" },
-      { "<leader>gL", "<cmd>Telescope git_diffs  diff_commits<cr>", desc = "Telescope git Log" },
+      -- { "<leader>gL", "<cmd>Telescope git_diffs  diff_commits<cr>", desc = "Telescope git Log" },
       {
         "q",
         "<cmd>DiffviewClose<CR>",
@@ -71,15 +71,15 @@ return {
       },
     },
   },
-  {
-    "linrongbin16/gitlinker.nvim",
-    cmd = "GitLink",
-    opts = {},
-    keys = {
-      { "<leader>gY", "<cmd>GitLink<cr>", mode = { "n", "v" }, desc = "Yank git link" },
-      { "<leader>gy", "<cmd>GitLink!<cr>", mode = { "n", "v" }, desc = "Open git link" },
-    },
-  },
+  -- {
+  --   "linrongbin16/gitlinker.nvim",
+  --   cmd = "GitLink",
+  --   opts = {},
+  --   keys = {
+  --     { "<leader>gY", "<cmd>GitLink<cr>", mode = { "n", "v" }, desc = "Yank git link" },
+  --     { "<leader>gy", "<cmd>GitLink!<cr>", mode = { "n", "v" }, desc = "Open git link" },
+  --   },
+  -- },
   {
     "lewis6991/gitsigns.nvim",
     opts = {

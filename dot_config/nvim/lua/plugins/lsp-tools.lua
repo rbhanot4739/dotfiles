@@ -6,6 +6,7 @@ return {
       -- https://www.lazyvim.org/plugins/lsp#%EF%B8%8F-customizing-lsp-keymaps
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
       keys[#keys + 1] = { "<C-k>", mode = { "i" }, false }
+      keys[#keys + 1] = { "<leader>ss", mode = { "n" }, false }
       --     local util = require("lspconfig.util")
       --     local root_files = {
       --       ".git",
