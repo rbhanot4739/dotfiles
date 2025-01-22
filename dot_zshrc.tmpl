@@ -142,13 +142,12 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 
 # ======== Load tools ========
-# [[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
-[[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
+{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+# add pixi/bin to path on rdev
+[[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
+{{- end }}
 
-# if [[ $(command -v devbox) ]]; then
-# eval "$(devbox global shellenv)" 2> /dev/null
-# alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
-# fi
+[[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
 
 if [[ $(command -v pixi) ]]; then
 eval "$(pixi completion --shell zsh)"
@@ -179,7 +178,10 @@ function y() {
   rm -f -- "$tmp"
 }
 
+{{- if (eq .chezmoi.os "darwin") }}
 [[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
+{{- end }}
+
 # [[ -d $HOME/.volta ]] && export VOLTA_HOME="$HOME/.volta/bin"
 [[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ensure its a rdev machine
-{{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
+{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
 curl -fsSL https://pixi.sh/install.sh | bash
 packages=("tmux" "tealdeer" "nvim" "ripgrep" "fzf" "fd-find" "zoxide" "eza" "git-delta" "bat" "direnv" "jq" "yq" "atuin" "sqlite" "lua" "luajit" "luarocks" "sd" "yazi" "poppler" "p7zip" "lazygit")
 for package in "${packages[@]}"; do
