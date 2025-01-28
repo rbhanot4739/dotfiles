@@ -19,7 +19,7 @@ return {
     merge_arrays(opts.bottom, bottom)
     merge_arrays(opts.right, right)
     opts.options = {
-      right = { size = 50 },
+      right = { size = 62 },
     }
   end,
 }

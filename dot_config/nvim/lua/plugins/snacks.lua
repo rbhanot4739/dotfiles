@@ -1,26 +1,26 @@
 local M = {}
-M.is_grep = nil
-
-local function switch_grep_files(picker, _)
-  -- switch b/w grep and files picker
-  local snacks = require("snacks")
-  local cwd = picker.input.filter.cwd
-
-  picker:close()
-
-  if M.is_grep then
-    -- if we are inside grep picker then switch to files picker and set M.is_grep = false
-    local pattern = picker.input.filter.search or picker.input.filter.pattern
-    snacks.picker.files({ cwd = cwd, pattern = pattern })
-    M.is_grep = false
-    return
-  else
-    -- if we are inside files picker then switch to grep picker and set M.is_grep = true
-    local pattern = picker.input.filter.pattern or picker.input.filter.search
-    snacks.picker.grep({ cwd = cwd, search = pattern })
-    M.is_grep = true
-  end
-end
+-- M.is_grep = nil
+--
+-- local function switch_grep_files(picker, _)
+--   -- switch b/w grep and files picker
+--   local snacks = require("snacks")
+--   local cwd = picker.input.filter.cwd
+--
+--   picker:close()
+--
+--   if M.is_grep then
+--     -- if we are inside grep picker then switch to files picker and set M.is_grep = false
+--     local pattern = picker.input.filter.search or picker.input.filter.pattern
+--     snacks.picker.files({ cwd = cwd, pattern = pattern })
+--     M.is_grep = false
+--     return
+--   else
+--     -- if we are inside files picker then switch to grep picker and set M.is_grep = true
+--     local pattern = picker.input.filter.pattern or picker.input.filter.search
+--     snacks.picker.grep({ cwd = cwd, search = pattern })
+--     M.is_grep = true
+--   end
+-- end
 
 return {
   "folke/snacks.nvim",
@@ -28,10 +28,19 @@ return {
   lazy = false,
   keys = {
     {
+      "?",
+      function()
+        Snacks.picker.lines()
+        -- Snacks.picker.search_history({ layout = { preset = "dropdown", preview = false } })
+      end,
+      desc = "Fuzzy find files",
+    },
+    {
       "<leader>/",
       function()
         Snacks.picker.search_history({ layout = { preset = "dropdown", preview = false } })
       end,
+      desc = "Fuzzy find files",
     },
     {
       "<leader>?",
@@ -92,7 +101,7 @@ return {
           win = {
             input = {
               keys = {
-                ["<a-n>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
+                ["<c-x>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
               },
             },
           },
@@ -193,14 +202,34 @@ return {
         --   },
       },
       sources = {
-        files = {
-          -- live = true,
-          actions = {
-            switch_grep_files = function(picker, _)
-              M.is_grep = false
-              switch_grep_files(picker, _)
-            end,
+        smart = {
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+              },
+            },
           },
+        },
+        recent = {
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+              },
+            },
+          },
+        },
+        buffers = {
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+              },
+            },
+          },
+        },
+        files = {
           win = {
             input = {
               keys = {
@@ -210,12 +239,6 @@ return {
           },
         },
         grep = {
-          actions = {
-            switch_grep_files = function(picker, _)
-              M.is_grep = true
-              switch_grep_files(picker, _)
-            end,
-          },
           win = {
             input = {
               keys = {
@@ -254,7 +277,7 @@ return {
       end,
     },
     dashboard = {
-      enabled = true,
+      enabled = false,
       preset = {
         keys = {
           {

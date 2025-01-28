@@ -3,6 +3,7 @@ return {
   dependencies = { "nvim-treesitter/nvim-treesitter-textobjects" },
   init = function() end,
   opts = {
+    auto_install = true,
     textobjects = {
       swap = {
         enable = true,

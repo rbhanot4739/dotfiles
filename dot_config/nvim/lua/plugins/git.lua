@@ -60,7 +60,7 @@ return {
     command = "DiffviewOpen",
     keys = {
       { "<leader>gd", "<cmd>DiffviewOpen<CR>", desc = "Diff Index" },
-      { "<leader>gD", "<cmd>DiffviewOpen HEAD..master<CR>", desc = "Diff master" },
+      { "<leader>gD", "<cmd>DiffviewOpen master..HEAD<CR>", desc = "Diff master" },
       { "<leader>gf", "<cmd>DiffviewFileHistory %<cr>", desc = "Open diffs for current File" },
       -- { "<leader>gL", "<cmd>Telescope git_diffs  diff_commits<cr>", desc = "Telescope git Log" },
       {

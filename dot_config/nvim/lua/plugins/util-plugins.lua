@@ -26,30 +26,20 @@ return {
       buffer_leader_key = "m", -- Per Buffer Mappings
     },
   },
-  {
-    "ysmb-wtsg/in-and-out.nvim",
-    keys = {
-      {
-        "<M-Right>",
-        function()
-          require("in-and-out").in_and_out()
-        end,
-        mode = { "i" },
-        desc = "In and Out",
-      },
-    },
-  },
   -- Session mgmt plugins
   {
     "rmagatti/auto-session",
     lazy = false,
     enabled = true,
+    keys = {
+      { "<leader>qs", [[<cmd>SessionSearch<cr>]], desc = "SessionSearch" }
+    },
     opts = {
       bypass_save_filetypes = { "alpha", "dashboard", "snacks_dashboard" },
       suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
       use_git_branch = true,
       cwd_change_handling = true,
-      auto_restore = false,
+      auto_restore = true,
       session_lens = {
         theme_conf = {
           border = true,

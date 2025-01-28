@@ -2,14 +2,10 @@ return {
   {
     "epwalsh/obsidian.nvim",
     version = "*", -- recommended, use latest release instead of latest commit
-    lazy = false,
+    lazy = true,
     enabled = not vim.env.SSH_TTY,
     event = {
-      -- "BufReadPre " .. vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
-      -- "BufNewFile " .. vim.fn.expand("~") .. "/Google Drive/My Drive/Obsedian",
-      "BufReadPre "
-        .. vim.fn.expand("~")
-        .. "/obsidian-vault/",
+      "BufReadPre " .. vim.fn.expand("~") .. "/obsidian-vault/",
       "BufNewFile " .. vim.fn.expand("~") .. "/obsidian-vault",
     },
     dependencies = {
