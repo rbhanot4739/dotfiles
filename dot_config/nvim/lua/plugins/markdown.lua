@@ -12,6 +12,28 @@ return {
       "nvim-lua/plenary.nvim",
     },
     keys = {
+      {
+        "<leader>oo",
+        function()
+          local vault = vim.fn.expand("~/obsidian-vault/")
+          Snacks.picker.pick("grep", {
+            cwd = vault,
+            actions = {
+              create_note = function(picker, item)
+                picker:close()
+                vim.cmd("ObsidianNew " .. picker.finder.filter.search)
+              end,
+            },
+            win = {
+              input = {
+                keys = {
+                  ["<c-x>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
+                },
+              },
+            },
+          })
+        end,
+      },
       -- { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
       -- { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
       -- { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },

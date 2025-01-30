@@ -57,6 +57,7 @@ return {
   },
   {
     "theHamsta/nvim-dap-virtual-text",
+    lazy = true,
     opts = {
       -- virt_text_pos = vim.fn.has("nvim-0.10") == 1 and "inline" or "eol",
       virt_text_pos = "eol",

@@ -30,7 +30,7 @@ return {
       {
         "<leader>gl",
         function()
-          require("neogit").action("log", "log_current")()
+          require("neogit").action("log", "log_current", "--color")()
         end,
         desc = "Neogit log",
       },

@@ -76,7 +76,6 @@ return {
       function()
         Snacks.picker.files({ cwd = vim.fn.expand("%:p:h") })
       end,
-      -- [[<cmd>lua require("telescope.builtin").find_files({cwd=vim.fn.expand("%:p:h")})<cr>]],
       desc = "Find adjacent files",
     },
     {
@@ -85,28 +84,6 @@ return {
         Snacks.picker.undo()
       end,
       desc = "Search Undo tree",
-    },
-    {
-      "<leader>oo",
-      function()
-        local vault = vim.fn.expand("~/obsidian-vault/")
-        Snacks.picker.pick("grep", {
-          cwd = vault,
-          actions = {
-            create_note = function(picker, item)
-              picker:close()
-              vim.cmd("ObsidianNew " .. picker.finder.filter.search)
-            end,
-          },
-          win = {
-            input = {
-              keys = {
-                ["<c-x>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
-              },
-            },
-          },
-        })
-      end,
     },
     {
       "<leader>fP",
@@ -119,33 +96,36 @@ return {
       end,
       desc = "Find Plugin files",
     },
-    {
-      "<leader>fg",
-      function()
-        require("snacks").picker.pick("files", {
-          cwd = require("utils").get_root_dir,
-        })
-      end,
-      desc = "Find git files",
-    },
+    -- {
+    --   "<leader>fg",
+    --   function()
+    --     require("snacks").picker.pick("files", {
+    --       cwd = require("utils").get_root_dir,
+    --     })
+    --   end,
+    --   desc = "Find git files",
+    -- },
     -- grep mappings
-    { "<leader>sw", LazyVim.pick("grep_word"), desc = "Visual selection or word (Root Dir)", mode = { "n", "x" } },
+    { "<leader>sw", LazyVim.pick("grep_word"), desc = "Grep Visual selection or word (Root Dir)", mode = { "n", "x" } },
     {
       "<leader>sW",
-      LazyVim.pick("grep_word", { cwd = require("utils").get_root_dir }),
-      desc = "Visual selection or word (git)",
+      function()
+        Snacks.picker.pick("grep_word", { cwd = Snacks.git.get_root() })
+      end,
+      desc = "Grep Visual selection or word (Git root)",
       mode = { "n", "x" },
     },
     {
       "<leader>sG",
       function()
         Snacks.picker.pick("grep", {
-          cwd = require("utils").get_root_dir,
+          -- cwd = require("utils").get_root_dir,
+          cwd = Snacks.git.get_root(),
           prompt_title = "Grep (Args Git root)",
         })
       end,
       -- mode = { "n", "v" },
-      desc = "Live grep (Args [Git root])",
+      desc = "Grep (Git root)",
     },
     {
       "<leader>ss",
@@ -179,6 +159,13 @@ return {
         Snacks.picker.git_branches({ layout = "ivy" })
       end,
       desc = "Git branches",
+    },
+    {
+      "<leader>gS",
+      function()
+        Snacks.picker.git_stash()
+      end,
+      desc = "Git stashes",
     },
     {
       "<leader>gy",

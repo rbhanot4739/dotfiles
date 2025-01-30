@@ -1,4 +1,5 @@
 -- local themes = require("telescope.themes")
+-- o
 
 return {
   -- "nvim-telescope/telescope.nvim",
