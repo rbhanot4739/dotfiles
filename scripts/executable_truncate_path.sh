@@ -27,7 +27,7 @@ IFS='/' read -r -a path_components <<<"$current_path"
 # echo "Path components: ${path_components[*]}"
 
 # Truncate all but the last two components
-for ((i = 0; i < ${#path_components[@]} - 2; i++)); do
+for ((i = 0; i < ${#path_components[@]} - 1; i++)); do
   if [[ "${path_components[$i]}" == .* ]]; then
     path_components[$i]="${path_components[$i]:0:2}"
   else

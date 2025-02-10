@@ -2,7 +2,7 @@
 
 # Todo: Adding following features
 # Session window preview
-# Let create new sessions in opened a directry (Zoxide integration)
+# Let create new sessions in opened a directory (Zoxide integration)
 
 # THIS IS THE WORKING VERSION OF THE SCRIPT
 
@@ -81,7 +81,7 @@ handler_request() {
 }
 
 if [[ $# -gt 1 ]]; then
-  echo "Invalid use of command, Usage: mx [session-name]"
+  echo "Invalid use of command, Usage: \"$0\" [session-name]"
   return
 fi
 

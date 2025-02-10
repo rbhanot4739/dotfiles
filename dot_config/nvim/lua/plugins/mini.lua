@@ -1,18 +1,18 @@
 return {
   {
     "echasnovski/mini.operators",
-    version = false,
     opts = {
       -- Exchange text regions
       exchange = {
-        prefix = "gX",
+        -- a pretty neat trick to exchange two args is `gxina` and then press `.`
+        prefix = "gx",
 
         -- Whether to reindent new text to match previous indent
         reindent_linewise = true,
       },
       -- Replace text with register
       replace = {
-        prefix = "gp", -- p as in put/paste
+        prefix = "gr",
 
         -- Whether to reindent new text to match previous indent
         reindent_linewise = true,
@@ -26,6 +26,7 @@ return {
         func = nil,
       },
     },
+    version = false,
   },
   {
     "echasnovski/mini.files",
@@ -77,15 +78,19 @@ return {
     },
   },
   {
+    -- left brackets [{( include the space around the brackets while the right don't
+    -- [ -( hello )-] # consider this string
+    -- ;d) -> [- hello -]  -- similarly ;r)< changes to [-< hello >-]
+    -- ;d( -> [-hello-])  -- similarly ;r(< changes to [-<hello>-]
     "echasnovski/mini.surround",
     opts = {
       mappings = {
         add = ";;",
         delete = ";d",
+        replace = ";r",
         find = ";>",
         find_left = ";<",
         highlight = ";h",
-        replace = ";r",
         update_n_lines = ";n",
       },
     },

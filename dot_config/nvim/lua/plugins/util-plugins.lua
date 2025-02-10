@@ -32,7 +32,7 @@ return {
     lazy = false,
     enabled = true,
     keys = {
-      { "<leader>qs", [[<cmd>SessionSearch<cr>]], desc = "SessionSearch" }
+      { "<leader>qs", [[<cmd>SessionSearch<cr>]], desc = "SessionSearch" },
     },
     opts = {
       bypass_save_filetypes = { "alpha", "dashboard", "snacks_dashboard" },

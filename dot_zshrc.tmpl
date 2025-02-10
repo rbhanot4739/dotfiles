@@ -114,7 +114,10 @@ zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -T -L=3 --color=always $realpath'
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
+zstyle ':fzf-tab:complete:z:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
+zstyle ':fzf-tab:complete:ls:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
+zstyle ':fzf-tab:complete:eza:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
 zstyle ':fzf-tab:*' switch-group '<' '>'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
@@ -142,12 +145,13 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 
 # ======== Load tools ========
-{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
-# add pixi/bin to path on rdev
-[[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
-{{- end }}
-
+# [[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
 [[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
+
+# if [[ $(command -v devbox) ]]; then
+# eval "$(devbox global shellenv)" 2> /dev/null
+# alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+# fi
 
 if [[ $(command -v pixi) ]]; then
 eval "$(pixi completion --shell zsh)"
@@ -178,11 +182,7 @@ function y() {
   rm -f -- "$tmp"
 }
 
-{{- if (eq .chezmoi.os "darwin") }}
 [[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
-{{- end }}
-
-# [[ -d $HOME/.volta ]] && export VOLTA_HOME="$HOME/.volta/bin"
 [[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
 
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -202,3 +202,6 @@ ABBR_LOG_AVAILABLE_ABBREVIATION=1
 ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
 # abbr file
 # ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"
+# EZA_CONFIG_DIR="$HOME/.config/eza"
+# export VOLTA_HOME="$HOME/.volta"
+# export PATH="$VOLTA_HOME/bin:$PATH"

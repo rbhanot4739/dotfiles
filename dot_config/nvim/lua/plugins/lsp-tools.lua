@@ -7,6 +7,15 @@ return {
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
       keys[#keys + 1] = { "<C-k>", mode = { "i" }, false }
       keys[#keys + 1] = { "<leader>ss", mode = { "n" }, false }
+      keys[#keys + 1] = { "gr", mode = { "n" }, false }
+      keys[#keys + 1] = {
+        "<leader>gr",
+        function()
+          Snacks.picker.lsp_references()
+        end,
+        nowait = true,
+        desc = "References",
+      }
       --     local util = require("lspconfig.util")
       --     local root_files = {
       --       ".git",

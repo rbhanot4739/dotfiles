@@ -47,13 +47,12 @@ return {
       table.insert(opts.sources, {
         name = "dictionary",
         keyword_length = 2,
+        priority = 100,
+        group_index = 3,
       })
       -- insert copilot completions after lsp
-      -- table.remove(opts.sources, 1)
-      -- table.insert(opts.sources, { name = "copilot",
-      --   group_index = 2,
-      --   priority = 100,
-      -- })
+      table.remove(opts.sources, 1)
+      table.insert(opts.sources, { name = "copilot", group_index = 2, priority = 100 })
 
       -- --------------------------------------cmdline setup start--------------------------------------
       -- `/` cmdline setup.

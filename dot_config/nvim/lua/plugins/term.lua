@@ -35,7 +35,7 @@ end
 return {
   "akinsho/toggleterm.nvim",
   version = "*",
-  enabled = true,
+  enabled = false,
   opts = {
     winbar = {
       enabled = true,
@@ -49,6 +49,11 @@ return {
   },
   keys = {
     { "", "<cmd>lua require('toggleterm').toggle()<CR>", { desc = "Toggle terminal", noremap = true, silent = true } },
+    {
+      "<C-/>",
+      "<cmd>lua require('toggleterm').toggle()<CR>",
+      { desc = "Toggle terminal", noremap = true, silent = true },
+    },
     {
       "<M-/>",
       mode = { "n", "t" },

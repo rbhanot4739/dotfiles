@@ -17,6 +17,16 @@ return {
     cmd = "Neogit",
     opts = {
       kind = "split",
+      initial_branch_name = "rbhanot/",
+      log_view = {
+        kind = "split",
+      },
+      mappings = {
+        status = {
+          ["up"] = "PeekUp",
+          ["down"] = "PeekDown",
+        },
+      },
     },
     keys = {
       { "<leader>gg", "<cmd>Neogit<cr>", desc = "Neogit" },
@@ -30,7 +40,7 @@ return {
       {
         "<leader>gl",
         function()
-          require("neogit").action("log", "log_current", "--color")()
+          require("neogit").action("log", "log_current")()
         end,
         desc = "Neogit log",
       },
@@ -45,18 +55,6 @@ return {
   },
   {
     "sindrets/diffview.nvim",
-    dependencies = {
-      -- {
-      --   "paopaol/telescope-git-diffs.nvim",
-      --   requires = {
-      --     "nvim-lua/plenary.nvim",
-      --     "sindrets/diffview.nvim",
-      --   },
-      --   config = function()
-      --     require("telescope").load_extension("git_diffs")
-      --   end,
-      -- },
-    },
     command = "DiffviewOpen",
     keys = {
       { "<leader>gd", "<cmd>DiffviewOpen<CR>", desc = "Diff Index" },
@@ -71,15 +69,6 @@ return {
       },
     },
   },
-  -- {
-  --   "linrongbin16/gitlinker.nvim",
-  --   cmd = "GitLink",
-  --   opts = {},
-  --   keys = {
-  --     { "<leader>gY", "<cmd>GitLink<cr>", mode = { "n", "v" }, desc = "Yank git link" },
-  --     { "<leader>gy", "<cmd>GitLink!<cr>", mode = { "n", "v" }, desc = "Open git link" },
-  --   },
-  -- },
   {
     "lewis6991/gitsigns.nvim",
     opts = {

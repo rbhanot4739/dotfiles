@@ -12,8 +12,13 @@ local find_all_cmd="fd --follow . $xcludes "
 local find_files_cmd="$find_all_cmd --type file "
 local find_dirs_cmd="$find_all_cmd --type directory "
 
-local fzf_colors="--color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 --color=selected-bg:#45475a"
-export FZF_DEFAULT_OPTS=" --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle' $fzf_colors" # Starts fzf in lower half of the screen taking 40% height
+# local catpuccino_colors="--color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 --color=selected-bg:#45475a"
+# local gruvbox_dark_colors="--color=bg+:#282828,bg:#282828,spinner:#fabd2f,hl:#fb4934 --color=fg:#ebdbb2,header:#fb4934,info:#b8bb26,pointer:#fabd2f --color=marker:#83a598,fg+:#ebdbb2,prompt:#b8bb26,hl+:#fb4934 --color=selected-bg:#3c3836"
+# local fzf_colors=$gruvbox_colors
+#
+# local fzf_colors=$catpuccino_colors
+export FZF_DEFAULT_OPTS=" --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'" # Starts fzf in lower half of the screen taking 40% height
+# export FZF_DEFAULT_OPTS=" --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle' $fzf_colors" # Starts fzf in lower half of the screen taking 40% height
 
 # if [[ $TMUX ]]; then
 #   export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --tmux bottom,50%"
@@ -149,3 +154,4 @@ gbf() {
 gbfa() {
   git checkout $(git branch --all | fzf)
 }
+# source $HOME/fzf-themes/tokyonight_moon.sh

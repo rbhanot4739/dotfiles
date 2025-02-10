@@ -30,3 +30,5 @@ if vim.env.SSH_TTY then
     },
   }
 end
+vim.o.foldlevelstart = 5
+-- vim.o.foldlevelstart = 4

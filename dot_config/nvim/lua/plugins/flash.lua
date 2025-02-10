@@ -1,35 +1,46 @@
 return {
   "folke/flash.nvim",
   opts = {
-    jump = { autojump = true }, -- automatically jump when there is only one match
+    remote_op = {
+      restore = true,
+      motion = nil,
+    },
+    jump = {
+      autojump = true,
+    }, -- automatically jump when there is only one match
     modes = {
       char = {
         keys = { "f", "F", "t", "T" },
         -- add labels to fF and tT commands
         jump_labels = true,
-      },
-      search = {
-        enabled = false,
+        multi_line = false,
+        jump = {
+          register = false,
+          -- when using jump labels, set to 'true' to automatically jump
+          -- or execute a motion when there is only one match
+          autojump = true,
+        },
       },
     },
   },
   keys = {
     {
-      "r",
+      "R",
       mode = "o",
       function()
         require("flash").remote()
       end,
       desc = "Remote Flash",
     },
+
     {
-      "R",
+      "r",
       mode = { "o", "x" },
       function()
         require("flash").treesitter_search({
-          remote_op = {
-            restore = true,
-            motion = true,
+          remote_op = { restore = true, motion = true },
+          highlight = {
+            backdrop = true,
           },
         })
       end,

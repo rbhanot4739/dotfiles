@@ -16,20 +16,20 @@ return {
 
     -- Add a cursor and jump to the next word under cursor.
     vim.keymap.set({ "n", "v" }, "<M-n>", function()
-      mc.addCursor("*")
+      mc.matchAddCursor(1)
     end, { desc = "Add cursor to next match" })
 
     -- Jump to the next word under cursor but do not add a cursor
-    vim.keymap.set({ "n", "v" }, "<M-p>", function()
-      mc.skipCursor("*")
+    vim.keymap.set({ "n", "v" }, "<M-N>", function()
+      mc.matchSkipCursor(1)
     end, { desc = "Do not add cursor to next match" })
 
-    -- Rotate the main cursor.
-    vim.keymap.set({ "n", "v" }, "<left>", mc.nextCursor, { desc = "Move to previous cursor" })
-    vim.keymap.set({ "n", "v" }, "<right>", mc.prevCursor, { desc = "Move to next cursor" })
-
-    -- Delete the main cursor.
-    vim.keymap.set({ "n", "v" }, "<leader>x", mc.deleteCursor)
+    vim.keymap.set({ "n", "v" }, "<M-p>", function()
+      mc.matchAddCursor(-1)
+    end)
+    vim.keymap.set({ "n", "v" }, "<M-P>", function()
+      mc.matchSkipCursor(-1)
+    end)
 
     vim.keymap.set("n", "<M-x>", function()
       if not mc.cursorsEnabled() then
@@ -42,22 +42,11 @@ return {
     end, { desc = "Close cursors" })
 
     -- Align cursor columns.
-    vim.keymap.set("n", "<leader>a", mc.alignCursors)
+    vim.keymap.set("n", "<A-\\>", mc.alignCursors)
 
     -- Append/insert for each line of visual selections.
     vim.keymap.set("v", "I", mc.insertVisual)
     vim.keymap.set("v", "A", mc.appendVisual)
-
-    -- match new cursors within visual selections by regex.
-    vim.keymap.set("v", "M", mc.matchCursors)
-
-    -- Rotate visual selection contents.
-    vim.keymap.set("v", "<leader>t", function()
-      mc.transposeCursors(1)
-    end)
-    vim.keymap.set("v", "<leader>T", function()
-      mc.transposeCursors(-1)
-    end)
 
     -- Customize how cursors look.
     vim.api.nvim_set_hl(0, "MultiCursorCursor", { link = "Cursor" })

@@ -1,39 +1,79 @@
 local M = {}
--- M.is_grep = nil
---
--- local function switch_grep_files(picker, _)
---   -- switch b/w grep and files picker
---   local snacks = require("snacks")
---   local cwd = picker.input.filter.cwd
---
---   picker:close()
---
---   if M.is_grep then
---     -- if we are inside grep picker then switch to files picker and set M.is_grep = false
---     local pattern = picker.input.filter.search or picker.input.filter.pattern
---     snacks.picker.files({ cwd = cwd, pattern = pattern })
---     M.is_grep = false
---     return
---   else
---     -- if we are inside files picker then switch to grep picker and set M.is_grep = true
---     local pattern = picker.input.filter.pattern or picker.input.filter.search
---     snacks.picker.grep({ cwd = cwd, search = pattern })
---     M.is_grep = true
---   end
--- end
+local ft_repls = {}
 
+M.switch_to_grep = nil
+M.grep_alt_picker = nil
+---@param picker snacks.Picker
+local function switch_to_grep(picker, _)
+  local picker_type = picker.opts.source
+  local allowed_pickers = { "files", "buffers", "recent", "smart", "grep" }
+  if not vim.tbl_contains(allowed_pickers, picker_type) then
+    Snacks.notify.warn("Switching to grep is not supported for `" .. picker_type .. "`", { title = "Snacks Picker" })
+    return
+  end
+
+  if picker_type == "grep" then
+    M.switch_to_grep = false
+    M.grep_alt_picker = M.grep_alt_picker or "files"
+  else
+    M.switch_to_grep = true
+    if picker_type == "recent_files" then
+      picker_type = "recent"
+    end
+    M.grep_alt_picker = picker_type
+  end
+  local snacks = require("snacks")
+  local cwd = picker.input.filter.cwd
+
+  picker:close()
+
+  if M.switch_to_grep then
+    local pattern = picker.input.filter.pattern or ""
+    ---@diagnostic disable-next-line: missing-fields
+    snacks.picker.grep({ cwd = cwd, search = pattern })
+  else
+    local pattern = picker.input.filter.search or ""
+    ---@diagnostic disable-next-line: missing-fields
+    snacks.picker.pick(M.grep_alt_picker, { cwd = cwd, pattern = pattern })
+  end
+end
+--
+--
+
+local function cd_up(picker, _)
+  local snacks = require("snacks")
+  local cwd = picker.input.filter.cwd
+  local picker_type = picker.opts.source
+  picker:close()
+  if picker_type == "grep" then
+    local pattern = picker.input.filter.search or ""
+    snacks.picker.grep({ cwd = vim.fs.dirname(cwd), search = pattern })
+  else
+    local pattern = picker.input.filter.pattern or ""
+    snacks.picker.files({ cwd = vim.fs.dirname(cwd), search = pattern })
+  end
+end
+
+-- Todo: Snacks picker for Octo/Obsidian/Toggleterm
 return {
   "folke/snacks.nvim",
   priority = 1000,
   lazy = false,
   keys = {
+    { "<leader>e", false },
+    {
+      "<leader>z",
+      function()
+        Snacks.picker.zoxide()
+      end,
+      desc = "Open zoxide",
+    },
     {
       "?",
       function()
         Snacks.picker.lines()
-        -- Snacks.picker.search_history({ layout = { preset = "dropdown", preview = false } })
       end,
-      desc = "Fuzzy find files",
+      desc = "Fuzzy find current word",
     },
     {
       "<leader>/",
@@ -55,7 +95,7 @@ return {
       desc = "Paste yank ring",
     },
     {
-      "zf",
+      "<leader>=",
       function()
         Snacks.picker.spelling({
           layout = {
@@ -79,11 +119,11 @@ return {
       desc = "Find adjacent files",
     },
     {
-      "<leader>su",
+      "<leader>sa",
       function()
-        Snacks.picker.undo()
+        Snacks.picker.grep({ cwd = vim.fn.expand("%:p:h") })
       end,
-      desc = "Search Undo tree",
+      desc = "Find adjacent files",
     },
     {
       "<leader>fP",
@@ -96,15 +136,6 @@ return {
       end,
       desc = "Find Plugin files",
     },
-    -- {
-    --   "<leader>fg",
-    --   function()
-    --     require("snacks").picker.pick("files", {
-    --       cwd = require("utils").get_root_dir,
-    --     })
-    --   end,
-    --   desc = "Find git files",
-    -- },
     -- grep mappings
     { "<leader>sw", LazyVim.pick("grep_word"), desc = "Grep Visual selection or word (Root Dir)", mode = { "n", "x" } },
     {
@@ -161,13 +192,6 @@ return {
       desc = "Git branches",
     },
     {
-      "<leader>gS",
-      function()
-        Snacks.picker.git_stash()
-      end,
-      desc = "Git stashes",
-    },
-    {
       "<leader>gy",
       mode = { "n", "x" },
       function()
@@ -175,10 +199,56 @@ return {
       end,
       desc = "Git Browse",
     },
+    {
+      "<M-/>",
+      mode = { "n", "t", "i" },
+      function()
+        local ft = vim.bo.filetype
+        local ft_cmds = { python = "ipython", lua = "lua" }
+        if ft == "snacks_terminal" then
+          vim.cmd("close")
+        else
+          Snacks.terminal.toggle(ft_cmds[ft], { interactive = false })
+        end
+      end,
+      desc = "Toggle terminal",
+    },
+    {
+      "<c-\\>",
+      mode = { "n", "t", "i" },
+      function()
+        Snacks.terminal.toggle(nil, { win = { style = "split" } })
+      end,
+      ft = "snacks_terminal",
+      desc = "Toggle terminal",
+    },
   },
   opts = {
+    -- matcher = { frecency = true},
     picker = {
+
+      -- layout = {
+      --   preset = "ivy",
+      -- },
       layouts = {
+        ivy = {
+          layout = {
+            box = "vertical",
+            backdrop = true,
+            row = -1,
+            width = 0,
+            height = 0.4,
+            border = "top",
+            title = " {title} {live} {flags}",
+            title_pos = "center",
+            { win = "input", height = 1, border = "bottom" },
+            {
+              box = "horizontal",
+              { win = "list", border = "none" },
+              { win = "preview", title = "{preview}", width = 0.8, border = "left" },
+            },
+          },
+        },
         --   select = {
         --     layout = {
         --       relative = "cursor",
@@ -190,46 +260,80 @@ return {
       },
       sources = {
         smart = {
+          actions = {
+            switch_grep_files = function(picker, _)
+              switch_to_grep(picker, _)
+            end,
+          },
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
               },
             },
           },
         },
         recent = {
+          actions = {
+            switch_grep_files = function(picker, _)
+              switch_to_grep(picker, _)
+            end,
+          },
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
               },
             },
           },
         },
         buffers = {
+          actions = {
+            switch_grep_files = function(picker, _)
+              switch_to_grep(picker, _)
+            end,
+          },
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
               },
             },
           },
         },
         files = {
+          -- live = true,
+          actions = {
+            switch_grep_files = function(picker, _)
+              switch_to_grep(picker, _)
+            end,
+            cd_up = function(picker, _)
+              cd_up(picker, _)
+            end,
+          },
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
         },
         grep = {
+          actions = {
+            switch_grep_files = function(picker, _)
+              switch_to_grep(picker, _)
+            end,
+            cd_up = function(picker, _)
+              cd_up(picker, _)
+            end,
+          },
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "v" } },
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -354,6 +458,12 @@ return {
           },
         },
       },
+    },
+    terminal = {
+      win = {
+        border = "rounded",
+      },
+      start_insert = true,
     },
   },
 }
