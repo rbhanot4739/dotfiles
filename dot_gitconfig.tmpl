@@ -1,10 +1,6 @@
 [user]
     name = Rohit Bhanot
-    {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
-      email = rbhanot@linkedin.com
-    {{- else }}
       email = rbhanot4739@gmail.com
-    {{- end }}
 [alias]
     a = add
     # Checkout shortcuts
@@ -58,10 +54,7 @@
 [core]
     excludesfile = ~/.global_gitignore
     editor = nvim
-    {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
-    {{- else }}
     sshCommand = "ssh -i ~/.ssh/personal_gh_key"
-    {{- end }}
 
 [pager]
     diff = delta
@@ -73,13 +66,13 @@
     diffFilter = delta --color-only
 
 [include]
-  path = ~/delta-themes
+  path = ~/delta-themes/tokyonight_moon.gitconfig
 
 [delta]
-    ; features = woolly-mammoth
-    plus-style = "syntax #012800"
-    minus-style = "syntax #340001"
-    syntax-theme = Monokai Extended
+    ; features = tokyonight_moon
+    ; plus-style = "syntax #012800"
+    ; minus-style = "syntax #340001"
+    ; syntax-theme = Monokai Extended
     navigate = true    # use n and N to move between diff sections
     line-numbers = true
     ; side-by-side = true
