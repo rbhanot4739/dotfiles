@@ -1,76 +1,40 @@
 # shellcheck disable=2034 # ignored as this file only contains var definitions
-col_bg=colour229
-col_bg0_h=colour230
-col_bg0=colour229
-col_bg1=colour223
-col_bg2=colour250
-col_bg3=colour248
-col_bg4=colour246
-col_gray0=colour246
-col_gray1=colour245
-col_gray2=colour244
-col_bg0_s=colour228
-col_fg=colour223
-col_fg4=colour243
-col_fg3=colour241
-col_fg2=colour239
-col_fg1=colour237
-col_fg0=colour235
-
-col_red=colour124
-col_red2=colour88
-col_green=colour106
-col_green2=colour100
-col_yellow=colour172
-col_yellow2=colour136
-col_blue=colour66
-col_blue2=colour24
-col_purple=colour132
-col_purple2=colour96
-col_aqua=colour72
-col_aqua2=colour66
-col_orange=colour166
-col_orange2=colour130
-
 # Dark colors
-col_bg=colour235
-col_bg0_h=colour234
-col_bg0=colour235
-col_bg1=colour237
-col_bg2=colour239
-col_bg3=colour241
-col_bg4=colour243
-col_gray0=colour246
-col_gray1=colour245
-col_gray2=colour245
-col_bg0_s=colour236
-col_fg=colour223
-col_fg4=colour246
-col_fg3=colour248
-col_fg2=colour250
-col_fg1=colour223
-col_fg0=colour229
+# col_bg=colour235
+# col_bg1=colour237
+# col_bg2=colour239
+# col_bg3=colour241
+# col_fg4=colour246
+# col_fg3=colour248
+# col_fg2=colour250
+# col_fg1=colour223
+# col_red2=colour167
+# col_yellow=colour172
+# col_yellow2=colour214
+# col_blue2=colour109
 
-col_red=colour124
-col_red2=colour167
-col_green=colour106
-col_green2=colour142
-col_yellow=colour172
-col_yellow2=colour214
-col_blue=colour66
-col_blue2=colour109
-col_purple=colour132
-col_purple2=colour175
-col_aqua=colour72
-col_aqua2=colour108
-col_orange=colour166
-col_orange2=colour208
+col_bg=#262626      # colour235
+col_bg1=#3a3a3a     # colour237
+col_bg2=#4e4e4e     # colour239
+col_bg3=#626262     # colour241
+col_fg4=#b2b2b2     # colour246
+col_fg3=#c6c6c6     # colour248
+col_fg2=#dadada     # colour250
+col_fg1=#ffd7af     # colour223
+col_red2=#d7005f    # colour167
+col_yellow=#d78700  # colour172
+col_yellow=#d78700  # colour172
+col_yellow2=#ffaf00 # colour214
+col_blue2=#5fafd7   # colour109
+col_orange=#e78a4e
+col_green=#a9b665
 
 tmux_append_seto() {
+
   local _option _value _result
   _option="$1"
   _value="$2"
-  TMUX_CMDS+=("set-option" "-gq" \""${_option}\"" \""${_value}\"" ";")
+  TMUX_CMDS+=("set-option" "-gq" \""${_option}\"" \""${_value}\"" "\n")
 }
 
 # append preconfigured tmux set-window-option to global array
@@ -78,7 +42,7 @@ tmux_append_setwo() {
   local _option _value _result
   _option="$1"
   _value="$2"
-  TMUX_CMDS+=("set-window-option" "-gq" \""${_option}\"" \""${_value}\"" ";")
+  TMUX_CMDS+=("set-window-option" "-gq" \""${_option}\"" \""${_value}\"" "\n")
 }
 
 
@@ -137,19 +101,19 @@ theme_set() {
   tmux_append_seto "status-left-length" "100"
   tmux_append_seto "status-right-style" none
   tmux_append_seto "status-right-length" "100"
-  tmux_append_setwo "window-status-separator" "''"
+  tmux_append_setwo "window-status-separator" ""
 
   tmux_append_seto "status-left" "#[bg=${col_fg2},fg=${col_bg1}] ${_left_status_a} #[bg=${col_bg2},fg=${col_fg2},nobold,noitalics,nounderscore]"
 
   # right status
   local _status_right_bg=${col_bg2}
   if [[ "$_statusbar_alpha" == "true" ]]; then _status_right_bg="default"; fi
-  tmux_append_seto "status-right" "#[bg=${_status_right_bg},fg=${col_fg4},nobold,nounderscore,noitalics]#[bg=${col_fg4},fg=${col_bg1}] ${_right_status_x}  ${_right_status_y} #[bg=${col_fg4},fg=${col_fg2},nobold,noitalics,nounderscore]#[bg=${col_fg2},fg=${col_bg1}] ${_right_status_z}"
+  tmux_append_seto "status-right" "#[bg=${_status_right_bg},fg=${col_fg4},nobold,nounderscore,noitalics]#[bg=${col_fg4},fg=${col_bg1}] ${_right_status_x}  ${_right_status_y} #[bg=${col_fg4},fg=${col_fg2},nobold,noitalics,nounderscore]#[bg=${col_fg2},fg=${col_bg1},bold] ${_right_status_z}"
 
   # current window
   local _current_window_status_format_bg=${col_bg2}
   if [[ "$_statusbar_alpha" == "true" ]]; then _current_window_status_format_bg="default"; fi
-  tmux_append_setwo "window-status-current-format" "#[bg=${col_yellow},fg=${col_bg2},nobold,noitalics,nounderscore]#[bg=${col_yellow},fg=${col_fg1}] #I #[bg=${col_yellow},fg=${col_fg1},bold] #W#{?window_zoomed_flag,*Z,} #{?window_end_flag,#[bg=${_current_window_status_format_bg}],#[bg=${col_bg2}]}#[fg=${col_yellow},nobold,noitalics,nounderscore]"
+  tmux_append_setwo "window-status-current-format" "#[bg=${col_yellow},fg=${col_bg2},nobold,noitalics,nounderscore]#[bg=${col_yellow},fg=${col_bg1}] #I #[bg=${col_yellow},fg=${col_bg1},bold] #W#{?window_zoomed_flag,*Z,} #{?window_end_flag,#[bg=${_current_window_status_format_bg}],#[bg=${col_bg2}]}#[fg=${col_yellow},nobold,noitalics,nounderscore]"
 
   # default window
   local _default_window_status_format_bg=${col_bg2}
@@ -161,11 +125,12 @@ declare -a TMUX_CMDS
 # set -ogq @truncated_path "#(bash $HOME/scripts/truncate_path.sh #{pane_current_path})"
 TMUX_CMDS=()
 LEFT_STATUS_A='#h'
-RIGHT_STATUS_X='%Y-%m-%d'
+RIGHT_STATUS_X='#{?pane_synchronized,SYNC,}'
 RIGHT_STATUS_Y="#{E:@truncated_path}"
 # RIGHT_STATUS_Y="#I"
 RIGHT_STATUS_Z='#S'
-ALPHA_STATUS='false'
+ALPHA_STATUS='true'
 theme_args=($LEFT_STATUS_A $RIGHT_STATUS_X $RIGHT_STATUS_Y $RIGHT_STATUS_Z $ALPHA_STATUS)
 theme_set "${theme_args[@]}"
+echo "# vim:set ft=tmux:\n"
 echo "${TMUX_CMDS[@]}"

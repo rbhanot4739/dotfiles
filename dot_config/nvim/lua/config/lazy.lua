@@ -25,7 +25,7 @@ require("lazy").setup({
       opts = {
         -- colorscheme = "gruvbox-material",
         -- colorscheme = "catppuccin",
-        -- colorscheme = "tokyonight-day",
+        -- colorscheme = "tokyonight",
         icons = {
           kinds = config_utils.icons.kinds,
         },

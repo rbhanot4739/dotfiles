@@ -194,7 +194,7 @@ function y() {
 export XDG_CONFIG_HOME="$HOME/.config"
 if [[ $(command -v nvim) ]]; then
  export EDITOR=nvim
- export MANPAGER='nvim +Man! -c "set laststatus=0"'
+ export MANPAGER='nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
 fi
 export BAT_THEME="ansi"
 
