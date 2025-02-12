@@ -50,7 +50,7 @@ if not vim.g.vscode then
   map("n", "<leader>lx", "<cmd>LazyExtras<cr>")
   map("n", "<BS>", "<C-6>", { remap = true })
   -- remap gx to gX for opening with system app. `gx` is used by mini.operator for exchange
-  map("n", "gX", "gx", { desc = "open with system app", noremap = true })
+  -- map("n", "gX", "gx", { desc = "open with system app", noremap = true })
   -- map jk to go to normal mode in terminal
   map({ "t" }, "jk", [[<C-\><C-n>]], { desc = "open with system app" })
 end

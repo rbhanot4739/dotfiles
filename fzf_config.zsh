@@ -15,10 +15,9 @@ local find_dirs_cmd="$find_all_cmd --type directory "
 # local catpuccino_colors="--color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc --color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 --color=selected-bg:#45475a"
 # local gruvbox_dark_colors="--color=bg+:#282828,bg:#282828,spinner:#fabd2f,hl:#fb4934 --color=fg:#ebdbb2,header:#fb4934,info:#b8bb26,pointer:#fabd2f --color=marker:#83a598,fg+:#ebdbb2,prompt:#b8bb26,hl+:#fb4934 --color=selected-bg:#3c3836"
 # local fzf_colors=$gruvbox_colors
-#
 # local fzf_colors=$catpuccino_colors
-export FZF_DEFAULT_OPTS=" --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'" # Starts fzf in lower half of the screen taking 40% height
-# export FZF_DEFAULT_OPTS=" --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle' $fzf_colors" # Starts fzf in lower half of the screen taking 40% height
+
+export FZF_DEFAULT_OPTS="--height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'" # Starts fzf in lower half of the screen taking 40% height
 
 # if [[ $TMUX ]]; then
 #   export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --tmux bottom,50%"
@@ -153,5 +152,17 @@ gbf() {
 
 gbfa() {
   git checkout $(git branch --all | fzf)
+}
+
+# custom hostname completion
+__fzf_list_hosts() {
+  # setopt localoptions nonomatch
+  # command cat <(command tail -n +1 ~/.ssh/config.custom 2> /dev/null | command grep -i '^\s*host\(name\)\? ' | awk '{for (i = 2; i <= NF; i++) print $1 " " $i}' | command grep -v '[*?%]') \
+  #   <(command grep -oE '^[[a-z0-9.,:-]+' ~/.ssh/known_hosts 2> /dev/null | tr ',' '\n' | tr -d '[' | awk '{ print $1 " " $1 }') \
+  #   <( command sed 's/#.*//') |
+  #   awk '{for (i = 2; i <= NF; i++) print $i}' | sort -u
+  local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
+  hosts+=($(awk '!/k8s/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
+  echo $hosts | tr ' ' '\n' | sort -u
 }
 # source $HOME/fzf-themes/tokyonight_moon.sh

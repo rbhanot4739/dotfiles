@@ -29,12 +29,13 @@ return {
       format = "{kind_icon}{symbol.name:Normal}",
       hl_group = "lualine_c_normal",
     })
+    local excluded_fts = { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm", "snacks_terminal", "man" }
     opts.options = {
       theme = "auto",
       disabled_filetypes = {
         globalstatus = vim.o.laststatus == 3,
-        statusline = { "neo-tree", "dashboard", "alpha", "ministarter" },
-        winbar = { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm", "snacks_terminal" },
+        statusline = excluded_fts,
+        winbar = excluded_fts,
       },
     }
     opts.winbar = {

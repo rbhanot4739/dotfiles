@@ -20,19 +20,28 @@ fi
 
 
 CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
-
 # Add the custom completion directory to fpath
 fpath=($CUSTOM_COMPLETION_DIR $fpath)
 autoload -Uz compinit
 compinit
 
+# zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f)"$(cat ~/.ssh/config.custom)"}%%[# ]*}//,/ })'
+
+# Define the custom completion function
+_ssh_custom_completion() {
+local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
+hosts+=($(awk '!/k8s/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts | sort -u | tr '\n' ' '))
+  compadd "$@" $hosts
+}
+compdef _ssh_custom_completion ssh
+
 # _vim_completion() {
 #   # Use the _files builtin to generate file completions only, excluding directories
 #   _path_files -W "$PWD" "*(.)"
 # }
-#
-# # Associate the completion function with the vim command
 # compdef _vim_completion vim
+
+
 
 if [[ -f "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -120,10 +129,7 @@ zstyle ':fzf-tab:complete:ls:*' fzf-preview 'eza -T -L=2 --color=always $realpat
 zstyle ':fzf-tab:complete:eza:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
 zstyle ':fzf-tab:*' switch-group '<' '>'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
-# zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
-# custom fzf flags
-# NOTE: fzf-tab does not follow FZF_DEFAULT_OPTS
-zstyle ':fzf-tab:*' fzf-flags --height ~40% --color=fg:1,fg+:2
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
 
 
 # ======== Setup key bindings ========
