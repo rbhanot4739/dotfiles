@@ -10,19 +10,27 @@ end
 
 function scheme_for_appearance(appearance)
 	if appearance:find("Dark") then
-		return "Catppuccin Macchiato"
+		-- return "tokyonight_moon"
+		return "Gruvbox dark, hard (base16)"
+		-- return "Gruvbox Material (Gogh)"
+		-- return "Catppuccin Macchiato"
 	else
-		return "Catppuccin Latte"
+		-- return "tokyonight_day"
+		return "Gruvbox light, hard (base16)"
+		-- return "Catppuccin Latte"
 	end
 end
 
+config.enable_kitty_keyboard = true
 -- config.color_scheme = scheme_for_appearance(get_appearance())
 -- config.color_scheme = "tokyonight_moon"
-config.color_scheme = "nightfox"
 -- config.color_scheme = "catppuccin-mocha"
+config.color_scheme = "Gruvbox dark, hard (base16)"
+-- config.color_scheme = "Gruvbox Material (Gogh)"
 
-config.font = wezterm.font("FiraCode Nerd Font Mono")
-config.font_size = 16
+-- config.font = wezterm.font("FiraCode Nerd Font Mono")
+config.font = wezterm.font("JetBrains Mono")
+config.font_size = 13
 
 -- Tab bar settings
 config.enable_tab_bar = true
@@ -41,11 +49,15 @@ config.keys = {
 	{ key = "RightArrow", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
 	{ key = "LeftArrow", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
 	{ key = "Enter", mods = "ALT", action = wezterm.action.DisableDefaultAssignment },
-	{
-		key = "Enter",
-		mods = "SHIFT|CTRL",
-		action = wezterm.action.ToggleFullScreen,
-	},
+	{ key = "Enter", mods = "SHIFT|CTRL", action = wezterm.action.DisableDefaultAssignment },
+	{ key = "Enter", mods = "SHIFT", action = wezterm.action.DisableDefaultAssignment },
+	{ key = "Enter", mods = "CTRL", action = wezterm.action.DisableDefaultAssignment },
+	-- {
+	-- 	key = "Enter",
+	-- 	mods = "SHIFT|CTRL",
+	-- 	action = wezterm.action.ToggleFullScreen,
+	-- },
+
 	-- Mappings similar to tmux
 	-- Ctrl-Shift-Space to launch Tmux-Thumbs like capture
 	-- Ctrl-Space to enter copy mode

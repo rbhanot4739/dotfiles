@@ -193,11 +193,73 @@ return {
     },
     {
       "<leader>gy",
-      mode = { "n", "x" },
       function()
-        Snacks.gitbrowse.open()
+        local Picker = require("snacks.picker.core.picker")
+        opts = opts or {}
+
+        -- Define the items to be displayed in the picker
+        local items = {
+          { text = "repo" },
+          { text = "file" },
+          { text = "branch" },
+          { text = "commit" },
+          { text = "permalink" },
+        }
+
+        local picker = Picker.new({
+          title = "Select link type",
+          items = items,
+          -- layout = { preview = false, preset = "select" },
+          layout = {
+            preview = false,
+            layout = {
+              backdrop = false,
+              width = 0.3,
+              min_width = 80,
+              height = 0.3,
+              min_height = 3,
+              box = "vertical",
+              border = "rounded",
+              title = "{title}",
+              title_pos = "center",
+              { win = "input", height = 1, border = "bottom" },
+              { win = "list", border = "none" },
+              { win = "preview", title = "{preview}", height = 0.4, border = "top" },
+            },
+          },
+          format = "text",
+          ---@param picker snacks.Picker
+          confirm = function(picker, item)
+            picker:close()
+            Snacks.gitbrowse.open({ what = item.text })
+            return true
+          end,
+          actions = {
+            copy_link = function(picker, item)
+              picker:close()
+              ---@diagnostic disable-next-line: missing-fields
+              Snacks.gitbrowse.open({
+                what = item.text,
+                open = function(url)
+                  vim.fn.setreg("+", url)
+                  Snacks.notify(
+                    string.format("Copied %s url ( %s ) to clipboard", item.text, url),
+                    { title = "Git Browse" }
+                  )
+                end,
+              })
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
+              },
+            },
+          },
+        })
+        picker:show()
       end,
-      desc = "Git Browse",
     },
     {
       "<M-/>",
@@ -365,6 +427,7 @@ return {
       enabled = true,
       config = function(opts, defaults)
         table.insert(opts.remote_patterns, { "^(https://).+@(.*):(.*)", "%1%2/%3" })
+        -- table.insert(opts.remote_patterns, { "^(org-.*):(.*)", "https://%1/%2" })
       end,
     },
     dashboard = {

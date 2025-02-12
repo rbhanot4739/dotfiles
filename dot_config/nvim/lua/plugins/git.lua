@@ -4,7 +4,10 @@ return {
   {
     "pwntester/octo.nvim",
     keys = function()
-      return { { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" } }
+      return { 
+        { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" },
+        { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" },
+      }
     end,
   },
   {

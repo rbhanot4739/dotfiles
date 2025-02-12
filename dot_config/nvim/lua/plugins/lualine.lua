@@ -20,26 +20,36 @@ return {
   event = "VeryLazy",
   opts = function(_, opts)
     local icons = LazyVim.config.icons
+    local trouble = require("trouble")
+    local symbols = trouble.statusline({
+      mode = "symbols",
+      groups = {},
+      title = false,
+      filter = { range = true },
+      format = "{kind_icon}{symbol.name:Normal}",
+      hl_group = "lualine_c_normal",
+    })
     opts.options = {
       theme = "auto",
       disabled_filetypes = {
         globalstatus = vim.o.laststatus == 3,
         statusline = { "neo-tree", "dashboard", "alpha", "ministarter" },
-        winbar = { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm" },
+        winbar = { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm", "snacks_terminal" },
       },
     }
     opts.winbar = {
-      -- lualine_a = {
-      --   {
-      --     "buffers",
-      --     symbols = {
-      --       modified = " ●", -- Text to show when the buffer is modified
-      --       alternate_file = "", -- Text to show to identify the alternate file
-      --       directory = "", -- Text to show when the buffer is a directory
-      --     },
-      --   },
-      -- },
-      lualine_a = {
+      lualine_c = {
+        { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
+        { "filename", file_status = true, path = 0 },
+        { symbols.get },
+      },
+      lualine_x = {
+        {
+          function()
+            return "󱉭  " .. vim.fs.basename(LazyVim.root.cwd())
+          end,
+          color = { fg = Snacks.util.color("Special") },
+        },
         {
           get_path,
           -- cond = function()
@@ -55,23 +65,21 @@ return {
         end,
       },
     }
-    -- remove the file icon and pretty_path sections
-    -- Note: when we remove 3rd section then 4th section becomes next 3rd so we again need to remmove the same again
-    table.remove(opts.sections.lualine_c, 3)
-    table.remove(opts.sections.lualine_c, 3)
-    local trouble = require("trouble")
-    local symbols = trouble.statusline({
-      mode = "symbols",
-      groups = {},
-      title = false,
-      filter = { range = true },
-      format = "{kind_icon}{symbol.name:Normal}",
-      hl_group = "lualine_c_normal",
-    })
     opts.sections.lualine_c = {
-      { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
-      { "filename", file_status = true, path = 0 },
-      { symbols.get },
+      {
+        function()
+          -- get value of VIRTUAL_ENV variable if it exists
+          local venv = vim.env.VIRTUAL_ENV
+          if venv then
+            -- return only the basename of the path
+            venv = vim.fn.fnamemodify(venv, ":t")
+            return string.format("  %s ", venv)
+          else
+            return ""
+          end
+        end,
+        color = { fg = Snacks.util.color("Special") },
+      },
     }
     -- table.remove(opts.sections.lualine_y, 1)
     -- table.remove(opts.sections.lualine_y, 1)
@@ -87,20 +95,14 @@ return {
       },
     }
     opts.sections.lualine_z = {
-      function()
-        -- get value of VIRTUAL_ENV variable if it exists
-        local venv = vim.env.VIRTUAL_ENV
-        if venv then
-          -- return only the basename of the path
-          venv = vim.fn.fnamemodify(venv, ":t")
-          return string.format("  %s ", venv)
-        else
-          return ""
-        end
-      end,
+      {
+        "filetype",
+        colored = false, -- Displays filetype icon in color if set to true
+        icon_only = false, -- Display only an icon for filetype
+        icon = { align = "right" }, -- Display filetype icon on the right hand side
+      },
     }
 
-    opts.extensions = { "neo-tree", "lazy" }
     return opts
   end,
 }
