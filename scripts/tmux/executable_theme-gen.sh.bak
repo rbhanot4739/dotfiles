@@ -50,9 +50,10 @@ tmux_append_setwo() {
 theme_set() {
   local _left_status_a _right_status_x _right_status_y _right_status_z _statusbar_alpha
   _left_status_a=$1
-  _right_status_y=$2
-  _right_status_z=$3
-  _statusbar_alpha=$4
+  _right_status_x=$2
+  _right_status_y=$3
+  _right_status_z=$4
+  _statusbar_alpha=$5
 
   tmux_append_seto "status" "on"
 
@@ -101,34 +102,34 @@ theme_set() {
   tmux_append_seto "status-right-style" none
   tmux_append_seto "status-right-length" "100"
   tmux_append_setwo "window-status-separator" ""
-  
-# left status
-tmux_append_seto "status-left" "#[bg=${col_fg4},fg=${col_bg1}] ${_left_status_a} #[bg=${col_bg},fg=${col_fg4},nobold,noitalics,nounderscore] #{?client_prefix,#[bg=${col_green}]#[fg=${col_bg}],}#{?client_prefix,#[bg=${col_green}]#[fg=${col_bg}]#[bold] PREFIX,}#[bg=default]#{?client_prefix,#[fg=${col_green}],}"
 
+  tmux_append_seto "status-left" "#[bg=${col_fg4},fg=${col_bg1}] ${_left_status_a} #[bg=${col_bg2},fg=${col_fg4},nobold,noitalics,nounderscore]"
 
   # right status
   local _status_right_bg=${col_bg2}
   if [[ "$_statusbar_alpha" == "true" ]]; then _status_right_bg="default"; fi
 tmux_append_seto "status-right" "#[bg=${_status_right_bg},fg=${col_fg4},nobold,nounderscore,noitalics]#{?pane_synchronized,#[fg=${col_red2}],}#{?pane_synchronized,#[bg=${col_red2}]#[fg=${col_fg2}]#[bold] SYNC ,}#{?pane_synchronized,#[fg=${col_bg}],}#[bg=default,fg=${col_bg},nobold,noitalics,nounderscore]#[bg=default,fg=${col_fg4}]#[bg=${col_fg4},fg=${col_bg1}] ${_right_status_y} #[fg=${col_bg2},nobold,noitalics,nounderscore]#[fg=${col_fg2},bg=${col_bg2},bold] ${_right_status_z}"
 
+  # tmux_append_seto "status-right" "#[bg=${_status_right_bg},fg=${col_fg4},nobold,nounderscore,noitalics]#[bg=${col_fg4},fg=${col_bg1}] ${_right_status_x}  ${_right_status_y} #[fg=${col_bg2},nobold,noitalics,nounderscore]#[fg=${col_fg2},bg=${col_bg2},bold] ${_right_status_z}"
+
   # current window
   local _current_window_status_format_bg=${col_bg2}
   if [[ "$_statusbar_alpha" == "true" ]]; then _current_window_status_format_bg="default"; fi
-  tmux_append_setwo "window-status-current-format" "#[bg=${col_yellow},fg=${col_bg},nobold,noitalics,nounderscore]#[bg=${col_yellow},fg=${col_bg1}] #I#[bg=${col_yellow},fg=${col_bg1},bold] #W#{?window_zoomed_flag,*Z,} #{?window_end_flag,#[bg=${_current_window_status_format_bg}],#[bg=${col_bg}]}#[fg=${col_yellow},nobold,noitalics,nounderscore]"
+  tmux_append_setwo "window-status-current-format" "#[bg=${col_yellow},fg=${col_bg2},nobold,noitalics,nounderscore]#[bg=${col_yellow},fg=${col_bg1}] #I #[bg=${col_yellow},fg=${col_bg1},bold] #W#{?window_zoomed_flag,*Z,} #{?window_end_flag,#[bg=${_current_window_status_format_bg}],#[bg=${col_bg2}]}#[fg=${col_yellow},nobold,noitalics,nounderscore]"
 
   # default window
   local _default_window_status_format_bg=${col_bg2}
   if [[ "$_statusbar_alpha" == "true" ]]; then _default_window_status_format_bg="default"; fi
-  tmux_append_setwo "window-status-format" "#[bg=${col_bg3},fg=${col_bg},noitalics]#[bg=${col_bg3},fg=${col_fg2}] #I#[bg=${col_bg3},fg=${col_fg2}] #W #{?window_end_flag,#[bg=${_default_window_status_format_bg}],#[bg=${col_bg}]}#[fg=${col_bg3},noitalics]"
-
-tmux_append_seto "status-justify" "centre"
+  tmux_append_setwo "window-status-format" "#[bg=${col_bg3},fg=${col_bg2},noitalics]#[bg=${col_bg3},fg=${col_fg2}] #I #[bg=${col_bg3},fg=${col_fg2}] #W #{?window_end_flag,#[bg=${_default_window_status_format_bg}],#[bg=${col_bg2}]}#[fg=${col_bg3},noitalics]"
 }
 
 declare -a TMUX_CMDS
 # set -ogq @truncated_path "#(bash $HOME/scripts/truncate_path.sh #{pane_current_path})"
 TMUX_CMDS=()
 LEFT_STATUS_A='#h'
+RIGHT_STATUS_X='#{?pane_synchronized,SYNC,}'
 RIGHT_STATUS_Y="#{E:@truncated_path}"
+# RIGHT_STATUS_Y="#I"
 RIGHT_STATUS_Z='#S'
 ALPHA_STATUS='true'
 theme_args=($LEFT_STATUS_A $RIGHT_STATUS_X $RIGHT_STATUS_Y $RIGHT_STATUS_Z $ALPHA_STATUS)

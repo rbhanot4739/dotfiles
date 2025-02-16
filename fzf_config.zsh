@@ -1,4 +1,5 @@
-# vim: ft=sh
+# vim: ft=sh:
+#
 # =================================== Fzf config ===================================
 
 local prev_win_opts="--preview-window :hidden --bind '?:change-preview-window(right|down|right,70%|hidden)' --header-first --header 'Press ? enable/toggle b/w preview modes'"
@@ -33,7 +34,7 @@ export FZF_CTRL_T_OPTS="--preview-label='File preview' --preview 'bat --style=fu
 export FZF_ALT_C_COMMAND="$find_dirs_cmd"
 export FZF_ALT_C_OPTS="--preview-label='Files' --preview 'tree -C {}' $prev_win_opts"
 
-export FZF_COMPLETION_TRIGGER="**"
+export FZF_COMPLETION_TRIGGER="."
 _fzf_compgen_path() {
   fd --follow --exclude ".git" . "$1"
 }
@@ -55,16 +56,11 @@ fzf_all() {
 zle -N fzf_all
 bindkey '^T' fzf_all
 
-# fuzzy search through man pages with tldr preview
-fman() {
-  local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
-  fd_cmd="fd -t f . --follow $paths"
-  eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u| fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --height 70% --border=double --preview 'tldr --color=always {} 2>/dev/null' | xargs man
-}
+
 
 # fuzzy searching functions
 
-function frg() {
+function rgf() {
   #!/usr/bin/env bash
 
   # Switch between Ripgrep launcher mode (CTRL-R) and fzf filtering mode (CTRL-F)
@@ -154,15 +150,42 @@ gbfa() {
   git checkout $(git branch --all | fzf)
 }
 
+
+# fuzzy search through man pages with tldr preview
+# fman() {
+#   local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
+#   fd_cmd="fd -t f . --follow $paths"
+#   eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u| fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --height 70% --border=double --preview 'tldr --color=always {} 2>/dev/null' | xargs man
+# }
+
+_fzf_comprun() {
+  local command=$1
+  shift
+
+  case "$command" in
+    cd)           fzf --preview 'tree -C {} | head -200'   "$@" ;;
+    export|unset) fzf --preview "eval 'echo \$'{}"         "$@" ;;
+    # ssh)          fzf --preview 'dig {}'                   "$@" ;;
+    man)            fzf --preview 'tldr --color=always {} 2>/dev/null' "$@" ;;
+    cat|ls|eza)            fzf --preview '[[ ! -d {} ]] && bat --color=always {}|| tree -C {}' "$@" ;;
+    *)            fzf  "$@" ;;
+  esac
+}
+
 # custom hostname completion
 __fzf_list_hosts() {
-  # setopt localoptions nonomatch
-  # command cat <(command tail -n +1 ~/.ssh/config.custom 2> /dev/null | command grep -i '^\s*host\(name\)\? ' | awk '{for (i = 2; i <= NF; i++) print $1 " " $i}' | command grep -v '[*?%]') \
-  #   <(command grep -oE '^[[a-z0-9.,:-]+' ~/.ssh/known_hosts 2> /dev/null | tr ',' '\n' | tr -d '[' | awk '{ print $1 " " $1 }') \
-  #   <( command sed 's/#.*//') |
-  #   awk '{for (i = 2; i <= NF; i++) print $i}' | sort -u
   local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
-  hosts+=($(awk '!/k8s/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
+  hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
   echo $hosts | tr ' ' '\n' | sort -u
+}
+
+ __fzf_list_man_pages() {
+local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
+fd_cmd="fd -t f . --follow $paths"
+eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u
+}
+
+_fzf_complete_man() {
+_fzf_complete +m -- "$@" < <(__fzf_list_man_pages)
 }
 # source $HOME/fzf-themes/tokyonight_moon.sh

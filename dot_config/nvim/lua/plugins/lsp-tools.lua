@@ -7,6 +7,8 @@ return {
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
       keys[#keys + 1] = { "<C-k>", mode = { "i" }, false }
       keys[#keys + 1] = { "<leader>ss", mode = { "n" }, false }
+      keys[#keys + 1] = { "<A-n>", mode = { "n" }, false }
+      keys[#keys + 1] = { "<A-p>", mode = { "n" }, false }
       keys[#keys + 1] = { "gr", mode = { "n" }, false }
       keys[#keys + 1] = {
         "<leader>gr",

@@ -37,8 +37,8 @@ mx() {
 }
 
 tm() {
-	/bin/bash $HOME/scripts/tmux-manager.sh $@
-	# /bin/bash ~/tmux-manager.sh "$@"
+	# /bin/bash $HOME/scripts/tmux/manager.sh $@
+	/bin/bash "$HOME/scripts/bak-manager.sh" "$@"
 }
 
 zle -N tm
@@ -76,7 +76,7 @@ if [[ $(command -v eza) ]]; then
 	alias lsa='ls --all'
 	# alias l='ls --git-ignore'
 	# print tree format
-	alias lst='ls -T -L=3'
+	alias lt='ls -T -L=3'
 	alias ll='ls --header --long --sort=modified'
 	alias l='ll'
 	alias lla='ll --all'

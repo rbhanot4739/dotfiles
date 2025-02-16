@@ -61,13 +61,13 @@ return {
         end,
         desc = "Explorer Mini.files",
       },
-      -- {
-      --   "<leader>E",
-      --   function()
-      --     require("mini.files").open(vim.loop.cwd(), true)
-      --   end,
-      --   desc = "Open mini.files (cwd)",
-      -- },
+      {
+        "<leader>E",
+        function()
+          require("mini.files").open(vim.loop.cwd(), true)
+        end,
+        desc = "Open mini.files (cwd)",
+      },
       {
         "<leader>fm",
         function()

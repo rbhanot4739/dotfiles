@@ -1,5 +1,5 @@
 local M = {}
-local ft_repls = {}
+local exclude_patterns = { "__pycache__", "*.typed" }
 
 M.switch_to_grep = nil
 M.grep_alt_picker = nil
@@ -35,22 +35,6 @@ local function switch_to_grep(picker, _)
     local pattern = picker.input.filter.search or ""
     ---@diagnostic disable-next-line: missing-fields
     snacks.picker.pick(M.grep_alt_picker, { cwd = cwd, pattern = pattern })
-  end
-end
---
---
-
-local function cd_up(picker, _)
-  local snacks = require("snacks")
-  local cwd = picker.input.filter.cwd
-  local picker_type = picker.opts.source
-  picker:close()
-  if picker_type == "grep" then
-    local pattern = picker.input.filter.search or ""
-    snacks.picker.grep({ cwd = vim.fs.dirname(cwd), search = pattern })
-  else
-    local pattern = picker.input.filter.pattern or ""
-    snacks.picker.files({ cwd = vim.fs.dirname(cwd), search = pattern })
   end
 end
 
@@ -114,14 +98,14 @@ return {
     {
       "<leader>fa",
       function()
-        Snacks.picker.files({ cwd = vim.fn.expand("%:p:h") })
+        Snacks.picker.files({ ignored = true, cwd = vim.fn.expand("%:p:h") })
       end,
       desc = "Find adjacent files",
     },
     {
       "<leader>sa",
       function()
-        Snacks.picker.grep({ cwd = vim.fn.expand("%:p:h") })
+        Snacks.picker.grep({ ignored = true, cwd = vim.fn.expand("%:p:h") })
       end,
       desc = "Find adjacent files",
     },
@@ -147,15 +131,15 @@ return {
       mode = { "n", "x" },
     },
     {
-      "<leader>sG",
+      "<leader>sg",
       function()
-        Snacks.picker.pick("grep", {
-          -- cwd = require("utils").get_root_dir,
-          cwd = Snacks.git.get_root(),
-          prompt_title = "Grep (Args Git root)",
-        })
+        Snacks.picker.git_grep()
+        -- Snacks.picker.pick("grep", {
+        --   cwd = Snacks.git.get_root(),
+        --   prompt_title = "Grep (Args Git root)",
+        -- })
       end,
-      -- mode = { "n", "v" },
+      mode = { "n", "v" },
       desc = "Grep (Git root)",
     },
     {
@@ -185,11 +169,17 @@ return {
     },
     -- git
     {
-      "<leader>gB",
+      "<leader>gb",
       function()
         Snacks.picker.git_branches({ layout = "ivy" })
       end,
       desc = "Git branches",
+    },
+    {
+      "<leader>gB",
+      function()
+        Snacks.picker.git_log({current_line = true})
+      end,
     },
     {
       "<leader>gy",
@@ -364,13 +354,15 @@ return {
           },
         },
         files = {
+          exclude = exclude_patterns,
           -- live = true,
           actions = {
             switch_grep_files = function(picker, _)
               switch_to_grep(picker, _)
             end,
             cd_up = function(picker, _)
-              cd_up(picker, _)
+              picker:set_cwd(vim.fs.dirname(picker:cwd()))
+              picker:find()
             end,
           },
           win = {
@@ -383,12 +375,14 @@ return {
           },
         },
         grep = {
+          exclude = exclude_patterns,
           actions = {
             switch_grep_files = function(picker, _)
               switch_to_grep(picker, _)
             end,
             cd_up = function(picker, _)
-              cd_up(picker, _)
+              picker:set_cwd(vim.fs.dirname(picker:cwd()))
+              picker:find()
             end,
           },
           win = {
@@ -396,6 +390,44 @@ return {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
                 ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+              },
+            },
+          },
+        },
+        git_log = {
+          toggles = {
+            current_file = "cf",
+            current_line = "cl",
+          },
+          confirm = function (_, item)
+            local commit = item.commit
+            require("diffview")
+            local cmd = "DiffviewOpen " .. commit
+            vim.cmd(cmd)
+          end,
+          actions = {
+            log_file = function(picker, _)
+              print(M.git_log_mode)
+              if not picker.opts["current_file"] and not picker.opts["current_line"] then
+                picker.opts["current_file"] = true
+                picker.opts["follow"] = false
+              elseif picker.opts["current_file"] then
+                picker.opts["current_line"] = true
+                picker.opts["current_file"] = false
+                picker.opts["follow"] = false
+              else
+                picker.opts["current_line"] = false
+                picker.opts["current_file"] = false
+                -- picker.opts["follow"] = true
+              end
+              picker:find()
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<A-l>"] = { "log_file", desc = "Switch git_log mode", mode = { "i", "n" } },
+                ["<S-Cr>"] = { "git_checkout", desc = "Checkout commit", mode = { "i", "n" } },
               },
             },
           },

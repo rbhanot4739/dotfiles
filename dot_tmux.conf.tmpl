@@ -20,6 +20,7 @@ set -ag terminal-overrides ",screen-256color,xterm-256color:Tc"
 set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'  # undercurl support
 set -as terminal-overrides ',*:Setulc=\E[58::2::::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m'  # underscore colours - needs tmux-3.0
 set -g status-justify centre
+set-option -g extended-keys on
 
 
 # ================== Keymaps
@@ -31,7 +32,8 @@ bind r source-file ~/.tmux.conf \; display-message "Conf reloaded..."
 
 bind N new-session
 # manage tmux sessions
-bind M-o run-shell '"$HOME/scripts/tmux/manager.sh"'
+# bind M-o run-shell '"$HOME/scripts/tmux/manager.sh"'
+bind M-o run-shell '"$HOME/scripts/bak-manager.sh"'
 bind M-w run-shell '"$HOME/scripts/tmux/panes.sh"'
 
 # =============== Pane/Window Control keys ===============
@@ -80,7 +82,8 @@ bind-key -nr C-S-right swap-window -d -t -1
 bind-key -nr C-S-left swap-window -d -t +1
 
 # set prefix+a to toggle syncing panes on/off
-bind a setw synchronize-panes\; display 'synchronize-panes #{?synchronize-panes,on,off}'
+# bind a setw synchronize-panes\; display 'synchronize-panes #{?synchronize-panes,on,off}'
+bind a setw synchronize-panes\; 
 
 
 # change pane layouts
@@ -157,23 +160,25 @@ set -g @plugin 'erikw/tmux-dark-notify'
 set -g status-position top
 set -g status-left-length 100
 set -g status-right-length 200
-set -ogq @truncated_path "#(bash $HOME/scripts/truncate_path.sh #{pane_current_path})"
+set -ogq @truncated_path "#(bash $HOME/scripts/truncate_path.sh #{pane_current_path} 2 1)"
 
 # set -g @dark-notify-theme-path-dark "$HOME/scripts/tmux/gruvbox-dark.tmux"
 # set -g @dark-notify-theme-path-light "$HOME/scripts/tmux/gruvbox-light.tmux"
 source $HOME/scripts/tmux/gruvbox-dark.conf
 # set -g @plugin 'egel/tmux-gruvbox'
 # set -g @tmux-gruvbox 'dark'
-
 # >>>
 
-# tmux thumbs==================== 
-set -g @plugin 'fcsonline/tmux-thumbs'
-set -g @thumbs-unique enabled
-set -g @thumbs-regexp-1 '([\w-]+(?:\.[\w-]*)*)'  # match filenames with extensions
-# set -g @thumbs-regexp-2 '(\w+-\w+\.\w+\.\w+\.\w+)'  # match filenames with extensions
-set -g @thumbs-reverse enabled
-# tmux thumbs==================== 
+# <<<  ==================== fingers ==================== 
+# set -g @plugin 'fcsonline/tmux-thumbs'
+# set -g @thumbs-unique enabled
+# set -g @thumbs-regexp-1 '([\w-]+(?:\.[\w-]*)*)'  # match filenames with extensions
+# set -g @thumbs-reverse enabled
+set -g @plugin 'Morantron/tmux-fingers'
+set -g @fingers-key M-space
+set -g @fingers-jump-key j
+set -g @fingers-pattern-0 '([\w-]+(?:\.[\w-]*)*)'
+# >>>
 
 # tmux fzf-url ====================
 set -g @plugin 'junegunn/tmux-fzf-url'
@@ -181,7 +186,7 @@ set -g @fzf-url-bind 'M-x'
 set -g @fzf-url-history-limit '2000'
 # tmux fzf-url ====================
 
-# tmux continum & resurrect ====================
+# continuum & resurrect ====================
 set -g @plugin 'tmux-plugins/tmux-continuum'
 # restore session automaticlly
 set -g @continuum-save-interval '30'

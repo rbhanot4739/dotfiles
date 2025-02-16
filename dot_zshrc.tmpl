@@ -25,15 +25,21 @@ fpath=($CUSTOM_COMPLETION_DIR $fpath)
 autoload -Uz compinit
 compinit
 
-# zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f)"$(cat ~/.ssh/config.custom)"}%%[# ]*}//,/ })'
-
 # Define the custom completion function
-_ssh_custom_completion() {
+_ssh_comp() {
 local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
-hosts+=($(awk '!/k8s/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts | sort -u | tr '\n' ' '))
+hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts | sort -u | tr '\n' ' '))
   compadd "$@" $hosts
 }
-compdef _ssh_custom_completion ssh
+compdef _ssh_comp ssh
+
+_man_comp() {
+local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
+fd_cmd="fd -t f . --follow $paths"
+man_pages=($(eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u))
+compadd "$@" $man_pages
+}
+compdef _man_comp man
 
 # _vim_completion() {
 #   # Use the _files builtin to generate file completions only, excluding directories
@@ -123,13 +129,18 @@ zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
-zstyle ':fzf-tab:complete:z:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
-zstyle ':fzf-tab:complete:ls:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
-zstyle ':fzf-tab:complete:eza:*' fzf-preview 'eza -T -L=2 --color=always $realpath'
-zstyle ':fzf-tab:*' switch-group '<' '>'
+
+zstyle ':fzf-tab:*' fzf-flags --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'tree -C $realpath'
+zstyle ':fzf-tab:complete:z:*' fzf-preview 'tree -C $realpath'
+# zstyle ':fzf-tab:complete:z:*' fzf-preview 'eza -T -L=1 --color=always $realpath'
+zstyle ':fzf-tab:complete:ls:*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
+zstyle ':fzf-tab:complete:eza:*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
-zstyle ':fzf-tab:*' use-fzf-default-opts yes
+
+# https://github.com/Aloxaf/fzf-tab/wiki/Preview#variables
+zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' \
+  fzf-preview 'echo ${(P)word}'
 
 
 # ======== Setup key bindings ========
@@ -178,6 +189,7 @@ fi
 
 [ -f "$HOME/fzf_config.zsh" ] && source "$HOME/"fzf_config.zsh
 [ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
+
 # yazi setup
 function y() {
   local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd

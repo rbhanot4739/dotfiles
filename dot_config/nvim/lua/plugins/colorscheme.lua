@@ -25,11 +25,11 @@ return {
       vim.g.gruvbox_material_enable_italic = 1
       vim.g.gruvbox_material_enable_bold = 1
       vim.g.gruvbox_material_disable_italic_comment = false
-      vim.g.gruvbox_material_background = "soft"
-      -- vim.g.gruvbox_material_background = "medium"
+      vim.g.gruvbox_material_background = "hard"
       vim.g.gruvbox_material_float_style = "dim"
-      vim.g.gruvbox_material_transparent_background = 1
       vim.g.gruvbox_material_spell_foreground = "colored"
+      vim.g.gruvbox_material_diagnostic_virtual_text = "colored"
+      vim.g.gruvbox_material_current_word = 'high contrast background'
       vim.cmd.colorscheme("gruvbox-material")
     end,
   },

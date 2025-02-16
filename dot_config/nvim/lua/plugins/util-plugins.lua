@@ -70,10 +70,9 @@ return {
   },
   {
     "chrisgrieser/nvim-spider",
-    config = function()
-      require("spider").setup()
-      vim.keymap.set("n", "cw", "ce", { remap = true })
-    end,
+    opts = {
+      -- skipInsignificantPunctuation = true,
+    },
     keys = {
       {
         "w",

@@ -4,7 +4,7 @@ return {
   {
     "pwntester/octo.nvim",
     keys = function()
-      return { 
+      return {
         { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" },
         { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" },
       }
@@ -32,21 +32,21 @@ return {
       },
     },
     keys = {
-      { "<leader>gg", "<cmd>Neogit<cr>", desc = "Neogit" },
-      {
-        "<leader>gc",
-        function()
-          require("neogit").action("log", "log_current", { "--author", "rbhanot" })()
-        end,
-        desc = "My Commits",
-      },
-      {
-        "<leader>gl",
-        function()
-          require("neogit").action("log", "log_current")()
-        end,
-        desc = "Neogit log",
-      },
+      { "<leader>gG", "<cmd>Neogit<cr>", desc = "Neogit" },
+      -- {
+      --   "<leader>gc",
+      --   function()
+      --     require("neogit").action("log", "log_current", { "--author", "rbhanot" })()
+      --   end,
+      --   desc = "My Commits",
+      -- },
+      -- {
+      --   "<leader>gl",
+      --   function()
+      --     require("neogit").action("log", "log_current")()
+      --   end,
+      --   desc = "Neogit log",
+      -- },
       {
         "<leader>gp",
         function()
