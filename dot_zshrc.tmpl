@@ -47,11 +47,18 @@ compdef _man_comp man
 # }
 # compdef _vim_completion vim
 
-
+{{- if eq .chezmoi.os "darwin" }}
 
 if [[ -f "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+{{ else if eq .chezmoi.os "linux" }}
+if [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+{{- else }}
+
+{{- end }}
 
 # Enable colors
 autoload -U colors && colors
@@ -139,8 +146,7 @@ zstyle ':fzf-tab:complete:eza:*' fzf-preview '[[ ! -d $realpath ]] && bat --colo
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # https://github.com/Aloxaf/fzf-tab/wiki/Preview#variables
-zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' \
-  fzf-preview 'echo ${(P)word}'
+zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' fzf-preview 'echo ${(P)word}'
 
 
 # ======== Setup key bindings ========

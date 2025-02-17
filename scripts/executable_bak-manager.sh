@@ -60,7 +60,7 @@ header="--header-label ' Keymaps ' --header '
 binds="--bind \"$fzf_binds\" --bind \"$del_bind\" --bind \"$rename_bind\""
 prompt="--prompt 'Tmux Sessions > '"
 fzf_transform=' --bind "?:transform:$TRANSFORMER"'
-layout=$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70% --reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
+layout=$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70%,border-native --margin 0 --reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
 
 fzf_cmd="fzf --style full"
 [ -n "$info" ] && fzf_cmd+=" $info"
