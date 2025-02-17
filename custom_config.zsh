@@ -37,7 +37,7 @@ mx() {
 }
 
 tm() {
-	/bin/bash $HOME/scripts/tmux/manager.sh $@
+	/bin/bash $HOME/scripts/tmux/manager.sh $@ 2> /dev/null
 	# /bin/bash "$HOME/scripts/bak-manager.sh" "$@"
 }
 

@@ -6,42 +6,72 @@
 # THIS IS THE WORKING VERSION OF THE SCRIPT
 
 get_tmux_sessions() {
-	sessions=$(tmux list-sessions | grep -v "attached" | awk '{print $1}' | cut -d: -f1)
+	sess_cmd="tmux list-sessions"
+	if [[ -n "$TMUX" ]]; then
+		sess_cmd+="| grep -v attached"
+	fi
+	sessions=$(eval "$sess_cmd" | awk '{print $1}' | cut -d: -f1)
 	echo "$sessions"
 
 }
 export -f get_tmux_sessions
 
 get_zoxide_dirs() {
-	zoxide query -l | head -n 10 | xargs -I {x} $HOME/scripts/truncate_path.sh {x} 2 2
+  path_cmd=$([[ -f $HOME/scripts/truncate_path.sh ]] && echo "$HOME/scripts/truncate_path.sh {x} 2 2" || echo "basename {x}")
+	cmd="zoxide query -l | head -n 10 | xargs -I {x} $path_cmd"
+  eval "$cmd"
 }
 export -f get_zoxide_dirs
 
-get_tmuxinator_projects(){
-tmuxinator list | tail -n +2 | sed 's/ \{1,\}/\n/g'
+get_tmuxinator_projects() {
+	tmuxinator list | tail -n +2 | sed 's/ \{1,\}/\n/g'
 }
 export -f get_tmuxinator_projects
 
-TRANSFORMER='
- if [[ $FZF_PROMPT =~ Sessions ]]; then
-   echo "change-prompt(Zoxide Dirs(Top 10) > )+reload(get_zoxide_dirs)"
-   elif [[ $FZF_PROMPT =~ Zoxide ]]; then
-     echo "change-prompt(Tmuxinator Projects > )+reload(get_tmuxinator_projects)"
-   else
-     echo "change-prompt(Tmux Sessions > )+reload(get_tmux_sessions)"
- fi
- '
-
-
 rename_session() {
-  read -p "Enter the new session name: " session_name
-  tmux rename-session -t "$1" "$session_name"
+	clear
+	echo -n "Enter the new session name: "
+	read -r -n 1 key
+	if [[ $key == $'\e' ]]; then
+		return 1
+	fi
+	read -r session_name
+	[[ -n $session_name ]] && tmux rename-session -t "$1" "$key$session_name"
 }
 export -f rename_session
 
-del_confirm_header="--header 'Are you sure you want to kill session {}'"
-del_bind="del:become:([[ \\\$(echo -e 'Yes\nNo' | fzf --tmux $del_confirm_header) == 'Yes' ]] && tmux kill-session -t {} )"
-rename_bind="ctrl-x:execute(rename_session {})+reload(get_tmux_sessions)"
+del_session() {
+	clear
+	echo -n "Are you sure you want to delete session ($1) [y/n]: "
+	read -r -n 1 response
+	response=${response:-n}
+	[[ "$response" =~ ^[Yy]$ ]] && tmux kill-session -t "$1"
+}
+export -f del_session
+
+TRANSFORMER='
+ if [[ $FZF_PROMPT =~ Sessions ]]; then
+    # enable zoxide only if its installed
+    if [[ $(command -v zoxide) ]]; then
+      echo "change-prompt(Zoxide Dirs (Top 10) > )+reload(get_zoxide_dirs)"
+    # enable tmuxinator only if its installed
+    elif [[ $(command -v tmuxinator) ]]; then
+      echo "change-prompt(Tmuxinator Projects > )+reload(get_tmuxinator_projects)"
+    fi
+elif [[ $FZF_PROMPT =~ Zoxide ]]; then
+    # enable tmuxinator only if its installed
+    if [[ $(command -v tmuxinator) ]]; then
+    echo "change-prompt(Tmuxinator Projects > )+reload(get_tmuxinator_projects)"
+  else
+    echo "change-prompt(Tmux Sessions > )+reload(get_tmux_sessions)"
+    fi
+else
+  echo "change-prompt(Tmux Sessions > )+reload(get_tmux_sessions)"
+fi
+ '
+
+del_bind="del:execute(del_session {})+reload(get_tmux_sessions)"
+rename_bind="ctrl-o:execute(rename_session {})+reload(get_tmux_sessions)"
 fzf_binds='enter:accept-or-print-query'
 info="--info=hidden"
 border="--border --padding 1,1  --border-label=' Tmux Session Manager '"
@@ -80,21 +110,26 @@ tmux_attach_start() {
 	local mode="$2"
 	local tmux_action=""
 	tmux_action=$([[ -n ${TMUX} ]] && echo "switch-client" || echo "attach-session")
-	sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
-	local tmux_sessions="tmux list-sessions -F '#{session_name}' 2>/dev/null"
+	local tmux_sessions=$(get_tmux_sessions) 
 	local tmuxinator_projects="tmuxinator list | tail -n +2"
 
-	if [[ $(eval "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+	# if [[ $(eval "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+	if [[ $tmux_sessions =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
 		tmux "$tmux_action" -t "$session"
-	# check if its a tmuninator project and start it
+	# check if its a tmuxinator project and start it
 	elif [[ $(eval "$tmuxinator_projects") =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
 		tmuxinator start "$session"
 	else
 		if [[ $(get_zoxide_dirs | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
 			session_dir=$(echo $session | awk -F '/' '{print $(NF-1)"/"$NF}')
-			session_dir=$(zoxide query "$session_dir")
+      cmd="zoxide query $session_dir"
+      session_dir=$(eval $cmd)
 			session=$(basename "$session_dir")
-			cd "$session_dir"
+      if [[ $(echo "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+				tmux "$tmux_action" -t "$session"
+			else
+				cd "$session_dir" || echo "$session_dir can't be accessed"
+			fi
 		fi
 		# its a new session that user has entered as query, so lets create and switch to it
 		if [[ "$mode" == "term" ]]; then
@@ -107,7 +142,7 @@ tmux_attach_start() {
 				echo "Session creation aborted."
 			fi
 		else
-			tmux new-session -d -s "$session" && tmux "$tmux_action" -t "$session"
+			tmux new-session -d -s "$session" 2>/dev/null && tmux "$tmux_action" -t "$session"
 		fi
 
 	fi
@@ -119,15 +154,9 @@ handler_request() {
 		tmux_attach_start "$1" "term"
 		return
 	else
-		sess_list=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
-		if [[ -n "$TMUX" ]]; then
-			# if we are inside a tmux session then exclude the current session from the session list
-			# curr_session=$(tmux display-message -p | sed -e 's/^\[//' -e 's/\].*//')
-			curr_session=$(tmux display-message -p '#S')
-			sess_list=$(echo -n -e "$sess_list" | grep -v "^$curr_session")
-		fi
+		tmux_sessions=$(get_tmux_sessions)
 		shell=$(which bash)
-		session=$(echo -n -e "$sess_list" | SHELL="$shell" eval "$fzf_cmd")
+		session=$(echo -n -e "$tmux_sessions" | SHELL="$shell" eval "$fzf_cmd")
 		if [[ -n $session ]]; then
 			tmux_attach_start "$session" "fzf"
 		fi
