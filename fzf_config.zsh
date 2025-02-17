@@ -174,6 +174,7 @@ _fzf_comprun() {
 
 # custom hostname completion
 __fzf_list_hosts() {
+  # hosts=($(awk '/^Host / {host=$2} /^ *Hostname / {print host,",",$2}' ~/.ssh/config.custom))
   local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
   hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
   echo $hosts | tr ' ' '\n' | sort -u

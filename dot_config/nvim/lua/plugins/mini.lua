@@ -5,7 +5,7 @@ return {
       -- Exchange text regions
       exchange = {
         -- a pretty neat trick to exchange two args is `gxina` and then press `.`
-        prefix = "ge",
+        prefix = "gx",
 
         -- Whether to reindent new text to match previous indent
         reindent_linewise = true,

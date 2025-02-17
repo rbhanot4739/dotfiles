@@ -51,4 +51,13 @@ if not vim.g.vscode then
   map("n", "<BS>", "<C-6>", { remap = true })
   -- map jk to go to normal mode in terminal
   map({ "t" }, "jk", [[<C-\><C-n>]], { desc = "open with system app" })
+  map("n", "gX", function()
+    local line = vim.api.nvim_get_current_line()
+    local url = string.match(line, "https?://[%w-_%.%?%.:/%+=&]+")
+    if url then
+      vim.ui.open(url)
+    else
+      print("No URL found on the current line")
+    end
+  end, { desc = "Open URL on the current line" })
 end

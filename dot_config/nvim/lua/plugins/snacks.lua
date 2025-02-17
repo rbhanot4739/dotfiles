@@ -46,6 +46,13 @@ return {
   keys = {
     { "<leader>e", false },
     {
+      "<leader>,",
+      function()
+        Snacks.picker.recent({ filter = { cwd = true } })
+      end,
+      desc = "Open recent files"
+    },
+    {
       "<leader>z",
       function()
         Snacks.picker.zoxide()
@@ -178,7 +185,7 @@ return {
     {
       "<leader>gB",
       function()
-        Snacks.picker.git_log({current_line = true})
+        Snacks.picker.git_log({ current_line = true })
       end,
     },
     {
@@ -399,7 +406,7 @@ return {
             current_file = "cf",
             current_line = "cl",
           },
-          confirm = function (_, item)
+          confirm = function(_, item)
             local commit = item.commit
             require("diffview")
             local cmd = "DiffviewOpen " .. commit

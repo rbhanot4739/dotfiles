@@ -3,10 +3,13 @@ is_git_worktree = require("utils").is_git_worktree
 return {
   {
     "pwntester/octo.nvim",
+    opts = {
+      picker = "snacks",
+    },
     keys = function()
       return {
-        { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" },
-        { "<leader>go", "<cmd>Octo<cr>", desc = "Open Octo" },
+        { "<leader>gp", "<cmd>Octo pr create<cr>", desc = "Open Octo" },
+        { "<leader>gP", "<cmd>Octo pr list<cr>", desc = "Open Octo" },
       }
     end,
   },
@@ -47,13 +50,13 @@ return {
       --   end,
       --   desc = "Neogit log",
       -- },
-      {
-        "<leader>gp",
-        function()
-          require("neogit").action("pull", "from_upstream")()
-        end,
-        desc = "Pull from upstreame",
-      },
+      -- {
+      --   "<leader>gp",
+      --   function()
+      --     require("neogit").action("pull", "from_upstream")()
+      --   end,
+      --   desc = "Pull from upstreame",
+      -- },
     },
   },
   {

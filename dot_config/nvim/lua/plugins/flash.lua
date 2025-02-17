@@ -25,7 +25,7 @@ return {
   },
   keys = {
     {
-      "R",
+      "r",
       mode = "o",
       function()
         require("flash").remote()
@@ -34,7 +34,7 @@ return {
     },
 
     {
-      "r",
+      "R",
       mode = { "o", "x" },
       function()
         require("flash").treesitter_search({

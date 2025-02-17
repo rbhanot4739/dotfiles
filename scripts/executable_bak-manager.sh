@@ -33,8 +33,15 @@ TRANSFORMER='
  '
 
 
+rename_session() {
+  read -p "Enter the new session name: " session_name
+  tmux rename-session -t "$1" "$session_name"
+}
+export -f rename_session
+
 del_confirm_header="--header 'Are you sure you want to kill session {}'"
 del_bind="del:become:([[ \\\$(echo -e 'Yes\nNo' | fzf --tmux $del_confirm_header) == 'Yes' ]] && tmux kill-session -t {} )"
+rename_bind="ctrl-x:execute(rename_session {})+reload(get_tmux_sessions)"
 fzf_binds='enter:accept-or-print-query'
 info="--info=hidden"
 border="--border --padding 1,1  --border-label=' Tmux Session Manager '"
@@ -45,14 +52,15 @@ header_first="--header-first"
 header="--header-label ' Keymaps ' --header '
 > ?: Switch between Tmux Sessions / Zoxide Dirs/ Tmuxinator Projects
 > Enter:  Attach to existing tmux session
-          Start session in a directoryStart
-          Start tmuxinator project
+          Start session in a directory
+          Start a tmuxinator project
 > Del: Kill tmux session / Stop tmuxinator project
+> Ctrl-x: Rename a session
 '"
-binds="--bind \"$fzf_binds\" --bind \"$del_bind\""
+binds="--bind \"$fzf_binds\" --bind \"$del_bind\" --bind \"$rename_bind\""
 prompt="--prompt 'Tmux Sessions > '"
 fzf_transform=' --bind "?:transform:$TRANSFORMER"'
-layout=$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70% --=reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
+layout=$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70% --reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
 
 fzf_cmd="fzf --style full"
 [ -n "$info" ] && fzf_cmd+=" $info"
