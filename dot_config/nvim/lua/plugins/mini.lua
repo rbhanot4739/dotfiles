@@ -84,6 +84,7 @@ return {
     -- ;d( -> [-hello-])  -- similarly ;r(< changes to [-<hello>-]
     "echasnovski/mini.surround",
     opts = {
+      n_lines = 80,
       mappings = {
         add = ";;",
         delete = ";d",
@@ -94,5 +95,5 @@ return {
         update_n_lines = ";n",
       },
     },
-  },
+  }
 }

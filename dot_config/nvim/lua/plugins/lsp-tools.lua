@@ -72,7 +72,8 @@ return {
   },
   {
     "williamboman/mason.nvim",
-    opts = { ensure_installed = { "flake8", "mypy", "cspell", "markdown-oxide" } },
+    -- opts = { ensure_installed = { "flake8", "mypy", "cspell", "markdown-oxide" } },
+    opts = { ensure_installed = { "flake8", "mypy", "cspell"} },
   },
   -- linter/formatter
   {

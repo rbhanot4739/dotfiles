@@ -50,10 +50,10 @@ return {
       function()
         Snacks.picker.recent({ filter = { cwd = true } })
       end,
-      desc = "Open recent files"
+      desc = "Open recent files",
     },
     {
-      "<leader>z",
+      "<leader>Z",
       function()
         Snacks.picker.zoxide()
       end,
@@ -183,32 +183,41 @@ return {
       desc = "Git branches",
     },
     {
-      "<leader>gB",
+      "<leader>gc",
       function()
-        Snacks.picker.git_log({ current_line = true })
+        Snacks.picker.git_log({ current_file = true })
       end,
+      desc = "Git log Current file",
     },
     {
       "<leader>gy",
       function()
-        local Picker = require("snacks.picker.core.picker")
-        opts = opts or {}
-
-        -- Define the items to be displayed in the picker
-        local items = {
-          { text = "repo" },
-          { text = "file" },
-          { text = "branch" },
-          { text = "commit" },
-          { text = "permalink" },
-        }
-
-        local picker = Picker.new({
+        local get_url = function(link_type)
+          Snacks.gitbrowse.open({
+            notify = false,
+            what = link_type,
+            open = function(url)
+              print("open called with", url)
+              vim.fn.setreg("+", url)
+            end,
+          })
+        end
+        local picker = Snacks.picker.pick({
           title = "Select link type",
-          items = items,
-          -- layout = { preview = false, preset = "select" },
+          items = {
+            { text = "repo" },
+            { text = "file" },
+            { text = "branch" },
+            { text = "commit" },
+            { text = "permalink" },
+          },
+          preview = function(ctx)
+            -- local r_url = get_url(ctx.item.text)
+            ctx.preview:set_title("Git link preview")
+            -- ctx.preview:set_lines({ "hello" })
+            ctx.preview:show(ctx.picker)
+          end,
           layout = {
-            preview = false,
             layout = {
               backdrop = false,
               width = 0.3,
@@ -228,7 +237,7 @@ return {
           ---@param picker snacks.Picker
           confirm = function(picker, item)
             picker:close()
-            Snacks.gitbrowse.open({ what = item.text })
+            Snacks.gitbrowse.open({ what = item.text, notify = false })
             return true
           end,
           actions = {
@@ -236,6 +245,7 @@ return {
               picker:close()
               ---@diagnostic disable-next-line: missing-fields
               Snacks.gitbrowse.open({
+                notify = false,
                 what = item.text,
                 open = function(url)
                   vim.fn.setreg("+", url)
@@ -250,7 +260,8 @@ return {
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
+                ["<S-Cr>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
+                -- ["<c-k>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
               },
             },
           },
@@ -270,11 +281,11 @@ return {
           Snacks.terminal.toggle(ft_cmds[ft], { interactive = false })
         end
       end,
-      desc = "Toggle terminal",
+      desc = "Toggle floating terminal",
     },
     {
       "<c-\\>",
-      mode = { "n", "t", "i" },
+      mode = { "t" },
       function()
         Snacks.terminal.toggle(nil, { win = { style = "split" } })
       end,
@@ -289,6 +300,17 @@ return {
       -- layout = {
       --   preset = "ivy",
       -- },
+      ---@class snacks.picker.previewers.Config
+      previewers = {
+        diff = {
+          builtin = false, -- use Neovim for previewing diffs (true) or use an external tool (false)
+          cmd = { "delta" }, -- example to show a diff with delta
+        },
+        git = {
+          builtin = false, -- use Neovim for previewing git output (true) or use git (false)
+          -- args = {"-c", "delta"}, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
+        },
+      },
       layouts = {
         ivy = {
           layout = {
@@ -402,19 +424,23 @@ return {
           },
         },
         git_log = {
+          previewers = {
+            diff = { builtin = false },
+          },
           toggles = {
             current_file = "cf",
             current_line = "cl",
           },
-          confirm = function(_, item)
+          confirm = function(picker, item)
             local commit = item.commit
             require("diffview")
-            local cmd = "DiffviewOpen " .. commit
+            local filename = vim.api.nvim_buf_get_name(picker.finder.filter.current_buf)
+            local cmd = "DiffviewOpen " .. commit .. "^! " .. " -- " .. filename
+            print(cmd)
             vim.cmd(cmd)
           end,
           actions = {
             log_file = function(picker, _)
-              print(M.git_log_mode)
               if not picker.opts["current_file"] and not picker.opts["current_line"] then
                 picker.opts["current_file"] = true
                 picker.opts["follow"] = false

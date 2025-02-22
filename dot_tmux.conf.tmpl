@@ -32,8 +32,8 @@ bind r source-file ~/.tmux.conf \; display-message "Conf reloaded..."
 
 bind N new-session
 # manage tmux sessions
-bind M-o run-shell '"$HOME/scripts/tmux/manager.sh"'
-# bind M-o run-shell '"$HOME/scripts/bak-manager.sh"'
+bind M-o run-shell 'bash $HOME/scripts/tmux/manager.sh'
+# bind M-o run-shell 'bash $HOME/scripts/bak-manager.sh'
 bind M-w run-shell '"$HOME/scripts/tmux/panes.sh"'
 
 # =============== Pane/Window Control keys ===============

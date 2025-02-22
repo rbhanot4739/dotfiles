@@ -18,6 +18,10 @@ fi
 
 (( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
 
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 
 CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
 # Add the custom completion directory to fpath
@@ -47,18 +51,6 @@ compdef _man_comp man
 # }
 # compdef _vim_completion vim
 
-{{- if eq .chezmoi.os "darwin" }}
-
-if [[ -f "/opt/homebrew/bin/brew" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-{{ else if eq .chezmoi.os "linux" }}
-if [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-{{- else }}
-
-{{- end }}
 
 # Enable colors
 autoload -U colors && colors
@@ -212,7 +204,9 @@ function y() {
 export XDG_CONFIG_HOME="$HOME/.config"
 if [[ $(command -v nvim) ]]; then
  export EDITOR=nvim
- export MANPAGER='nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
+ # export MANPAGER='nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
+ # export MANPAGER='NVIM_APPNAME=minimal-lazy nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
+ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 fi
 export BAT_THEME="ansi"
 

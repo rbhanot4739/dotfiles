@@ -10,34 +10,35 @@ return {
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
+      { "nvim-telescope/telescope.nvim", branch = "0.1.x", ft = { "markdown" } },
     },
     keys = {
-      {
-        "<leader>oo",
-        function()
-          local vault = vim.fn.expand("~/obsidian-vault/")
-          Snacks.picker.pick("grep", {
-            cwd = vault,
-            actions = {
-              create_note = function(picker, item)
-                picker:close()
-                vim.cmd("ObsidianNew " .. picker.finder.filter.search)
-              end,
-            },
-            win = {
-              input = {
-                keys = {
-                  ["<c-x>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
-                },
-              },
-            },
-          })
-        end,
-      },
-      -- { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
-      -- { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
-      -- { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
-      -- { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Open ObsidianTags" } },
+      -- {
+      --   "<leader>oo",
+      --   function()
+      --     local vault = vim.fn.expand("~/obsidian-vault/")
+      --     Snacks.picker.pick("grep", {
+      --       cwd = vault,
+      --       actions = {
+      --         create_note = function(picker, item)
+      --           picker:close()
+      --           vim.cmd("ObsidianNew " .. picker.finder.filter.search)
+      --         end,
+      --       },
+      --       win = {
+      --         input = {
+      --           keys = {
+      --             ["<c-x>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
+      --           },
+      --         },
+      --       },
+      --     })
+      --   end,
+      -- },
+      { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
+      { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
+      { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
+      { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Open ObsidianTags" } },
     },
     opts = {
       completion = {
@@ -46,7 +47,7 @@ return {
       ui = {
         enable = false,
       },
-      -- picker = { name = "fzf-lua" },
+      picker = { name = "telescope.nvim" },
       workspaces = {
         {
           name = "personal",
@@ -74,50 +75,48 @@ return {
   },
 
   {
-    {
-      "MeanderingProgrammer/render-markdown.nvim",
-      opts = {
-        code = {
-          sign = false,
-          width = "full",
+    "MeanderingProgrammer/render-markdown.nvim",
+    opts = {
+      code = {
+        sign = false,
+        width = "full",
+      },
+      heading = {
+        sign = false,
+        position = "overlay",
+        icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+        signs = { "󰫎 " },
+        width = "full",
+        above = "▄",
+        below = "▀",
+        backgrounds = {
+          "RenderMarkdownH1Bg",
+          "RenderMarkdownH2Bg",
+          "RenderMarkdownH3Bg",
+          "RenderMarkdownH4Bg",
+          "RenderMarkdownH5Bg",
+          "RenderMarkdownH6Bg",
         },
-        heading = {
-          sign = false,
-          position = "overlay",
-          icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
-          signs = { "󰫎 " },
-          width = "full",
-          above = "▄",
-          below = "▀",
-          backgrounds = {
-            "RenderMarkdownH1Bg",
-            "RenderMarkdownH2Bg",
-            "RenderMarkdownH3Bg",
-            "RenderMarkdownH4Bg",
-            "RenderMarkdownH5Bg",
-            "RenderMarkdownH6Bg",
-          },
-          foregrounds = {
-            "RenderMarkdownH1",
-            "RenderMarkdownH2",
-            "RenderMarkdownH3",
-            "RenderMarkdownH4",
-            "RenderMarkdownH5",
-            "RenderMarkdownH6",
-          },
+        foregrounds = {
+          "RenderMarkdownH1",
+          "RenderMarkdownH2",
+          "RenderMarkdownH3",
+          "RenderMarkdownH4",
+          "RenderMarkdownH5",
+          "RenderMarkdownH6",
         },
-        checkbox = {
-          checked = { scope_highlight = "@markup.strikethrough" },
-          custom = {
-            important = { raw = "[~]", rendered = "󰓎 ", highlight = "DiagnosticWarn" },
-          },
+      },
+      checkbox = {
+        checked = { scope_highlight = "@markup.strikethrough" },
+        custom = {
+          important = { raw = "[~]", rendered = "󰓎 ", highlight = "DiagnosticWarn" },
         },
-        quote = { repeat_linebreak = true },
-        win_options = {
-          showbreak = { default = "", rendered = "  " },
-          breakindent = { default = false, rendered = true },
-          breakindentopt = { default = "", rendered = "" },
-        },
+      },
+      quote = { repeat_linebreak = true },
+      win_options = {
+        showbreak = { default = "", rendered = "  " },
+        breakindent = { default = false, rendered = true },
+        breakindentopt = { default = "", rendered = "" },
       },
     },
   },

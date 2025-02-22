@@ -37,8 +37,8 @@ mx() {
 }
 
 tm() {
-	/bin/bash $HOME/scripts/tmux/manager.sh $@ 2> /dev/null
-	# /bin/bash "$HOME/scripts/bak-manager.sh" "$@"
+	bash $HOME/scripts/tmux/manager.sh $@
+	# bash "$HOME/scripts/bak-manager.sh" "$@"
 }
 
 zle -N tm
@@ -68,6 +68,7 @@ alias rbld="rexec mint build"
 alias rcfg="rexec mint build-cfg"
 alias rundep="rexec mint undeploy"
 alias rdep="rexec mint deploy"
+alias topo="topology-v3 "
 
 # create folowing aliases only if eza is installed else use ls
 if [[ $(command -v eza) ]]; then

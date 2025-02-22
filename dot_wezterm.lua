@@ -21,6 +21,7 @@ function scheme_for_appearance(appearance)
 	end
 end
 
+config.debug_key_events = true
 config.enable_kitty_keyboard = true
 -- config.color_scheme = scheme_for_appearance(get_appearance())
 -- config.color_scheme = "tokyonight_moon"
@@ -29,7 +30,7 @@ config.color_scheme = "Gruvbox dark, hard (base16)"
 -- config.color_scheme = "Gruvbox Material (Gogh)"
 
 -- config.font = wezterm.font("FiraCode Nerd Font Mono")
-config.font = wezterm.font("JetBrains Mono")
+config.font = wezterm.font("JetBrainsMonoNL Nerd Font")
 config.font_size = 13
 
 -- Tab bar settings

@@ -3,8 +3,8 @@ return {
     "folke/tokyonight.nvim",
     opts = {
       transparent = false,
-      lazy = false,
-      priority = 1000,
+      lazy = true,
+      -- priority = 1000,
       styles = {
         sidebars = "transparent",
         floats = "transparent",
@@ -29,7 +29,7 @@ return {
       vim.g.gruvbox_material_float_style = "dim"
       vim.g.gruvbox_material_spell_foreground = "colored"
       vim.g.gruvbox_material_diagnostic_virtual_text = "colored"
-      vim.g.gruvbox_material_current_word = 'high contrast background'
+      vim.g.gruvbox_material_current_word = "high contrast background"
       vim.cmd.colorscheme("gruvbox-material")
     end,
   },

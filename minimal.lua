@@ -17,35 +17,14 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
 
 	spec = {
-		-- add LazyVim and import its plugins
 		{
-			"LazyVim/LazyVim",
-			import = "lazyvim.plugins",
-			opts = {},
+			"catppuccin/nvim",
+			lazy = false,
+			priority = 1000,
+			config = function()
+				vim.cmd([[colorscheme catppuccin]])
+			end,
 		},
-		{ "akinsho/bufferline.nvim", enabled = false },
-		{ "linux-cultist/venv-selector.nvim", enabled = false },
-		{ "folke/persistence.nvim", enabled = false },
-		{ "nvim-neo-tree/neo-tree.nvim", enabled = false },
-		{ "chezmoi.vim", enabled = false },
-		{ "edgy.nvim", enabled = false },
-		{ "flash.nvim", enabled = false },
-		{ "lazy.nvim", enabled = false },
-		{ "lualine.nvim", enabled = false },
-		{ "mini.ai", enabled = false },
-		{ "mini.icons", enabled = false },
-		{ "mini.move", enabled = false },
-		{ "mini.pairs", enabled = false },
-		{ "noice.nvim", enabled = false },
-		{ "nui.nvim", enabled = false },
-		{ "nvim-treesitter-textobjects", enabled = false },
-		{ "trouble.nvim", enabled = false },
-		{ "ts-comments.nvim", enabled = false },
-		{ "which-key.nvim", enabled = false },
-		{ "nvim-treesitter", enabled = false },
-		{ "LazyVim", enabled = false },
-		{ "tokyonight.nvim", enabled = false },
-		-- { "snacks.nvim", enabled = false },
 	},
 	defaults = {
 		-- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.

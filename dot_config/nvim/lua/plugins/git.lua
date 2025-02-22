@@ -8,8 +8,8 @@ return {
     },
     keys = function()
       return {
-        { "<leader>gp", "<cmd>Octo pr create<cr>", desc = "Open Octo" },
-        { "<leader>gP", "<cmd>Octo pr list<cr>", desc = "Open Octo" },
+        { "<leader>gp", "<cmd>Octo pr create<cr>", desc = "Create new PR" },
+        { "<leader>gP", "<cmd>Octo pr list<cr>", desc = "List PRs" },
       }
     end,
   },

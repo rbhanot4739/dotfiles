@@ -30,25 +30,22 @@ if not vim.g.vscode then
   map({ "n", "v", "i" }, "<Down>", "<Nop>", { desc = "disable arrow keys" })
   map({ "n", "v", "i" }, "<Left>", "<Nop>", { desc = "disable arrow keys" })
   map({ "n", "v", "i" }, "<Right>", "<Nop>", { desc = "disable arrow keys" })
-  -- delete lazyVim builtin keymaps
-  -- vim.keymap.del({ "n", "t" }, "<c-_>")
-  -- vim.keymap.del("n", "<leader>ft")
 
   -- add a mapping to replace visual selection in file
   -- vim.keymap.set("v", "<leader>*", 'y:%s/\\V<c-r>"//g<left><left>', { desc = "replace visual selection" })
   -- replace word under cursor
   -- map({ "n" }, "<leader>*", ":%s/\\<<C-r><C-w>\\>//g<left><left>", { desc = "replace word under cursor" })
 
-  -- lazygit
-  -- map("n", "<leader>gG", function()
-  --   Snacks.lazygit({ cwd = LazyVim.root.git() })
-  -- end, { desc = "Lazygit (Root Dir)" })
-
   map("n", "<leader>gl", function()
     Snacks.lazygit({ args = { "log" }, cwd = LazyVim.root.git() })
   end, { desc = "Lazygit Log" })
+
   map("n", "<leader>lx", "<cmd>LazyExtras<cr>")
+  -- Use backspace to go to previous buffer
   map("n", "<BS>", "<C-6>", { remap = true })
+  -- Use enter to toggle folds
+  map("n", "<cr>", "za", { remap = true })
+
   -- map jk to go to normal mode in terminal
   map({ "t" }, "jk", [[<C-\><C-n>]], { desc = "open with system app" })
   map("n", "gX", function()
