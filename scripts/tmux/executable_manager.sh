@@ -34,7 +34,7 @@ rename_session() {
   clear
 	# Prompt the user to enter a string
   old_name=$(echo "$1" | cut -d' ' -f1)
-	echo "Please enter new session name[$old_name] (Escape/Ctrl+C to cancel):"
+	echo -n "Please enter new session name[$old_name] (Escape/Ctrl+C to cancel): "
   # old_name=$([[ $1 == "current" ]] && tmux display-message -p '#S' || echo "$1")
 
 	user_input=""
@@ -42,8 +42,6 @@ rename_session() {
 	while true; do
 		# Read user input one character at a time
 		read -rsn1 input
-
-		# Convert input to hex value for debugging (you can comment this out later)
 
 		if [[ "$input" == $'\e' ]]; then
 			# Escape key pressed, exit the function
@@ -133,7 +131,7 @@ header="--header-label ' Keymaps ' --header '
 binds="--bind \"$fzf_binds\" --bind \"$del_bind\" --bind \"$rename_bind\""
 prompt="--prompt ' Tmux Sessions > '"
 fzf_transform=' --bind "?:transform:$TRANSFORMER"'
-layout=$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70%,border-native --margin 0 --reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
+layout=$([[ -n ${TMUX} ]] && echo "--tmux center,40%,50%,border-native --margin 0 --reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
 
 fzf_cmd="fzf --style full"
 [ -n "$info" ] && fzf_cmd+=" $info"

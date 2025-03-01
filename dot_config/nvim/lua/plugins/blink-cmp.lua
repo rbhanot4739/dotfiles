@@ -2,8 +2,8 @@ return {
   "saghen/blink.cmp",
   dependencies = {
     "mikavilpas/blink-ripgrep.nvim",
-    "rcarriga/cmp-dap",
-    "saghen/blink.compat",
+    -- "rcarriga/cmp-dap",
+    "Kaiser-Yang/blink-cmp-git",
   },
   opts = {
     keymap = {
@@ -28,18 +28,42 @@ return {
     appearance = {
       kind_icons = require("config.utils").icons.kinds,
     },
+    cmdline = {
+      enabled = true,
+      sources = function()
+        local type = vim.fn.getcmdtype()
+        if type == "/" or type == "?" then
+          return { "buffer" }
+        end
+        if type == ":" or type == "@" then
+          return { "cmdline" }
+        end
+        return {}
+      end,
+      completion = {
+        trigger = {
+          show_on_blocked_trigger_characters = {},
+          show_on_x_blocked_trigger_characters = nil, -- Inherits from top level `completion.trigger.show_on_blocked_trigger_characters` config when not set
+        },
+        menu = {
+          auto_show = nil, -- Inherits from top level `completion.menu.auto_show` config when not set
+          draw = {},
+        },
+      },
+    },
     completion = {
-      -- list = {
-      --   selection = function(ctx)
-      --     return ctx.mode == "cmdline" and "manual" or "manual"
-      --   end,
-      -- },
-      menu = { border = "rounded" },
+      menu = {
+        -- min_width = 10,
+        -- max_height = 10,
+        -- border = "rounded",
+        draw = {
+          -- columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } }
+        },
+      },
       documentation = { window = { border = "rounded" } },
     },
     signature = { enabled = true, window = { border = "rounded" } },
     sources = {
-      compat = {},
       default = {
         "lsp",
         "path",
@@ -49,27 +73,15 @@ return {
         "ripgrep",
         -- "dap",
       },
-      cmdline = function()
-        local type = vim.fn.getcmdtype()
-        -- Search forward and backward
-        if type == "/" or type == "?" then
-          return { "buffer" }
-        end
-        -- Commands
-        if type == ":" then
-          return { "cmdline" }
-        end
-        return {}
-      end,
       providers = {
-        -- copilot = { score_offset = 100 },
-        -- lsp = { async = true, score_offset = 1 },
-        -- buffer = { score_offset = 2 },
-        -- path = { score_offset = 3 },
+        copilot = { async = true, score_offset = 100 },
+        lsp = { async = true, score_offset = 99 },
+        buffer = { score_offset = 98 },
+        -- path = { score_offset = 97 },
         ripgrep = {
           module = "blink-ripgrep",
           name = "Ripgrep",
-          score_offset = 95,
+          score_offset = 97,
         },
         markdown = { name = "RenderMarkdown", module = "render-markdown.integ.blink" },
         dap = {
@@ -77,6 +89,13 @@ return {
           module = "blink.compat.source",
           enabled = function()
             require("cmp_dap").is_dap_buffer()
+          end,
+        },
+        git = {
+          module = "blink-cmp-git",
+          name = "Git",
+          enabled = function()
+            return vim.tbl_contains({ "octo", "gitcommit", "markdown" }, vim.bo.filetype)
           end,
         },
       },

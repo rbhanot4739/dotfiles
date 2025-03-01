@@ -20,6 +20,7 @@ return {
       "sindrets/diffview.nvim", -- optional - Diff integration
       -- "nvim-telescope/telescope.nvim", -- optional
     },
+    enabled = false,
     cmd = "Neogit",
     opts = {
       kind = "split",

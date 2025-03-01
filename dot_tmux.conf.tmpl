@@ -13,9 +13,8 @@ setw -g automatic-rename on
 set -g base-index 1         # start windows numbering at 1
 setw -g pane-base-index 1   # make pane numbering consistent with windows
 set -g renumber-windows on  # renumber windows sequentially after closing any of them
-# set-option -sa terminal-overrides ",xterm*:Tc"
 set -g default-terminal "tmux-256color"
-# set -g default-terminal "screen-256color"
+# set -sa terminal-features ",xterm-256color:extkeys"
 set -ag terminal-overrides ",screen-256color,xterm-256color:Tc"
 set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'  # undercurl support
 set -as terminal-overrides ',*:Setulc=\E[58::2::::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m'  # underscore colours - needs tmux-3.0

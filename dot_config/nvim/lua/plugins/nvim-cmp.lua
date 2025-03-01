@@ -6,7 +6,6 @@ return {
       "rcarriga/cmp-dap",
       "hrsh7th/cmp-cmdline",
       "lukas-reineke/cmp-rg",
-      -- { "uga-rosa/cmp-dictionary", opts = { paths = { "/usr/share/dict/words" }, exact_length = 2 } },
       {
         "uga-rosa/cmp-dictionary",
         opts = {

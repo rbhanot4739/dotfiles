@@ -14,11 +14,16 @@ return {
   },
   {
     "CopilotC-Nvim/CopilotChat.nvim",
+    enabled = true,
     opts = {
       mappings = {
         reset = {
           normal = "<C-x>",
           insert = "<C-x>",
+        },
+        accept_diff = {
+          normal = "<A-y>",
+          insert = "<A-yt>",
         },
       },
     },

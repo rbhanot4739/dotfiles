@@ -73,12 +73,12 @@ return {
       end,
       desc = "Fuzzy find files",
     },
-    {
-      "<leader>?",
-      function()
-        Snacks.picker.command_history({ layout = { preset = "dropdown", preview = false } })
-      end,
-    },
+    -- {
+    --   "<leader>?",
+    --   function()
+    --     Snacks.picker.command_history({ layout = { preset = "dropdown", preview = false } })
+    --   end,
+    -- },
     {
       "<c-r>",
       mode = { "i" },
@@ -340,6 +340,9 @@ return {
         --   },
       },
       sources = {
+        explorer = {
+          auto_close = true,
+        },
         smart = {
           actions = {
             switch_grep_files = function(picker, _)

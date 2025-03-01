@@ -55,11 +55,12 @@ return {
     "chrisgrieser/nvim-rip-substitute",
     cmd = "RipSubstitute",
     opts = {
-      keymaps = { abort = "<Esc>" },
+      keymaps = { abort = "<Esc>",  toggleIgnoreCase = "<C-i>"},
+      popupWin = {position = "top"},
     },
     keys = {
       {
-        "<leader>:",
+        "<leader>?",
         function()
           require("rip-substitute").sub()
         end,
