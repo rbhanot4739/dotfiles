@@ -15,6 +15,9 @@ local function switch_to_grep(picker, _)
   if picker_type == "grep" then
     M.switch_to_grep = false
     M.grep_alt_picker = M.grep_alt_picker or "files"
+  elseif picker_type == "grep_buffers" then
+    M.switch_to_grep = true
+    M.grep_alt_picker = "buffers"
   else
     M.switch_to_grep = true
     if picker_type == "recent_files" then
@@ -22,6 +25,7 @@ local function switch_to_grep(picker, _)
     end
     M.grep_alt_picker = picker_type
   end
+
   local snacks = require("snacks")
   local cwd = picker.input.filter.cwd
 
@@ -30,7 +34,11 @@ local function switch_to_grep(picker, _)
   if M.switch_to_grep then
     local pattern = picker.input.filter.pattern or ""
     ---@diagnostic disable-next-line: missing-fields
-    snacks.picker.grep({ cwd = cwd, search = pattern })
+    if picker_type == "buffers" then
+      snacks.picker.grep_buffers({ search = pattern })
+    else
+      snacks.picker.grep({ cwd = cwd, search = pattern })
+    end
   else
     local pattern = picker.input.filter.search or ""
     ---@diagnostic disable-next-line: missing-fields
@@ -38,7 +46,6 @@ local function switch_to_grep(picker, _)
   end
 end
 
--- Todo: Snacks picker for Octo/Obsidian/Toggleterm
 return {
   "folke/snacks.nvim",
   priority = 1000,
@@ -140,11 +147,11 @@ return {
     {
       "<leader>sg",
       function()
-        Snacks.picker.git_grep()
-        -- Snacks.picker.pick("grep", {
-        --   cwd = Snacks.git.get_root(),
-        --   prompt_title = "Grep (Args Git root)",
-        -- })
+        if Snacks.git.get_root() == nil then
+          Snacks.picker.grep({ cwd = Snacks.git.get_root() })
+        else
+          Snacks.picker.git_grep()
+        end
       end,
       mode = { "n", "v" },
       desc = "Grep (Git root)",
@@ -260,14 +267,14 @@ return {
           win = {
             input = {
               keys = {
-                ["<S-Cr>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
-                -- ["<c-k>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
+                -- ["<S-Cr>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
               },
             },
           },
         })
         picker:show()
       end,
+      mode = {"n", "x" },
     },
     {
       "<M-/>",
@@ -420,7 +427,7 @@ return {
           win = {
             input = {
               keys = {
-                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
                 ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
