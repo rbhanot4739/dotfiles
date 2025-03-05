@@ -1,49 +1,62 @@
 local M = {}
 local exclude_patterns = { "__pycache__", "*.typed" }
 
-M.switch_to_grep = nil
-M.grep_alt_picker = nil
 ---@param picker snacks.Picker
 local function switch_to_grep(picker, _)
+  local snacks = require("snacks")
+  local cwd = picker.input.filter.cwd
   local picker_type = picker.opts.source
-  local allowed_pickers = { "files", "buffers", "recent", "smart", "grep" }
+  local allowed_pickers = { "files", "buffers", "recent", "smart", "grep", "git_grep", "grep_buffers" }
+
   if not vim.tbl_contains(allowed_pickers, picker_type) then
     Snacks.notify.warn("Switching to grep is not supported for `" .. picker_type .. "`", { title = "Snacks Picker" })
     return
   end
 
-  if picker_type == "grep" then
-    M.switch_to_grep = false
-    M.grep_alt_picker = M.grep_alt_picker or "files"
-  elseif picker_type == "grep_buffers" then
-    M.switch_to_grep = true
-    M.grep_alt_picker = "buffers"
+  if vim.tbl_contains({ "grep", "git_grep", "grep_buffers" }, picker_type) then
+    local pattern = picker.input.filter.search or ""
+
+    if picker_type == "grep_buffers" then
+      ---@diagnostic disable-next-line: missing-fields
+      M.grep_alt_picker = "buffers"
+    else
+      M.grep_alt_picker = M.grep_alt_picker or "files"
+    end
+    snacks.picker(M.grep_alt_picker, { cwd = cwd, pattern = pattern })
   else
-    M.switch_to_grep = true
+    local pattern = picker.input.filter.pattern or ""
     if picker_type == "recent_files" then
       picker_type = "recent"
     end
-    M.grep_alt_picker = picker_type
-  end
-
-  local snacks = require("snacks")
-  local cwd = picker.input.filter.cwd
-
-  picker:close()
-
-  if M.switch_to_grep then
-    local pattern = picker.input.filter.pattern or ""
-    ---@diagnostic disable-next-line: missing-fields
     if picker_type == "buffers" then
       snacks.picker.grep_buffers({ search = pattern })
     else
-      snacks.picker.grep({ cwd = cwd, search = pattern })
+      local grep_picker = snacks.git.get_root() and "git_grep" or "grep"
+      snacks.picker(grep_picker, { cwd = cwd, search = pattern })
     end
-  else
-    local pattern = picker.input.filter.search or ""
-    ---@diagnostic disable-next-line: missing-fields
-    snacks.picker.pick(M.grep_alt_picker, { cwd = cwd, pattern = pattern })
+    M.grep_alt_picker = picker_type
   end
+  picker:close()
+end
+
+function M.test_picker()
+  ---@type snacks.picker.Config
+  return {
+    finder = function()
+      local list = { "Vim", "Neovim", "Lua" }
+      local items = {}
+      for _, item in ipairs(list) do
+        items[#items + 1] = {
+          item = item,
+          text = item,
+          preview = { text = "Hello " .. item },
+        }
+      end
+      return items
+    end,
+    format = "text",
+    preview = "preview",
+  }
 end
 
 return {
@@ -51,6 +64,12 @@ return {
   priority = 1000,
   lazy = false,
   keys = {
+    {
+      "<leader>L",
+      function()
+        Snacks.picker(M.test_picker())
+      end,
+    },
     { "<leader>e", false },
     {
       "<leader>,",
@@ -80,12 +99,6 @@ return {
       end,
       desc = "Fuzzy find files",
     },
-    -- {
-    --   "<leader>?",
-    --   function()
-    --     Snacks.picker.command_history({ layout = { preset = "dropdown", preview = false } })
-    --   end,
-    -- },
     {
       "<c-r>",
       mode = { "i" },
@@ -199,31 +212,38 @@ return {
     {
       "<leader>gy",
       function()
-        local get_url = function(link_type)
-          Snacks.gitbrowse.open({
+        local start_line, end_line
+        start_line, end_line = require("utils").get_visual_selection()
+        local get_url = function(link_type, copy)
+          local l_url = ""
+          copy = copy == nil and true or false
+          ---@diagnostic disable-next-line: missing-fields
+          local opts = {
             notify = false,
+            line_start = start_line or nil,
+            line_end = end_line or nil,
             what = link_type,
-            open = function(url)
-              print("open called with", url)
+          }
+          if copy then
+            opts["open"] = function(url)
+              l_url = url
               vim.fn.setreg("+", url)
-            end,
-          })
+            end
+          end
+          Snacks.gitbrowse.open(opts)
+          return l_url
         end
+
         local picker = Snacks.picker.pick({
           title = "Select link type",
           items = {
-            { text = "repo" },
-            { text = "file" },
-            { text = "branch" },
-            { text = "commit" },
-            { text = "permalink" },
+            { text = "repo", preview = { text = get_url("repo") } },
+            { text = "branch", preview = { text = get_url("branch") } },
+            { text = "file", preview = { text = get_url("file") } },
+            { text = "commit", preview = { text = get_url("commit") } },
+            { text = "permalink", preview = { text = get_url("permalink") } },
           },
-          preview = function(ctx)
-            -- local r_url = get_url(ctx.item.text)
-            ctx.preview:set_title("Git link preview")
-            -- ctx.preview:set_lines({ "hello" })
-            ctx.preview:show(ctx.picker)
-          end,
+          preview = "preview",
           layout = {
             layout = {
               backdrop = false,
@@ -244,37 +264,31 @@ return {
           ---@param picker snacks.Picker
           confirm = function(picker, item)
             picker:close()
-            Snacks.gitbrowse.open({ what = item.text, notify = false })
+            ---@diagnostic disable-next-line: missing-fields
+            get_url(item.text, false)
             return true
           end,
           actions = {
             copy_link = function(picker, item)
               picker:close()
-              ---@diagnostic disable-next-line: missing-fields
-              Snacks.gitbrowse.open({
-                notify = false,
-                what = item.text,
-                open = function(url)
-                  vim.fn.setreg("+", url)
-                  Snacks.notify(
-                    string.format("Copied %s url ( %s ) to clipboard", item.text, url),
-                    { title = "Git Browse" }
-                  )
-                end,
-              })
+              local url = get_url(item.text)
+              Snacks.notify(
+                string.format("Copied %s url ( %s ) to clipboard", item.text, url),
+                { title = "Git Browse" }
+              )
             end,
           },
           win = {
             input = {
               keys = {
-                -- ["<S-Cr>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
+                ["<S-Cr>"] = { "copy_link", desc = "Copy link", mode = { "i", "n" } },
               },
             },
           },
         })
         picker:show()
       end,
-      mode = {"n", "x" },
+      mode = { "n", "x" },
     },
     {
       "<M-/>",
@@ -352,9 +366,7 @@ return {
         },
         smart = {
           actions = {
-            switch_grep_files = function(picker, _)
-              switch_to_grep(picker, _)
-            end,
+            switch_grep_files = switch_to_grep,
           },
           win = {
             input = {
@@ -366,9 +378,7 @@ return {
         },
         recent = {
           actions = {
-            switch_grep_files = function(picker, _)
-              switch_to_grep(picker, _)
-            end,
+            switch_grep_files = switch_to_grep,
           },
           win = {
             input = {
@@ -380,9 +390,19 @@ return {
         },
         buffers = {
           actions = {
-            switch_grep_files = function(picker, _)
-              switch_to_grep(picker, _)
-            end,
+            switch_grep_files = switch_to_grep,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+              },
+            },
+          },
+        },
+        grep_buffers = {
+          actions = {
+            switch_grep_files = switch_to_grep,
           },
           win = {
             input = {
@@ -396,9 +416,7 @@ return {
           exclude = exclude_patterns,
           -- live = true,
           actions = {
-            switch_grep_files = function(picker, _)
-              switch_to_grep(picker, _)
-            end,
+            switch_grep_files = switch_to_grep,
             cd_up = function(picker, _)
               picker:set_cwd(vim.fs.dirname(picker:cwd()))
               picker:find()
@@ -416,9 +434,7 @@ return {
         grep = {
           exclude = exclude_patterns,
           actions = {
-            switch_grep_files = function(picker, _)
-              switch_to_grep(picker, _)
-            end,
+            switch_grep_files = switch_to_grep,
             cd_up = function(picker, _)
               picker:set_cwd(vim.fs.dirname(picker:cwd()))
               picker:find()
@@ -429,6 +445,56 @@ return {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
                 ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+              },
+            },
+          },
+        },
+        git_grep = {
+          exclude = exclude_patterns,
+          actions = {
+            switch_grep_files = switch_to_grep,
+            cd_up = function(picker, _)
+              picker:set_cwd(vim.fs.dirname(picker:cwd()))
+              picker:find()
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
+                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+              },
+            },
+          },
+        },
+        lsp_workspace_symbols = {
+          actions = {
+            switch_to_ws = function(picker, item)
+              picker:close()
+              local pattern = picker.input.filter.search or ""
+              Snacks.picker.lsp_symbols({ pattern = pattern })
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_to_ws", desc = "Switch to workspace symbols", mode = { "i", "n" } },
+              },
+            },
+          },
+        },
+        lsp_symbols = {
+          actions = {
+            switch_to_ws = function(picker, _)
+              picker:close()
+              local pattern = picker.input.filter.pattern or ""
+              Snacks.picker.lsp_workspace_symbols({ search = pattern })
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<c-k>"] = { "switch_to_ws", desc = "Switch to workspace symbols", mode = { "i", "n" } },
               },
             },
           },

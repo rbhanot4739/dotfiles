@@ -1,4 +1,5 @@
 {
   "reportMissingTypeStubs": false,
-  "typeCheckingMode": "standard"
+  "typeCheckingMode": "standard",
+  "analyzeUnannotatedFunctions": true
 }

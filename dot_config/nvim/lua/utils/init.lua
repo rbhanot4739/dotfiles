@@ -39,4 +39,17 @@ M.get_root_dir = get_project_root()
 
 -- Custom picker for combining oldfiles and find_files to get VsCode like file search
 
+function M.get_visual_selection()
+  local start_line, end_line
+  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+    start_line = vim.fn.line("v")
+    end_line = vim.fn.line(".")
+    print("start_line", start_line, "end_line", end_line)
+    if start_line > end_line then
+      start_line, end_line = end_line, start_line
+    end
+  end
+  return start_line, end_line
+end
+
 return M

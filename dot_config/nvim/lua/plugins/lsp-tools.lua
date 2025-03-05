@@ -18,62 +18,51 @@ return {
         nowait = true,
         desc = "References",
       }
-      --     local util = require("lspconfig.util")
-      --     local root_files = {
-      --       ".git",
-      --       "setup.py",
-      --       "setup.cfg",
-      --       "pyrightconfig.json",
-      --       "pyproject.toml",
-      --       "requirements.txt",
-      --       "Pipfile",
-      --     }
-      --     vim.tbl_extend("force", opts, {
-      --       codelens = {
-      --         enabled = true,
-      --       },
-      --       servers = {
-      --         basedpyright = {
-      --           root_dir = function(fname)
-      --             return util.root_pattern(unpack(root_files))(fname)
-      --           end,
-      --           capabilities = {
-      --             textDocument = {
-      --               publishDiagnostics = {
-      --                 tagSupport = {
-      --                   valueSet = { 2 },
-      --                 },
-      --               },
-      --             },
-      --           },
-      --           settings = {
-      --             basedpyright = {
-      --               analysis = {
-      --                 diagnosticMode = "workspace",
-      --                 typeCheckingMode = "standard",
-      --                 -- ignore = { "*" },
-      --                 diagnosticSeverityOverrides = {
-      --                   reportUndefinedVariable = false,
-      --                   reportUnusedVariable = "warning", -- or anything
-      --                   -- reportUnknownParameterType = false,
-      --                   -- reportUnknownArgumentType = false,
-      --                   -- reportUnknownLambdaType = false,
-      --                   -- reportUnknownVariableType = false,
-      --                   -- reportUnknownMemberType = false,
-      --                   -- reportMissingParameterType = false,
-      --                 },
-      --               },
-      --             },
-      --           },
-      --         },
-      --       },
-      --     })
+      local util = require("lspconfig.util")
+      opts["servers"]["basedpyright"] = {
+        root_dir = function(fname)
+          local root_files = {
+            "pyrightconfig.json",
+            "setup.py",
+            "setup.cfg",
+            "pyproject.toml",
+            "requirements.txt",
+            "Pipfile",
+            ".git",
+          }
+          return util.root_pattern(unpack(root_files))(fname)
+        end,
+        capabilities = {
+          textDocument = {
+            publishDiagnostics = {
+              tagSupport = {
+                valueSet = { 2 },
+              },
+            },
+          },
+        },
+        settings = {
+          basedpyright = {
+            -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
+            analysis = {
+              diagnosticMode = "openFilesOnly",
+              typeCheckingMode = "standard",
+              autoSearchPaths = true,
+              diagnosticSeverityOverrides = {
+                -- https://docs.basedpyright.com/latest/configuration/config-files/#type-check-diagnostics-settings
+                reportMissingTypeStubs = false,
+                analyzeUnannotatedFunctions = true,
+              },
+            },
+          },
+        },
+      }
     end,
   },
   {
     "williamboman/mason.nvim",
     -- opts = { ensure_installed = { "flake8", "mypy", "cspell", "markdown-oxide" } },
-    opts = { ensure_installed = { "flake8", "mypy", "cspell"} },
+    opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
   },
   -- linter/formatter
   {
