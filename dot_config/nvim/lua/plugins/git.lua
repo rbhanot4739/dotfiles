@@ -18,7 +18,6 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim", -- required
       "sindrets/diffview.nvim", -- optional - Diff integration
-      -- "nvim-telescope/telescope.nvim", -- optional
     },
     enabled = false,
     cmd = "Neogit",
@@ -67,7 +66,6 @@ return {
       { "<leader>gd", "<cmd>DiffviewOpen<CR>", desc = "Diff Index" },
       { "<leader>gD", "<cmd>DiffviewOpen master..HEAD<CR>", desc = "Diff master" },
       { "<leader>gf", "<cmd>DiffviewFileHistory %<cr>", desc = "Open diffs for current File" },
-      -- { "<leader>gL", "<cmd>Telescope git_diffs  diff_commits<cr>", desc = "Telescope git Log" },
       {
         "q",
         "<cmd>DiffviewClose<CR>",

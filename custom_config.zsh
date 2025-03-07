@@ -31,29 +31,22 @@ debug_print() {
 	fi
 }
 
-mx() {
-	/bin/bash $HOME/scripts/tmux-sessions.sh $@
-	# /bin/bash $HOME/tmux-sessions.sh $@
-}
-
 tm() {
-	bash $HOME/scripts/tmux/manager.sh $@
-	# bash "$HOME/scripts/bak-manager.sh" "$@"
+  bash $HOME/scripts/tmux/manager.sh $@
 }
-
-zle -N tm
-bindkey '^O' tm
+# zle -N tm
+# `-s` binds key to a string command which is cool I guess
+bindkey -s '^O' 'tm\n'
 
 cd_up_widget() {
-	echo "cd_up called"
+	# echo "cd_up called"
 	cd ..
-	zle reset-prompt
+	# zle reset-prompt
 	zle accept-line
 }
 
 zle -N cd_up_widget
 bindkey '' cd_up_widget
-# bindkey '^[[D' cd_up_widget
 
 #  =================================== Aliases ===================================
 

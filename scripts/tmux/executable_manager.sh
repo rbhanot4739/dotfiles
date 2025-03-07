@@ -112,7 +112,7 @@ fi
 
 
 del_bind="del:execute(del_session {})+reload(get_tmux_sessions)"
-rename_bind="ctrl-o:execute(rename_session {})+reload(get_tmux_sessions)"
+rename_bind="ctrl-]:execute(rename_session {})+reload(get_tmux_sessions)"
 fzf_binds='enter:accept-or-print-query'
 info="--info=hidden"
 border="--border --padding 1,1  --border-label=' Tmux Session Manager '"
@@ -126,7 +126,7 @@ header="--header-label ' Keymaps ' --header '
           Start session in a directory
           Start a tmuxinator project
 > Del: Kill tmux session / Stop tmuxinator project
-> Ctrl-o: Rename a session
+> Ctrl-]: Rename a session
 '"
 binds="--bind \"$fzf_binds\" --bind \"$del_bind\" --bind \"$rename_bind\""
 prompt="--prompt ' Tmux Sessions > '"

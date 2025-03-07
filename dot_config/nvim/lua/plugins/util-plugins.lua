@@ -2,7 +2,6 @@
 return {
   {
     "okuuva/auto-save.nvim",
-
     cmd = "ASToggle", -- optional for lazy loading on command
     event = { "InsertLeave", "TextChanged" }, -- optional for lazy loading on trigger events
     opts = {
@@ -20,6 +19,29 @@ return {
     dependencies = {
       { "nvim-tree/nvim-web-devicons" },
     },
+    keys = {
+      {
+        "m",
+        function()
+          require("arrow.buffer_ui").openMenu()
+        end,
+        noremap = true,
+        silent = true,
+        nowait = true,
+        desc = "Arrow File Mappings",
+      },
+      {
+        "\\",
+        function()
+          require("arrow.ui").openMenu()
+        end,
+        noremap = true,
+        silent = true,
+        nowait = true,
+        desc = "Arrow Buffer Mappings",
+      },
+    },
+    lazy = true,
     opts = {
       show_icons = true,
       leader_key = "\\", -- Recommended to be a single key
@@ -30,7 +52,7 @@ return {
   {
     "rmagatti/auto-session",
     lazy = false,
-    enabled = true,
+    enabled = false,
     keys = {
       { "<leader>qs", [[<cmd>SessionSearch<cr>]], desc = "SessionSearch" },
     },
@@ -39,7 +61,7 @@ return {
       suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
       use_git_branch = true,
       cwd_change_handling = true,
-      auto_restore = true,
+      auto_restore = false,
       session_lens = {
         theme_conf = {
           border = true,
@@ -55,8 +77,8 @@ return {
     "chrisgrieser/nvim-rip-substitute",
     cmd = "RipSubstitute",
     opts = {
-      keymaps = { abort = "<Esc>",  toggleIgnoreCase = "<C-i>"},
-      popupWin = {position = "top"},
+      keymaps = { abort = "<Esc>", toggleIgnoreCase = "<C-i>" },
+      popupWin = { position = "top" },
     },
     keys = {
       {

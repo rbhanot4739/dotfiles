@@ -1,59 +1,89 @@
 return {
-  {
-    "jake-stewart/multicursor.nvim",
-    branch = "1.0",
-    config = function()
-      local mc = require("multicursor-nvim")
-
-      mc.setup()
-
-      -- Add cursors above/below the main cursor.
-      vim.keymap.set({ "n", "v" }, "<M-Up>", function()
-        mc.addCursor("k")
-      end, { desc = "Add cursor above" })
-      vim.keymap.set({ "n", "v" }, "<M-Down>", function()
-        mc.addCursor("j")
-      end, { desc = "Add cursor below" })
-
-      -- Add a cursor and jump to the next word under cursor.
-      vim.keymap.set({ "n", "v" }, "<M-n>", function()
-        mc.matchAddCursor(1)
-      end, { desc = "Add cursor to next match" })
-
-      -- Jump to the next word under cursor but do not add a cursor
-      vim.keymap.set({ "n", "v" }, "<M-N>", function()
-        mc.matchSkipCursor(1)
-      end, { desc = "Do not add cursor to next match" })
-
-      vim.keymap.set({ "n", "v" }, "<M-p>", function()
-        mc.matchAddCursor(-1)
-      end)
-      vim.keymap.set({ "n", "v" }, "<M-P>", function()
-        mc.matchSkipCursor(-1)
-      end)
-
-      vim.keymap.set("n", "<M-x>", function()
-        if not mc.cursorsEnabled() then
-          mc.enableCursors()
-        elseif mc.hasCursors() then
-          mc.clearCursors()
+  "jake-stewart/multicursor.nvim",
+  branch = "1.0",
+  lazy = true,
+  keys = {
+    {
+      "<M-Up>",
+      mode = { "n", "v" },
+      function()
+        require("multicursor-nvim").addCursor("k")
+      end,
+      desc = "Add cursor above",
+    },
+    {
+      "<M-Down>",
+      mode = { "n", "v" },
+      function()
+        require("multicursor-nvim").addCursor("j")
+      end,
+      desc = "Add cursor below",
+    },
+    {
+      "<M-n>",
+      mode = { "n", "v" },
+      function()
+        require("multicursor-nvim").matchAddCursor(1)
+      end,
+      desc = "Add cursor to next match",
+    },
+    {
+      "<M-N>",
+      mode = { "n", "v" },
+      function()
+        require("multicursor-nvim").matchSkipCursor(1)
+      end,
+      desc = "Do not add cursor to next match",
+    },
+    {
+      "<M-p>",
+      mode = { "n", "v" },
+      function()
+        require("multicursor-nvim").matchAddCursor(-1)
+      end,
+    },
+    {
+      "<M-P>",
+      mode = { "n", "v" },
+      function()
+        require("multicursor-nvim").matchSkipCursor(-1)
+      end,
+    },
+    {
+      mode = "n",
+      "<A-\\>",
+      function()
+        require("multicursor-nvim").alignCursors()
+      end,
+    },
+    {
+      mode = "v",
+      "I",
+      function()
+        require("multicursor-nvim").insertVisual()
+      end,
+    },
+    {
+      mode = "v",
+      "A",
+      function()
+        require("multicursor-nvim").appendVisual()
+      end,
+    },
+    {
+      "<M-x>",
+      mode = "n",
+      function()
+        if not require("multicursor-nvim").cursorsEnabled() then
+          require("multicursor-nvim").enableCursors()
+        elseif require("multicursor-nvim").hasCursors() then
+          require("multicursor-nvim").clearCursors()
         else
           -- Default <esc> handler.
         end
-      end, { desc = "Close cursors" })
-
-      -- Align cursor columns.
-      vim.keymap.set("n", "<A-\\>", mc.alignCursors)
-
-      -- Append/insert for each line of visual selections.
-      vim.keymap.set("v", "I", mc.insertVisual)
-      vim.keymap.set("v", "A", mc.appendVisual)
-
-      -- Customize how cursors look.
-      vim.api.nvim_set_hl(0, "MultiCursorCursor", { link = "Cursor" })
-      vim.api.nvim_set_hl(0, "MultiCursorVisual", { link = "Visual" })
-      vim.api.nvim_set_hl(0, "MultiCursorDisabledCursor", { link = "Visual" })
-      vim.api.nvim_set_hl(0, "MultiCursorDisabledVisual", { link = "Visual" })
-    end,
+      end,
+      desc = "Close cursors",
+    },
   },
+  opts = {},
 }

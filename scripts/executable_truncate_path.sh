@@ -1,14 +1,10 @@
 #!/bin/bash
 
-# Get the current path
 current_path="$1"
-# how many characters to keep from each path component
+# characters to keep from each path component
 keep_chars="${2:-2}"
-# how many path components from the last to keep
+# path components from the last to keep
 keep_components="${3:-1}"
-
-# Debug: Print the original path
-# echo "Original path: $current_path"
 
 # Ensure HOME is set
 if [ -z "$HOME" ]; then
@@ -21,14 +17,8 @@ if [[ "$current_path" == *"$HOME"* ]]; then
 	current_path="~${current_path#$HOME}"
 fi
 
-# Debug: Print the path after replacement
-# echo "Path after replacement: $current_path"
-
 # Split the path into components
 IFS='/' read -r -a path_components <<<"$current_path"
-
-# Debug: Print the path components
-# echo "Path components: ${path_components[*]}"
 
 # Truncate all but the $keep_components
 for ((i = 0; i < ${#path_components[@]} - "$keep_components"; i++)); do
@@ -47,7 +37,7 @@ handle_comps() {
 		if [[ "${path_components[$i]}" == *$char* ]]; then
 			IFS=$char read -ra parts <<<"${path_components[$i]}"
 			for j in "${!parts[@]}"; do
-				parts[$j]="${parts[$j]:0:keep_chars}"
+				parts[$j]="${parts[$j]:0:keep_chars+1}"
 			done
 			path_components[$i]=$(
 				IFS=$char
@@ -65,8 +55,5 @@ truncated_path=$(
 	IFS=/
 	echo "${path_components[*]}"
 )
-
-# Debug: Print the truncated path
-# echo "Truncated path: $truncated_path"
 
 echo "$truncated_path"

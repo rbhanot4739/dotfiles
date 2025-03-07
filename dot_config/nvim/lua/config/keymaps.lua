@@ -40,7 +40,7 @@ if not vim.g.vscode then
     Snacks.lazygit({ args = { "log" }, cwd = LazyVim.root.git() })
   end, { desc = "Lazygit Log" })
 
-  map("n", "<leader>lx", "<cmd>LazyExtras<cr>")
+  map("n", "<leader>L", "<cmd>LazyExtras<cr>")
   -- Use backspace to go to previous buffer
   map("n", "<BS>", "<C-6>", { remap = true })
   -- Use enter to toggle folds

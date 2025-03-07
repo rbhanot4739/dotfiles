@@ -39,37 +39,11 @@ local function switch_to_grep(picker, _)
   picker:close()
 end
 
-function M.test_picker()
-  ---@type snacks.picker.Config
-  return {
-    finder = function()
-      local list = { "Vim", "Neovim", "Lua" }
-      local items = {}
-      for _, item in ipairs(list) do
-        items[#items + 1] = {
-          item = item,
-          text = item,
-          preview = { text = "Hello " .. item },
-        }
-      end
-      return items
-    end,
-    format = "text",
-    preview = "preview",
-  }
-end
-
 return {
   "folke/snacks.nvim",
   priority = 1000,
   lazy = false,
   keys = {
-    {
-      "<leader>L",
-      function()
-        Snacks.picker(M.test_picker())
-      end,
-    },
     { "<leader>e", false },
     {
       "<leader>,",
@@ -315,12 +289,15 @@ return {
     },
   },
   opts = {
-    -- matcher = { frecency = true},
     picker = {
-
-      -- layout = {
-      --   preset = "ivy",
-      -- },
+      matcher = { frecency = true },
+      actions = {
+        switch_grep_files = switch_to_grep,
+        cd_up = function(picker, _)
+          picker:set_cwd(vim.fs.dirname(picker:cwd()))
+          picker:find()
+        end,
+      },
       ---@class snacks.picker.previewers.Config
       previewers = {
         diff = {
@@ -329,7 +306,7 @@ return {
         },
         git = {
           builtin = false, -- use Neovim for previewing git output (true) or use git (false)
-          -- args = {"-c", "delta"}, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
+          args = { "-c", "delta" }, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
         },
       },
       layouts = {
@@ -365,21 +342,22 @@ return {
           auto_close = true,
         },
         smart = {
-          actions = {
-            switch_grep_files = switch_to_grep,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          -- },
           win = {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
         },
         recent = {
-          actions = {
-            switch_grep_files = switch_to_grep,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          -- },
           win = {
             input = {
               keys = {
@@ -389,9 +367,9 @@ return {
           },
         },
         buffers = {
-          actions = {
-            switch_grep_files = switch_to_grep,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          -- },
           win = {
             input = {
               keys = {
@@ -401,9 +379,9 @@ return {
           },
         },
         grep_buffers = {
-          actions = {
-            switch_grep_files = switch_to_grep,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          -- },
           win = {
             input = {
               keys = {
@@ -415,13 +393,13 @@ return {
         files = {
           exclude = exclude_patterns,
           -- live = true,
-          actions = {
-            switch_grep_files = switch_to_grep,
-            cd_up = function(picker, _)
-              picker:set_cwd(vim.fs.dirname(picker:cwd()))
-              picker:find()
-            end,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          --   cd_up = function(picker, _)
+          --     picker:set_cwd(vim.fs.dirname(picker:cwd()))
+          --     picker:find()
+          --   end,
+          -- },
           win = {
             input = {
               keys = {
@@ -433,13 +411,13 @@ return {
         },
         grep = {
           exclude = exclude_patterns,
-          actions = {
-            switch_grep_files = switch_to_grep,
-            cd_up = function(picker, _)
-              picker:set_cwd(vim.fs.dirname(picker:cwd()))
-              picker:find()
-            end,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          --   cd_up = function(picker, _)
+          --     picker:set_cwd(vim.fs.dirname(picker:cwd()))
+          --     picker:find()
+          --   end,
+          -- },
           win = {
             input = {
               keys = {
@@ -451,13 +429,13 @@ return {
         },
         git_grep = {
           exclude = exclude_patterns,
-          actions = {
-            switch_grep_files = switch_to_grep,
-            cd_up = function(picker, _)
-              picker:set_cwd(vim.fs.dirname(picker:cwd()))
-              picker:find()
-            end,
-          },
+          -- actions = {
+          --   switch_grep_files = switch_to_grep,
+          --   cd_up = function(picker, _)
+          --     picker:set_cwd(vim.fs.dirname(picker:cwd()))
+          --     picker:find()
+          --   end,
+          -- },
           win = {
             input = {
               keys = {
@@ -572,66 +550,25 @@ return {
       end,
     },
     dashboard = {
-      enabled = false,
-      preset = {
-        keys = {
-          {
-            icon = " ",
-            key = "f",
-            desc = "Find File",
-            action = function()
-              local has_telescope, telescope = pcall(require, "telescope")
-              local has_fzf, fzf = pcall(require, "fzf-lua")
-              local has_snacks, snacks = pcall(require, "snacks")
-              if has_telescope then
-                telescope.extensions.smart_open.smart_open({ cwd_only = true })
-              elseif has_fzf then
-                fzf.files({ hidden = true })
-              else
-                snacks.picker.pick("files")
-              end
-            end,
-          },
-          {
-            icon = " ",
-            key = "g",
-            desc = "Grep",
-            action = function()
-              local has_telescope, telescope = pcall(require, "telescope")
-              local has_fzf, fzf = pcall(require, "fzf-lua")
-              local has_snacks, snacks = pcall(require, "snacks")
-              if has_telescope then
-                telescope.extensions.live_grep_args.live_grep_args({
-                  prompt_title = "Live Grep",
-                })
-              elseif has_fzf then
-                fzf.grep({ hidden = true })
-              else
-                snacks.picker.pick("grep")
-              end
-            end,
-          },
-          -- { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
-          -- { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
-          {
-            icon = " ",
-            key = "c",
-            desc = "Config",
-            action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})",
-          },
-          { icon = " ", key = "s", desc = "Restore Session", action = ":SessionRestore" },
-          { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
-          { icon = " ", key = "l", desc = "Sessions", action = ":SessionSearch" },
-          { icon = "󰒲 ", key = "x", desc = "LazyExtras", action = ":LazyExtras" },
-          { icon = "? ", key = "h", desc = "Help", action = ":Telescope help_tags" },
-          { icon = " ", key = "q", desc = "Quit", action = ":qa" },
-        },
-      },
-      sections = {
-        { section = "header" },
-        { section = "keys", gap = 1, padding = 1 },
-        { section = "startup" },
-      },
+      enabled = true,
+      config = function(opts)
+        for _, keymap in ipairs(opts.preset.keys) do
+          local desc = string.lower(keymap.desc)
+          if string.find(desc, "find file") then
+            keymap.action = ":lua Snacks.picker.smart({filter={cwd=true}})"
+          end
+          if string.find(desc, "recent files") then
+            keymap.action = ":lua Snacks.picker.recent({filter={cwd=true}})"
+          end
+          if string.find(desc, "grep") or string.find(desc, "find text") then
+            keymap.action = Snacks.git.get_root() == nil and ":lua Snacks.picker.grep()"
+              or ":lua Snacks.picker.git_grep()"
+          end
+          if string.find(desc, "projects") then
+            keymap.action = ":lua Snacks.picker.zoxide()"
+          end
+        end
+      end,
     },
     scratch = {
       win_by_ft = {

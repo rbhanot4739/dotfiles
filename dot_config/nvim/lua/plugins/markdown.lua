@@ -1,6 +1,6 @@
 return {
   {
-    "epwalsh/obsidian.nvim",
+    "obsidian-nvim/obsidian.nvim",
     version = "*", -- recommended, use latest release instead of latest commit
     lazy = true,
     enabled = not vim.env.SSH_TTY,
@@ -10,44 +10,25 @@ return {
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
-      { "nvim-telescope/telescope.nvim", branch = "0.1.x", ft = { "markdown" } },
     },
     keys = {
-      -- {
-      --   "<leader>oo",
-      --   function()
-      --     local vault = vim.fn.expand("~/obsidian-vault/")
-      --     Snacks.picker.pick("grep", {
-      --       cwd = vault,
-      --       actions = {
-      --         create_note = function(picker, item)
-      --           picker:close()
-      --           vim.cmd("ObsidianNew " .. picker.finder.filter.search)
-      --         end,
-      --       },
-      --       win = {
-      --         input = {
-      --           keys = {
-      --             ["<c-x>"] = { "create_note", desc = "Create new note", mode = { "i", "n" } },
-      --           },
-      --         },
-      --       },
-      --     })
-      --   end,
-      -- },
-      { "<leader>oo", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Open ObsidianSearch" } },
-      { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Open ObsidianLinks" } },
+      { "<leader>on", "<cmd>ObsidianNew<CR>", { noremap = true, silent = true, desc = "Obsidian New Note" } },
+      { "<leader>of", "<cmd>ObsidianQuickSwitch<CR>", { noremap = true, silent = true, desc = "Obsidian Find notes" } },
+      { "<leader>og", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Obsidian Grep notes" } },
+      { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Obsidian Links" } },
       { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
-      { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Open ObsidianTags" } },
+      { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Obsidian Tags" } },
+      { "<leader>oT", "<cmd>ObsidianTOC<cr>", { noremap = true, silent = true, desc = "Obsidian TOC" } },
     },
     opts = {
       completion = {
         nvim_cmp = false,
+        blink = true,
       },
       ui = {
         enable = false,
       },
-      picker = { name = "telescope.nvim" },
+      picker = { name = "snacks.pick" },
       workspaces = {
         {
           name = "personal",

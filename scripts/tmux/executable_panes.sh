@@ -24,7 +24,7 @@ fzf_cmd="fzf --style full"
 
 tmux_panes=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}: #{window_name}<>#{pane_current_path}" | grep -v "$current_pane" |
 	while read -r line; do
-    # clever shell expansion
+    # shell expansion
     path="${line##*<>}"    # this removes everything from beginning of the string upto `*<>`
 		prefix="${line%%<>*}"    # this removes everything from the end of the string upto `<>*`
 
