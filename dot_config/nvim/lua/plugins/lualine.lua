@@ -1,20 +1,4 @@
-local get_path = function()
-  -- convert the path to a short form
-  -- vim.fn.expand("%:~:.:h") will first get the path to file
-  -- then replace the homedir with `~` and then replace the
-  -- current directory with `.` and finally will pick just the directory part of the path
-  local path = vim.fn.expand("%:~:.:h")
-  if string.len(path) > 50 then
-    local parts = vim.split(path, "/")
-    for i = 1, #parts - 1 do
-      if string.len(parts[i]) > 2 then
-        parts[i] = string.sub(parts[i], 1, 2)
-      end
-    end
-    path = table.concat(parts, "/")
-  end
-  return path
-end
+local get_path = require("utils").trim_path
 return {
   "nvim-lualine/lualine.nvim",
   event = "VeryLazy",
@@ -29,7 +13,8 @@ return {
       format = "{kind_icon}{symbol.name:Normal}",
       hl_group = "lualine_c_normal",
     })
-    local excluded_fts = { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm", "snacks_terminal", "man" }
+    local excluded_fts =
+      { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm", "snacks_terminal", "man", "snacks_dashboard" }
     opts.options = {
       theme = "auto",
       disabled_filetypes = {
@@ -53,10 +38,6 @@ return {
         },
         {
           get_path,
-          -- cond = function()
-          --   local excluded_fts = { "dashboard", "alpha", "ministarter", "toggleterm" }
-          --   return not vim.tbl_contains(excluded_fts, vim.bo.filetype)
-          -- end,
         },
       },
       lualine_z = {

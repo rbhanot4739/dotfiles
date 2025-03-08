@@ -1,3 +1,7 @@
+local utils = require("utils")
+local lsp_symbols = LazyVim.config.kind_filter.default
+table.insert(lsp_symbols, "Constant")
+
 local M = {}
 local exclude_patterns = { "__pycache__", "*.typed" }
 
@@ -48,7 +52,7 @@ return {
     {
       "<leader>,",
       function()
-        Snacks.picker.recent({ filter = { cwd = true } })
+        Snacks.picker.recent()
       end,
       desc = "Open recent files",
     },
@@ -108,7 +112,7 @@ return {
       function()
         Snacks.picker.grep({ ignored = true, cwd = vim.fn.expand("%:p:h") })
       end,
-      desc = "Find adjacent files",
+      desc = "Grep adjacent files",
     },
     {
       "<leader>fP",
@@ -146,25 +150,21 @@ return {
     {
       "<leader>ss",
       function()
-        table.insert(LazyVim.config.kind_filter.default, "Constant")
-        Snacks.picker.lsp_symbols({
-          filter = LazyVim.config.kind_filter,
-        })
+        Snacks.picker.lsp_symbols({})
       end,
       desc = "LSP Symbols",
     },
     {
       "<leader>sS",
       function()
-        table.insert(LazyVim.config.kind_filter.default, "Constant")
-        Snacks.picker.lsp_workspace_symbols({ filter = LazyVim.config.kind_filter })
+        Snacks.picker.lsp_workspace_symbols()
       end,
       desc = "LSP Workspace Symbols",
     },
     {
       "<leader><space>",
       function()
-        Snacks.picker.smart({ filter = { cwd = true } })
+        Snacks.picker.smart()
       end,
       desc = "Smart Picker",
     },
@@ -187,7 +187,7 @@ return {
       "<leader>gy",
       function()
         local start_line, end_line
-        start_line, end_line = require("utils").get_visual_selection()
+        start_line, end_line = utils.get_visual_selection()
         local get_url = function(link_type, copy)
           local l_url = ""
           copy = copy == nil and true or false
@@ -295,6 +295,8 @@ return {
         switch_grep_files = switch_to_grep,
         cd_up = function(picker, _)
           picker:set_cwd(vim.fs.dirname(picker:cwd()))
+          local dir = utils.trim_path(picker:cwd())
+          picker.title = utils.title(picker.opts.source) .. " (" .. dir .. ")"
           picker:find()
         end,
       },
@@ -328,23 +330,13 @@ return {
             },
           },
         },
-        --   select = {
-        --     layout = {
-        --       relative = "cursor",
-        --       -- width = 70,
-        --       -- min_width = 0,
-        --       -- row = 1,
-        --     },
-        --   },
       },
       sources = {
         explorer = {
           auto_close = true,
         },
         smart = {
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          -- },
+          filter = { cwd = true },
           win = {
             input = {
               keys = {
@@ -355,9 +347,7 @@ return {
           },
         },
         recent = {
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          -- },
+          filter = { cwd = true },
           win = {
             input = {
               keys = {
@@ -367,9 +357,6 @@ return {
           },
         },
         buffers = {
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          -- },
           win = {
             input = {
               keys = {
@@ -379,9 +366,6 @@ return {
           },
         },
         grep_buffers = {
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          -- },
           win = {
             input = {
               keys = {
@@ -392,14 +376,6 @@ return {
         },
         files = {
           exclude = exclude_patterns,
-          -- live = true,
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          --   cd_up = function(picker, _)
-          --     picker:set_cwd(vim.fs.dirname(picker:cwd()))
-          --     picker:find()
-          --   end,
-          -- },
           win = {
             input = {
               keys = {
@@ -411,13 +387,6 @@ return {
         },
         grep = {
           exclude = exclude_patterns,
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          --   cd_up = function(picker, _)
-          --     picker:set_cwd(vim.fs.dirname(picker:cwd()))
-          --     picker:find()
-          --   end,
-          -- },
           win = {
             input = {
               keys = {
@@ -429,13 +398,6 @@ return {
         },
         git_grep = {
           exclude = exclude_patterns,
-          -- actions = {
-          --   switch_grep_files = switch_to_grep,
-          --   cd_up = function(picker, _)
-          --     picker:set_cwd(vim.fs.dirname(picker:cwd()))
-          --     picker:find()
-          --   end,
-          -- },
           win = {
             input = {
               keys = {
@@ -462,6 +424,7 @@ return {
           },
         },
         lsp_symbols = {
+          filter = { default = lsp_symbols },
           actions = {
             switch_to_ws = function(picker, _)
               picker:close()
@@ -478,9 +441,6 @@ return {
           },
         },
         git_log = {
-          previewers = {
-            diff = { builtin = false },
-          },
           toggles = {
             current_file = "cf",
             current_line = "cl",
@@ -490,7 +450,6 @@ return {
             require("diffview")
             local filename = vim.api.nvim_buf_get_name(picker.finder.filter.current_buf)
             local cmd = "DiffviewOpen " .. commit .. "^! " .. " -- " .. filename
-            print(cmd)
             vim.cmd(cmd)
           end,
           actions = {
@@ -513,7 +472,7 @@ return {
           win = {
             input = {
               keys = {
-                ["<A-l>"] = { "log_file", desc = "Switch git_log mode", mode = { "i", "n" } },
+                ["<C-k>"] = { "log_file", desc = "Switch git_log mode", mode = { "i", "n" } },
                 ["<S-Cr>"] = { "git_checkout", desc = "Checkout commit", mode = { "i", "n" } },
               },
             },
@@ -546,7 +505,6 @@ return {
       enabled = true,
       config = function(opts, defaults)
         table.insert(opts.remote_patterns, { "^(https://).+@(.*):(.*)", "%1%2/%3" })
-        -- table.insert(opts.remote_patterns, { "^(org-.*):(.*)", "https://%1/%2" })
       end,
     },
     dashboard = {
@@ -555,10 +513,10 @@ return {
         for _, keymap in ipairs(opts.preset.keys) do
           local desc = string.lower(keymap.desc)
           if string.find(desc, "find file") then
-            keymap.action = ":lua Snacks.picker.smart({filter={cwd=true}})"
+            keymap.action = ":lua Snacks.picker.smart()"
           end
           if string.find(desc, "recent files") then
-            keymap.action = ":lua Snacks.picker.recent({filter={cwd=true}})"
+            keymap.action = ":lua Snacks.picker.recent()"
           end
           if string.find(desc, "grep") or string.find(desc, "find text") then
             keymap.action = Snacks.git.get_root() == nil and ":lua Snacks.picker.grep()"
