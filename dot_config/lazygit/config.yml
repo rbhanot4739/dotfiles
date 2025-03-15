@@ -2,6 +2,13 @@ git:
   paging:
     colorArg: always
     pager: delta --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+
+  commit:
+    autoWrapCommitMessage: false
+    autoWrapWidth: 100
+
+  branchPrefix: "rbhanot/"
+
 # Keybindings
 keybinding:
   universal:

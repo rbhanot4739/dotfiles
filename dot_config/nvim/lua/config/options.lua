@@ -30,5 +30,15 @@ if vim.env.SSH_TTY then
     },
   }
 end
-vim.o.foldlevelstart = 20
+vim.o.foldlevelstart = 99
 -- vim.o.foldlevelstart = 4
+vim.opt.diffopt = {
+  "internal",
+  "filler",
+  "closeoff",
+  "context:12",
+  "algorithm:histogram",
+  "linematch:200",
+  "indent-heuristic",
+}
+

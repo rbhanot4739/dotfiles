@@ -46,16 +46,16 @@ return {
       end,
       desc = "Remote Treesitter Search",
     },
+    -- {
+    --   "<leader>**",
+    --   mode = "n",
+    --   function()
+    --     require("flash").jump({ continue = true })
+    --   end,
+    --   desc = "Flash: Continue last search keyword under cursor",
+    -- },
     {
-      ",,",
-      mode = "n",
-      function()
-        require("flash").jump({ continue = true })
-      end,
-      desc = "Flash: Continue last search keyword under cursor",
-    },
-    {
-      ",",
+      "<leader>*",
       mode = { "n" },
       function()
         require("flash").jump({ pattern = vim.fn.expand("<cword>") })

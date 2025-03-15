@@ -13,8 +13,18 @@ return {
       format = "{kind_icon}{symbol.name:Normal}",
       hl_group = "lualine_c_normal",
     })
-    local excluded_fts =
-      { "neo-tree", "dashboard", "alpha", "ministarter", "toggleterm", "snacks_terminal", "man", "snacks_dashboard" }
+    local excluded_fts = {
+      "neo-tree",
+      "dashboard",
+      "alpha",
+      "ministarter",
+      "toggleterm",
+      "snacks_terminal",
+      "man",
+      "snacks_dashboard",
+      "DiffviewFiles",
+      "DiffviewFileHistory",
+    }
     opts.options = {
       theme = "auto",
       disabled_filetypes = {

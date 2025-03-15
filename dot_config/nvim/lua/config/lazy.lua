@@ -43,7 +43,12 @@ require("lazy").setup({
     version = false, -- always use the latest git commit
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "tokyonight", "habamax" } },
+  install = { colorscheme = { "gruvbox-material", "tokyonight", "habamax" } },
+  change_detection = {
+    -- automatically check for config file changes and reload the ui
+    enabled = true,
+    notify = true, -- get a notification when changes are found
+  },
   checker = {
     enabled = false, -- check for plugin updates periodically
     notify = false, -- notify on update
@@ -54,14 +59,43 @@ require("lazy").setup({
       -- disable some rtp plugins
       disabled_plugins = {
         "gzip",
-        -- "matchit",
-        -- "matchparen",
-        -- "netrwPlugin",
         "tarPlugin",
         "tohtml",
         "tutor",
         "zipPlugin",
+        "netrwPlugin",
+        "netrwSettings",
+        "netrwFileHandlers",
+        "matchit",
+        "matchparen",
+        "tar",
+        "tarPlugin",
+        "rrhelper",
+        "spellfile_plugin",
+        "vimball",
+        "vimballPlugin",
+        "zip",
+        "zipPlugin",
+        "tutor",
+        "rplugin",
+        "syntax",
+        "synmenu",
+        "optwin",
+        "compiler",
+        "bugreport",
+        "ruby_provider",
+        "perl_provider",
       },
     },
   },
 })
+-- vim.cmd([[command! -nargs=0 Grep :lua Snacks.picker.grep()]])
+
+local function set_shada_file()
+  local git_root = require("snacks").git.get_root()
+  local dir = git_root ~= nil and git_root or vim.fn.getcwd()
+  local shada_file = vim.fs.joinpath(vim.fn.stdpath("state"), "shada", vim.fn.fnamemodify(dir, ":t") .. ".shada")
+  vim.o.shadafile = shada_file
+end
+
+set_shada_file()

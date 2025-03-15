@@ -5,6 +5,18 @@ table.insert(lsp_symbols, "Constant")
 local M = {}
 local exclude_patterns = { "__pycache__", "*.typed" }
 
+local function enable_dash()
+  if vim.fn.argc(-1) > 0 then
+    return false
+  end
+  for _, arg in ipairs(vim.v.argv) do
+    if arg:sub(1, 1) == "+" then
+      return false
+    end
+  end
+  return true
+end
+
 ---@param picker snacks.Picker
 local function switch_to_grep(picker, _)
   local snacks = require("snacks")
@@ -43,12 +55,118 @@ local function switch_to_grep(picker, _)
   picker:close()
 end
 
+local function escape_pattern(str, pattern, replace, n)
+  pattern = string.gsub(pattern, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1") -- escape pattern
+  replace = string.gsub(replace, "[%%]", "%%%%") -- escape replacement
+
+  return string.gsub(str, pattern, replace, n)
+end
+
+local function sess_picker(opts)
+  local persisted = require("persisted")
+  local utils = require("persisted.utils")
+  local config = require("persisted.config")
+
+  opts = opts or {}
+  Snacks.picker.pick({
+    title = "Select Session",
+    finder = function()
+      local sep = utils.dir_pattern()
+      local sessions = persisted.list()
+      local res = {}
+      for _, session in ipairs(sessions) do
+        local session_name = escape_pattern(session, config.save_dir, "")
+          :gsub("%%", sep)
+          :gsub(vim.fn.expand("~"), sep)
+          :gsub("//", "")
+          :sub(1, -5)
+
+        local branch, dir_path, dir_name
+        if string.find(session_name, "@@", 1, true) then
+          local splits = vim.split(session_name, "@@", { plain = true })
+          branch = table.remove(splits, #splits)
+          dir_path = vim.fn.join(splits, "@@")
+        else
+          dir_path = session_name
+        end
+
+        local dir_parts = vim.fn.split(dir_path, "/")
+        dir_name = dir_parts[#dir_parts]
+
+        table.insert(res, {
+          text = session,
+          branch = branch,
+          dir_path = dir_path,
+          dir_name = dir_name,
+        })
+      end
+      return res
+    end,
+    format = function(item, picker)
+      local ret = {} ---@type snacks.picker.Highlight[]
+      local a = Snacks.picker.util.align
+      local icon, icon_hl = "  ", nil
+      ret[#ret + 1] = { a(icon, 4), icon_hl }
+      ret[#ret + 1] = { a(item.dir_path, 80, { truncate = true }) }
+      ret[#ret + 1] = { "    " }
+      if item.branch then
+        ret[#ret + 1] = { a(" " .. item.branch, 30), "Number" }
+      else
+        ret[#ret + 1] = { a(" ", 30) }
+      end
+      return ret
+    end,
+    layout = opts.layout or {
+      preview = false,
+      layout = {
+        backdrop = false,
+        width = 0.7,
+        min_width = 80,
+        height = 0.5,
+        min_height = 3,
+        box = "vertical",
+        border = "rounded",
+        title = "{title}",
+        title_pos = "center",
+        { win = "input", height = 1, border = "bottom" },
+        { win = "list", border = "none" },
+        { win = "preview", title = "{preview}", height = 0.4, border = "top" },
+      },
+    },
+    confirm = function(picker, item)
+      local session_name = item.text
+      persisted.load({ session = session_name })
+    end,
+    actions = {
+      delete = function(picker, item)
+        local session_name = item.text
+        vim.fn.delete(session_name)
+        picker:find()
+      end,
+    },
+    win = {
+      input = {
+        keys = {
+          ["<c-d>"] = { "delete", mode = { "i", "n" } },
+        },
+      },
+    },
+  })
+end
+
 return {
   "folke/snacks.nvim",
   priority = 1000,
   lazy = false,
   keys = {
+    {
+      "<leader>qs",
+      function()
+        sess_picker()
+      end,
+    },
     { "<leader>e", false },
+    { "<leader>gd", false },
     {
       "<leader>,",
       function()
@@ -136,16 +254,19 @@ return {
       mode = { "n", "x" },
     },
     {
+      "<leader>sG",
+      function()
+        Snacks.picker.grep({ cwd = vim.uv.cwd() })
+      end,
+      desc = "Grep Cwd",
+    },
+    {
       "<leader>sg",
       function()
-        if Snacks.git.get_root() == nil then
-          Snacks.picker.grep({ cwd = Snacks.git.get_root() })
-        else
-          Snacks.picker.git_grep()
-        end
+        local root_dir = Snacks.git.get_root() ~= nil and Snacks.git.get_root() or LazyVim.root()
+        Snacks.picker.grep({ cwd = root_dir })
       end,
-      mode = { "n", "v" },
-      desc = "Grep (Git root)",
+      desc = "Grep project root or git root",
     },
     {
       "<leader>ss",
@@ -167,6 +288,13 @@ return {
         Snacks.picker.smart()
       end,
       desc = "Smart Picker",
+    },
+    {
+      "<leader>sb",
+      function()
+        Snacks.picker.pickers()
+      end,
+      desc = "Snacks builtin pickers",
     },
     -- git
     {
@@ -263,6 +391,7 @@ return {
         picker:show()
       end,
       mode = { "n", "x" },
+      desc = "Git links",
     },
     {
       "<M-/>",
@@ -315,7 +444,7 @@ return {
         ivy = {
           layout = {
             box = "vertical",
-            backdrop = true,
+            backdrop = false,
             row = -1,
             width = 0,
             height = 0.4,
@@ -330,18 +459,34 @@ return {
             },
           },
         },
+        ivy_split = {
+          preview = "main",
+          layout = {
+            box = "vertical",
+            backdrop = false,
+            width = 0,
+            height = 0.2,
+            position = "bottom",
+            border = "top",
+            title = " {title} {live} {flags}",
+            title_pos = "center",
+            { win = "input", height = 1, border = "bottom" },
+            {
+              box = "horizontal",
+              { win = "list", border = "none" },
+              { win = "preview", title = "{preview}", width = 0.6, border = "left" },
+            },
+          },
+        },
       },
       sources = {
-        explorer = {
-          auto_close = true,
-        },
         smart = {
           filter = { cwd = true },
           win = {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
-                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -380,18 +525,19 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
-                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
         },
         grep = {
           exclude = exclude_patterns,
+          cwd = require("snacks").git.get_root() ~= nil and require("snacks").git.get_root() or LazyVim.root(),
           win = {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
-                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -402,7 +548,7 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
-                ["<c-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -422,6 +568,10 @@ return {
               },
             },
           },
+        },
+        lsp_references = {
+          -- supports_live = true,
+          -- live = false,
         },
         lsp_symbols = {
           filter = { default = lsp_symbols },
@@ -509,6 +659,7 @@ return {
     },
     dashboard = {
       enabled = true,
+      -- enabled = enable_dash(),
       config = function(opts)
         for _, keymap in ipairs(opts.preset.keys) do
           local desc = string.lower(keymap.desc)
@@ -519,8 +670,7 @@ return {
             keymap.action = ":lua Snacks.picker.recent()"
           end
           if string.find(desc, "grep") or string.find(desc, "find text") then
-            keymap.action = Snacks.git.get_root() == nil and ":lua Snacks.picker.grep()"
-              or ":lua Snacks.picker.git_grep()"
+            keymap.action = ":lua Snacks.picker.grep({cwd = vim.uv.cwd()})"
           end
           if string.find(desc, "projects") then
             keymap.action = ":lua Snacks.picker.zoxide()"

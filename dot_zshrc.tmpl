@@ -6,6 +6,10 @@ if [[ ! -d $HOME/powerlevel10k ]]; then
   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
 fi
 
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 if [[ $(command -v devbox) ]]; then
 eval "$(devbox global shellenv)" 2> /dev/null
 alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
@@ -17,10 +21,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 (( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
-
-if [[ -f "/opt/homebrew/bin/brew" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
 
 
 CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
@@ -36,6 +36,8 @@ hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_host
   compadd "$@" $hosts
 }
 compdef _ssh_comp ssh
+
+# zstyle ':completion:*:*:ssh:*:hosts' hosts $(awk '/^Host / {print $2}' ~/.ssh/config.custom; awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts | sort -u|uniq)
 
 _man_comp() {
 local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"

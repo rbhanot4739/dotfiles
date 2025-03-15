@@ -46,7 +46,9 @@ cd_up_widget() {
 }
 
 zle -N cd_up_widget
-bindkey '' cd_up_widget
+bindkey -M emacs '' cd_up_widget
+bindkey -M vicmd '' cd_up_widget
+bindkey -M viins '' cd_up_widget
 
 #  =================================== Aliases ===================================
 
@@ -100,7 +102,8 @@ alias hg="h | rg"
 alias wh='which '
 alias wich='which '
 alias wch='which '
-[[ $(command -v nvim) ]] && alias vim='nvim'
+# [[ $(command -v nvim) ]] && alias vim='nvim'
+[[ -f ~/nvim-macos-arm64/bin/nvim ]] && alias vim='~/nvim-macos-arm64/bin/nvim'
 [[ $(command -v rg) ]] && alias grep='rg' && alias gr='rg'
 [[ $(command -v tmuxinator) ]] && alias mux="tmuxinator "
 if [[ $(command -v bat) ]]; then
@@ -113,7 +116,7 @@ if [[ $(command -v gh) ]]; then
 fi
 
 # git aliases
-alias lg='lazygit'
+alias gg='lazygit'
 alias g="git "
 alias ga='git add '
 alias gco='git co '
