@@ -4,6 +4,7 @@ return {
     "mikavilpas/blink-ripgrep.nvim",
     -- "rcarriga/cmp-dap",
     "Kaiser-Yang/blink-cmp-git",
+    "Kaiser-Yang/blink-cmp-avante",
     "ribru17/blink-cmp-spell",
   },
   opts = {
@@ -83,6 +84,7 @@ return {
     },
     sources = {
       default = {
+        "avante",
         "markdown",
         "ripgrep",
         "spell",
@@ -97,13 +99,24 @@ return {
           module = "blink-ripgrep",
           name = "Ripgrep",
           -- score_offset = 97,
+          opts = {
+            backend = "gitgrep-or-ripgrep",
+            transform_items = function(_, items)
+              for _, item in ipairs(items) do
+                -- example: append a description to easily distinguish rg results
+                item.labelDetails = {
+                  description = "(rg)",
+                }
+              end
+              return items
+            end,
+          },
         },
         markdown = {
           name = "RenderMarkdown",
           module = "render-markdown.integ.blink",
           fallbacks = { "lsp" },
         },
-
         spell = {
           name = "Spell",
           module = "blink-cmp-spell",
@@ -123,6 +136,13 @@ return {
               end
               return in_spell_capture
             end,
+          },
+        },
+        avante = {
+          module = "blink-cmp-avante",
+          name = "Avante",
+          opts = {
+            -- options for blink-cmp-avante
           },
         },
         dap = {

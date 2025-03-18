@@ -15,40 +15,40 @@ return {
     },
   },
   -- Todo: Assess if I really need this, as I could not seem to fit this into my workflow
-  {
-    "otavioschwanck/arrow.nvim",
-    dependencies = {
-      { "nvim-tree/nvim-web-devicons" },
-    },
-    keys = {
-      {
-        "m",
-        function()
-          require("arrow.buffer_ui").openMenu()
-        end,
-        noremap = true,
-        silent = true,
-        nowait = true,
-        desc = "Arrow File Mappings",
-      },
-      {
-        ",",
-        function()
-          require("arrow.ui").openMenu()
-        end,
-        noremap = true,
-        silent = true,
-        nowait = true,
-        desc = "Arrow Buffer Mappings",
-      },
-    },
-    lazy = true,
-    opts = {
-      show_icons = true,
-      leader_key = ",", -- Recommended to be a single key
-      buffer_leader_key = "m", -- Per Buffer Mappings
-    },
-  },
+  -- {
+  --   "otavioschwanck/arrow.nvim",
+  --   dependencies = {
+  --     { "nvim-tree/nvim-web-devicons" },
+  --   },
+  --   keys = {
+  --     {
+  --       "m",
+  --       function()
+  --         require("arrow.buffer_ui").openMenu()
+  --       end,
+  --       noremap = true,
+  --       silent = true,
+  --       nowait = true,
+  --       desc = "Arrow File Mappings",
+  --     },
+  --     {
+  --       ",",
+  --       function()
+  --         require("arrow.ui").openMenu()
+  --       end,
+  --       noremap = true,
+  --       silent = true,
+  --       nowait = true,
+  --       desc = "Arrow Buffer Mappings",
+  --     },
+  --   },
+  --   lazy = true,
+  --   opts = {
+  --     show_icons = true,
+  --     leader_key = ",", -- Recommended to be a single key
+  --     buffer_leader_key = "m", -- Per Buffer Mappings
+  --   },
+  -- },
   -- Quickfix
   {
     "stevearc/quicker.nvim",
@@ -123,8 +123,6 @@ return {
   --   },
   -- },
 
-  -- https://github.com/glacambre/firenvim
-  { "glacambre/firenvim", build = ":call firenvim#install(0)" },
   {
     "chrisgrieser/nvim-rip-substitute",
     cmd = "RipSubstitute",

@@ -196,12 +196,6 @@ return {
       desc = "Fuzzy find files",
     },
     {
-      "<c-r>",
-      mode = { "i" },
-      [[<cmd>YankyRingHistory<cr>]],
-      desc = "Paste yank ring",
-    },
-    {
       "<leader>=",
       function()
         Snacks.picker.spelling({

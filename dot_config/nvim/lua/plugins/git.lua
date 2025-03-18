@@ -30,7 +30,7 @@ return {
       return {
         {
           "<leader>gp",
-          "<cmhttps://org-127256988@github.com/linkedin-multiproduct/autobuild/blob/2ff698f735c831f6447d9c99791d16d571599258/tm-config.json#L29-L29d>Octo pr create<cr>",
+          "<cmd>Octo pr create<cr>",
           desc = "Create new PR",
         },
         { "<leader>gP", "<cmd>Octo pr list<cr>", desc = "List PRs" },

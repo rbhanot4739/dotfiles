@@ -20,9 +20,9 @@ if not vim.g.vscode then
   map("n", "$", "g$", { desc = "move with wrapped lines" })
   map("n", "^", "g^", { desc = "move with wrapped lines" })
 
-  map("n", "gh", "^", { desc = "move to start of line with H" })
-  map("n", "gl", "g_", { desc = "move to end of line with L" })
-  map("n", "G", "Gzz", { desc = "move to end of file and center the contents" })
+  map({ "n", "o" }, "gh", "^", { remap = true, desc = "move to start of line with H" })
+  map({ "n", "o" }, "gl", "g_", { remap = true, desc = "move to end of line with L" })
+  -- map("n", "G", "Gzz", { desc = "move to end of file and center the contents" })
   map("n", "Y", "y$", { desc = "copy to end of line" })
 
   -- disable arrow  keys
@@ -57,4 +57,7 @@ if not vim.g.vscode then
       print("No URL found on the current line")
     end
   end, { desc = "Open URL on the current line" })
+  map("n", "<leader>Y", "yig", { remap = true })
+  map("n", "<leader>C", "cig", { remap = true })
+  map("n", "<leader>V", "vig", { remap = true })
 end
