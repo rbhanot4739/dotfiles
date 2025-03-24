@@ -4,6 +4,7 @@
 {{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
 curl -fsSL https://pixi.sh/install.sh | bash
 if [[ $? -ne 0 ]]; then
+  mkdir -p $HOME/.pixi/bin
   curl -L -o ~/.pixi/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
   chmod +x ~/.pixi/bin/pixi
 fi
