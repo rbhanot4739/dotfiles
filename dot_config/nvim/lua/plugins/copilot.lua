@@ -16,6 +16,13 @@ return {
     "CopilotC-Nvim/CopilotChat.nvim",
     enabled = true,
     opts = {
+      model = "o3-mini",
+      debug = false,
+      provider = "copilot",
+      sticky = {
+        "@models Using o3-mini",
+        "#files",
+      },
       mappings = {
         reset = {
           normal = "<C-x>",

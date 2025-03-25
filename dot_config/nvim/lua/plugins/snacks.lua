@@ -413,6 +413,7 @@ return {
   },
   opts = {
     picker = {
+      -- ui_select = true,
       matcher = { frecency = true },
       actions = {
         switch_grep_files = switch_to_grep,

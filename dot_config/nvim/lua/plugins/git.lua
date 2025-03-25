@@ -1,6 +1,8 @@
-local function is_git_root()
-  return require("snacks").git.get_root() ~= nil
-end
+-- local function is_git_root()
+--   return require("snacks").git.get_root() ~= nil
+-- end
+
+local is_git_root = require("utils").is_git_worktree
 
 local function toggle_diffview(cmd)
   if next(require("diffview.lib").views) == nil then

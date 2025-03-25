@@ -62,7 +62,7 @@ return {
         -- max_height = 10,
         -- border = "rounded",
         draw = {
-          -- columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } }
+          -- columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } },
         },
       },
       documentation = { window = { border = "rounded" } },
@@ -84,33 +84,32 @@ return {
     },
     sources = {
       default = {
-        "avante",
         "markdown",
         "ripgrep",
         "spell",
         -- "dap",
       },
       providers = {
-        -- copilot = { async = true, score_offset = 100 },
-        -- lsp = { async = true, score_offset = 99 },
-        -- buffer = { score_offset = 98 },
+        copilot = { async = true, score_offset = 100 },
+        lsp = { async = true, score_offset = 99 },
+        buffer = { enabled = false, score_offset = 98 },
         -- path = { score_offset = 97 },
         ripgrep = {
           module = "blink-ripgrep",
           name = "Ripgrep",
-          -- score_offset = 97,
+          score_offset = 97,
           opts = {
             backend = "gitgrep-or-ripgrep",
-            transform_items = function(_, items)
-              for _, item in ipairs(items) do
-                -- example: append a description to easily distinguish rg results
-                item.labelDetails = {
-                  description = "(rg)",
-                }
-              end
-              return items
-            end,
           },
+          transform_items = function(_, items)
+            for _, item in ipairs(items) do
+              -- example: append a description to easily distinguish rg results
+              item.labelDetails = {
+                description = "(rg)",
+              }
+            end
+            return items
+          end,
         },
         markdown = {
           name = "RenderMarkdown",

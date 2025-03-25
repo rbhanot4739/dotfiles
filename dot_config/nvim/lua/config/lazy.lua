@@ -43,7 +43,7 @@ require("lazy").setup({
     version = false, -- always use the latest git commit
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "gruvbox-material", "tokyonight", "habamax" } },
+  install = { colorscheme = { "tokyonight", "habamax" } },
   change_detection = {
     -- automatically check for config file changes and reload the ui
     enabled = true,
