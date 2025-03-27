@@ -35,7 +35,8 @@ return {
     }
     opts.winbar = {
       lualine_c = {
-        { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
+        get_path,
+        -- { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
         { "filename", file_status = true, path = 0 },
         { symbols.get },
       },
@@ -45,9 +46,6 @@ return {
             return "󱉭  " .. vim.fs.basename(LazyVim.root.cwd())
           end,
           color = { fg = Snacks.util.color("Special") },
-        },
-        {
-          get_path,
         },
       },
       lualine_z = {

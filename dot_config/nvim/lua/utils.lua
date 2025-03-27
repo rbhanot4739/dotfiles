@@ -53,11 +53,18 @@ end
 
 function M.trim_path(path)
   -- convert the path to a short form
-  -- vim.fn.expand("%:~:.:h") will first get the path to file
-  -- then replace the homedir with `~` and then replace the
-  -- current directory with `.` and finally will pick just the directory part of the path
+  -- vim.fn.expand("%:~:.:h")
+  -- 1. ":~" – Replaces the home directory path with "~".
+  -- 2. ":." – Makes the path relative to the current working directory (or substitutes it with "." if applicable).
+  -- 3. ":h" – Returns the directory part (i.e. the head) of that expanded path.
+
   path = path ~= nil and type(path) == "string" and vim.fn.fnamemodify(path, ":~") or vim.fn.expand("%:~:.:h")
-  -- path = vim.fn.expand("%:~:.:h")
+  if string.find(path, "environment") then
+    local parts = vim.split(path, "/")
+    if #parts >= 2 then
+      path = table.concat({ "..", parts[#parts - 1], parts[#parts] }, "/")
+    end
+  end
   if string.len(path) > 35 then
     local parts = vim.split(path, "/")
     for i = 1, #parts - 1 do

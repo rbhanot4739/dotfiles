@@ -93,7 +93,12 @@ return {
         copilot = { async = true, score_offset = 100 },
         lsp = { async = true, score_offset = 99 },
         buffer = { enabled = false, score_offset = 98 },
-        -- path = { score_offset = 97 },
+        path = {
+          score_offset = 95,
+          enabled = function()
+            return vim.bo.filetype ~= "copilot-chat"
+          end,
+        },
         ripgrep = {
           module = "blink-ripgrep",
           name = "Ripgrep",

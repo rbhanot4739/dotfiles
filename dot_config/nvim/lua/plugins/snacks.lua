@@ -94,6 +94,7 @@ local function sess_picker(opts)
         dir_name = dir_parts[#dir_parts]
 
         table.insert(res, {
+          file = session,
           text = session,
           branch = branch,
           dir_path = dir_path,
@@ -301,7 +302,7 @@ return {
     {
       "<leader>gc",
       function()
-        Snacks.picker.git_log({ current_file = true })
+        Snacks.picker.git_log({ current_line = true })
       end,
       desc = "Git log Current file",
     },
@@ -601,11 +602,11 @@ return {
             log_file = function(picker, _)
               if not picker.opts["current_file"] and not picker.opts["current_line"] then
                 picker.opts["current_file"] = true
-                picker.opts["follow"] = false
-              elseif picker.opts["current_file"] then
-                picker.opts["current_line"] = true
-                picker.opts["current_file"] = false
-                picker.opts["follow"] = false
+                -- picker.opts["follow"] = false
+              elseif picker.opts["current_line"] then
+                picker.opts["current_line"] = false
+                picker.opts["current_file"] = true
+                -- picker.opts["follow"] = false
               else
                 picker.opts["current_line"] = false
                 picker.opts["current_file"] = false

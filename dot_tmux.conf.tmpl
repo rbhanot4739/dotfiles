@@ -151,6 +151,9 @@ bind-key -n MouseUp2Status kill-window -t=
 bind-key -n DoubleClick1Status new-window
 # --------------------------------------------------------------------------------
 
+{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+# do thing in rdev
+{{- else }}
 # TPM settings
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
@@ -208,3 +211,4 @@ if "test ! -d ~/.tmux/plugins/tpm" \
 run '~/.tmux/plugins/tpm/tpm'
 if-shell "test -e ~/.local/state/tmux/tmux-dark-notify-theme.conf" \
      "source-file ~/.local/state/tmux/tmux-dark-notify-theme.conf"
+{{- end }}

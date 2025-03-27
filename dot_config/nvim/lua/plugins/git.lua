@@ -149,11 +149,11 @@ return {
       -- },
     },
   },
-  {
-    "lewis6991/gitsigns.nvim",
-    cond = is_git_root,
-    opts = {
-      current_line_blame = true,
-    },
-  },
+  -- {
+  --   "lewis6991/gitsigns.nvim",
+  --   cond = is_git_root,
+  --   opts = {
+  --     current_line_blame = true,
+  --   },
+  -- },
 }
