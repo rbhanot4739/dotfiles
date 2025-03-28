@@ -57,6 +57,12 @@ return {
       },
     },
     completion = {
+      ghost_text = {
+        enabled = true,
+      },
+      trigger = {
+        show_on_blocked_trigger_characters = {},
+      },
       menu = {
         -- min_width = 10,
         -- max_height = 10,
@@ -90,8 +96,22 @@ return {
         -- "dap",
       },
       providers = {
-        copilot = { async = true, score_offset = 100 },
-        lsp = { async = true, score_offset = 99 },
+        copilot = {
+          async = true,
+          -- score_offset = 100,
+          score_offset = -1,
+          override = {
+            get_trigger_characters = function(self)
+              local trigger_characters = self:get_trigger_characters()
+              vim.list_extend(trigger_characters, { "\n", "\t", " " })
+              return trigger_characters
+            end,
+          },
+        },
+        lsp = {
+          async = true,
+          score_offset = 99,
+        },
         buffer = { enabled = false, score_offset = 98 },
         path = {
           score_offset = 95,

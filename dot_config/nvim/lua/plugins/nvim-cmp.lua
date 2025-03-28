@@ -50,8 +50,8 @@ return {
         group_index = 3,
       })
       -- insert copilot completions after lsp
-      table.remove(opts.sources, 1)
-      table.insert(opts.sources, { name = "copilot", group_index = 2, priority = 100 })
+      -- table.remove(opts.sources, 1)
+      -- table.insert(opts.sources, { name = "copilot", group_index = 2, priority = 100 })
 
       -- --------------------------------------cmdline setup start--------------------------------------
       -- `/` cmdline setup.
@@ -132,23 +132,23 @@ return {
         ["<C-k>"] = cmp.mapping.scroll_docs(4),
         ["<C-a>"] = cmp.mapping.abort(),
       })
-      opts.sorting = {
-        priority_weight = 2,
-        comparators = {
-          cmp.config.compare.exact,
-          require("copilot_cmp.comparators").prioritize,
-          -- Below is the default comparitor list and order for nvim-cmp
-          cmp.config.compare.offset,
-          -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
-          cmp.config.compare.score,
-          cmp.config.compare.recently_used,
-          cmp.config.compare.locality,
-          cmp.config.compare.kind,
-          cmp.config.compare.sort_text,
-          cmp.config.compare.length,
-          cmp.config.compare.order,
-        },
-      }
+      -- opts.sorting = {
+      --   priority_weight = 2,
+      --   comparators = {
+      --     cmp.config.compare.exact,
+      --     require("copilot_cmp.comparators").prioritize,
+      --     -- Below is the default comparitor list and order for nvim-cmp
+      --     cmp.config.compare.offset,
+      --     -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
+      --     cmp.config.compare.score,
+      --     cmp.config.compare.recently_used,
+      --     cmp.config.compare.locality,
+      --     cmp.config.compare.kind,
+      --     cmp.config.compare.sort_text,
+      --     cmp.config.compare.length,
+      --     cmp.config.compare.order,
+      --   },
+      -- }
       -- opts.completion.autocomplete = false
     end,
   },

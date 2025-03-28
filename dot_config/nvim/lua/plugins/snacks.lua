@@ -214,6 +214,20 @@ return {
       desc = "Spell suggest",
     },
     {
+      "<leader>fe",
+      function()
+        Snacks.explorer({ cwd = vim.fn.expand("%:h") })
+      end,
+      desc = "Explorer Snacks",
+    },
+    {
+      "<leader>fE",
+      function()
+        Snacks.explorer({ cwd = vim.uv.cwd() })
+      end,
+      desc = "Explorer Snacks (cwd)",
+    },
+    {
       "<leader>fa",
       function()
         Snacks.picker.files({ ignored = true, cwd = vim.fn.expand("%:p:h") })
@@ -476,6 +490,10 @@ return {
         },
       },
       sources = {
+        explorer = {
+          supports_live = true,
+          exclude = { "*dist-info*", "*.so", "*.pth", "*egg*", "*typed" },
+        },
         smart = {
           filter = { cwd = true },
           win = {
@@ -659,16 +677,16 @@ return {
       config = function(opts)
         for _, keymap in ipairs(opts.preset.keys) do
           local desc = string.lower(keymap.desc)
-          if string.find(desc, "find file") then
+          if desc:find("find file") then
             keymap.action = ":lua Snacks.picker.smart()"
           end
-          if string.find(desc, "recent files") then
+          if desc:find("recent files") then
             keymap.action = ":lua Snacks.picker.recent()"
           end
-          if string.find(desc, "grep") or string.find(desc, "find text") then
+          if desc:find("grep") or desc:find("find text") then
             keymap.action = ":lua Snacks.picker.grep({cwd = vim.uv.cwd()})"
           end
-          if string.find(desc, "projects") then
+          if desc:find("projects") then
             keymap.action = ":lua Snacks.picker.zoxide()"
           end
         end

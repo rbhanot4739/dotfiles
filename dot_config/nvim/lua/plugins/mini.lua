@@ -32,6 +32,16 @@ return {
     "echasnovski/mini.files",
     opts = function(_, opts)
       return vim.tbl_deep_extend("force", opts, {
+        content = {
+          filter = function(fs_entry)
+            for _, pat in ipairs({ ".*dist%-info.*", ".*egg.*", ".*typed.*", "%.so$", ".*%.pth$" }) do
+              if fs_entry.name:match(pat) then
+                return false
+              end
+            end
+            return true
+          end,
+        },
         mappings = {
           -- go_in = "<Right>",
           -- go_out = "<Left>",
@@ -57,7 +67,7 @@ return {
       {
         "<leader>e",
         function()
-          require("mini.files").open(vim.api.nvim_buf_get_name(0), true)
+          require("mini.files").open(vim.fn.expand("%"))
         end,
         desc = "Explorer Mini.files",
       },
@@ -95,5 +105,5 @@ return {
         update_n_lines = ";n",
       },
     },
-  }
+  },
 }
