@@ -4,8 +4,15 @@ return {
     "mikavilpas/blink-ripgrep.nvim",
     -- "rcarriga/cmp-dap",
     "Kaiser-Yang/blink-cmp-git",
-    "Kaiser-Yang/blink-cmp-avante",
     "ribru17/blink-cmp-spell",
+  },
+  keymap = {
+    ["<c-g>"] = {
+      function()
+        -- invoke manually, requires blink >v0.8.0
+        require("blink-cmp").show({ providers = { "ripgrep" } })
+      end,
+    },
   },
   opts = {
     keymap = {
@@ -99,7 +106,7 @@ return {
         copilot = {
           async = true,
           -- score_offset = 100,
-          score_offset = -1,
+          score_offset = 100,
           override = {
             get_trigger_characters = function(self)
               local trigger_characters = self:get_trigger_characters()
@@ -116,15 +123,16 @@ return {
         path = {
           score_offset = 95,
           enabled = function()
-            return vim.bo.filetype ~= "copilot-chat"
+            return vim.bo.filetype ~= "copilot-chat" and vim.bo.filetype ~= "codecompanion"
           end,
         },
         ripgrep = {
           module = "blink-ripgrep",
           name = "Ripgrep",
-          score_offset = 97,
+          score_offset = 90,
           opts = {
-            backend = "gitgrep-or-ripgrep",
+            prefix_min_len = 5,
+            context_size = 3,
           },
           transform_items = function(_, items)
             for _, item in ipairs(items) do
@@ -160,13 +168,6 @@ return {
               end
               return in_spell_capture
             end,
-          },
-        },
-        avante = {
-          module = "blink-cmp-avante",
-          name = "Avante",
-          opts = {
-            -- options for blink-cmp-avante
           },
         },
         dap = {

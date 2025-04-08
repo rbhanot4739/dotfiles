@@ -4,7 +4,7 @@ git:
     pager: delta --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
 
   commit:
-    autoWrapCommitMessage: false
+    autoWrapCommitMessage: true
     autoWrapWidth: 100
 
   branchPrefix: "rbhanot/"

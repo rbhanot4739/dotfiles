@@ -41,4 +41,3 @@ vim.opt.diffopt = {
   "linematch:200",
   "indent-heuristic",
 }
-

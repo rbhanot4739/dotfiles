@@ -19,8 +19,16 @@ set -ag terminal-overrides ",screen-256color,xterm-256color:Tc"
 set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'  # undercurl support
 set -as terminal-overrides ',*:Setulc=\E[58::2::::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m'  # underscore colours - needs tmux-3.0
 set -g status-justify centre
-set-option -g extended-keys on
 set -g display-panes-time 7000
+# set-option -g extended-keys on
+
+bind-key -T root         S-Enter     send-keys Escape "[13;2u"
+bind-key -T root         M-Enter     send-keys Escape "[13;3u"
+bind-key -T root         M-S-Enter   send-keys Escape "[13;4u"
+bind-key -T root         C-Enter     send-keys Escape "[13;5u"
+bind-key -T root         C-S-Enter   send-keys Escape "[13;6u"
+bind-key -T root         C-M-Enter   send-keys Escape "[13;7u"
+bind-key -T root         C-M-S-Enter send-keys Escape "[13;8u"
 
 
 # ================== Keymaps
@@ -78,8 +86,8 @@ bind-key "_" split-window -fv -c "#{pane_current_path}"
 bind -n C-S-Up  swap-pane -UZ
 bind -n C-S-Down  swap-pane -DZ
 # Swap windows
-bind-key -nr C-S-right swap-window -d -t -1
-bind-key -nr C-S-left swap-window -d -t +1
+bind-key -nr C-S-right swap-window -d -t +1
+bind-key -nr C-S-left swap-window -d -t -1
 
 # set prefix+a to toggle syncing panes on/off
 # bind a setw synchronize-panes\; display 'synchronize-panes #{?synchronize-panes,on,off}'
@@ -150,10 +158,6 @@ bind-key -n MouseUp2Status kill-window -t=
 # Double click on the window list to open a new window
 bind-key -n DoubleClick1Status new-window
 # --------------------------------------------------------------------------------
-
-{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
-# do thing in rdev
-{{- else }}
 # TPM settings
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
@@ -181,12 +185,27 @@ set -g @plugin 'Morantron/tmux-fingers'
 set -g @fingers-key M-space
 set -g @fingers-jump-key j
 set -g @fingers-pattern-0 '([\w-]+(?:\.[\w-]*)*)'
+
+bind -n C-M-h run -b "#{@fingers-cli} start {left-of}"
+bind -n C-M-j run -b "#{@fingers-cli} start {down-of}"
+bind -n C-M-k run -b "#{@fingers-cli} start {up-of}"
+bind -n C-M-l run -b "#{@fingers-cli} start {right-of}"
+bind -n C-M-o run -b "#{@fingers-cli} start {last}"
 # >>>
 
 # tmux fzf-url ====================
-set -g @plugin 'junegunn/tmux-fzf-url'
-set -g @fzf-url-bind 'M-x'
-set -g @fzf-url-history-limit '2000'
+# set -g @plugin 'junegunn/tmux-fzf-url'
+# set -g @plugin 'wfxr/tmux-fzf-url'
+# set -g @fzf-url-bind 'M-x'
+# set -g @fzf-url-history-limit '2000'
+
+ set -g @plugin 'alberti42/tmux-fzf-links'
+ set-option -g @fzf-links-key M-x
+ set-option -g @fzf-links-history-lines 2000
+ set-option -g @fzf-links-editor-open-cmd "tmux new-window -n 'nvim' nvim +%line '%file'"
+ set-option -g @fzf-links-python /opt/homebrew/bin/python3.12
+
+
 # tmux fzf-url ====================
 
 # continuum & resurrect ====================
@@ -211,4 +230,3 @@ if "test ! -d ~/.tmux/plugins/tpm" \
 run '~/.tmux/plugins/tpm/tpm'
 if-shell "test -e ~/.local/state/tmux/tmux-dark-notify-theme.conf" \
      "source-file ~/.local/state/tmux/tmux-dark-notify-theme.conf"
-{{- end }}

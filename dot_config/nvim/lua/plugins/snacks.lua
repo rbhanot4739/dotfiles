@@ -171,7 +171,7 @@ return {
     {
       "<leader>,",
       function()
-        Snacks.picker.recent()
+        Snacks.picker.buffers()
       end,
       desc = "Open recent files",
     },
@@ -490,6 +490,10 @@ return {
         },
       },
       sources = {
+        todo_comments = {
+          hidden = false,
+          ignored = false,
+        },
         explorer = {
           supports_live = true,
           exclude = { "*dist-info*", "*.so", "*.pth", "*egg*", "*typed" },
@@ -568,6 +572,7 @@ return {
           },
         },
         lsp_workspace_symbols = {
+          layout = "ivy",
           actions = {
             switch_to_ws = function(picker, item)
               picker:close()
@@ -588,6 +593,7 @@ return {
           -- live = false,
         },
         lsp_symbols = {
+          -- layout = { preset = "sidebar", layout = { position = "right" } },
           filter = { default = lsp_symbols },
           actions = {
             switch_to_ws = function(picker, _)
@@ -673,7 +679,6 @@ return {
     },
     dashboard = {
       enabled = true,
-      -- enabled = enable_dash(),
       config = function(opts)
         for _, keymap in ipairs(opts.preset.keys) do
           local desc = string.lower(keymap.desc)

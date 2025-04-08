@@ -43,9 +43,10 @@ return {
           end,
         },
         mappings = {
-          -- go_in = "<Right>",
-          -- go_out = "<Left>",
+          go_in = "<CR>",
+          go_out = "<BS>",
           go_in_plus = "<CR>",
+          reset = ".",
           go_in_horizontal = "-",
           go_in_horizontal_plus = "_",
           go_in_vertical = "\\",
@@ -68,6 +69,7 @@ return {
         "<leader>e",
         function()
           require("mini.files").open(vim.fn.expand("%"))
+          -- require("mini.files").reveal_cwd()
         end,
         desc = "Explorer Mini.files",
       },

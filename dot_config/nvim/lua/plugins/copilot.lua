@@ -10,6 +10,7 @@ return {
         svn = false,
         cvs = false,
       },
+      copilot_model =  "claude-3.5-sonnet",
     },
   },
   {
@@ -36,36 +37,100 @@ return {
     },
   },
   {
-    "yetone/avante.nvim",
-    event = "VeryLazy",
-    enabled = false,
-    version = false, -- Never set this value to "*"! Never!
-    opts = {
-      -- add any opts here
-      -- for example
-      provider = "copilot",
-      openai = {
-        -- model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
-        timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
-        temperature = 0,
-        max_completion_tokens = 8192, -- Increase this to include reasoning tokens (for reasoning models)
-        --reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
-      },
-    },
-    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
-    build = "make",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-      "zbirenbaum/copilot.lua", -- for providers='copilot'
-      {
-        -- Make sure to set this up properly if you have lazy=true
-        "MeanderingProgrammer/render-markdown.nvim",
-        opts = {
-          file_types = { "markdown", "Avante" },
+    "olimorris/codecompanion.nvim",
+    enabled = true,
+    config = function(_, opts)
+      opts = {
+        display = {
+          chat = {
+            show_header_separator = true,
+            start_in_insert_mode = false,
+            window = { height = 0.8, width = 0.35 },
+          },
+          diff = {
+            enabled = true,
+            close_chat_at = 240, -- Close an open chat buffer if the total columns of your display are less than...
+            layout = "vertical", -- vertical|horizontal split for default provider
+            opts = {
+              "internal",
+              "filler",
+              "closeoff",
+              "algorithm:histogram",
+              "followwrap",
+              "linematch:120",
+              "indent-heuristic"
+            },
+            provider = "default", -- default|mini_diff
+          },
         },
-        ft = { "markdown", "Avante" },
-      },
+        adapters = {
+          copilot = function()
+            return require("codecompanion.adapters").extend("copilot", {
+              schema = {
+                model = {
+                  default = "claude-3.5-sonnet",
+                },
+              },
+            })
+          end,
+        },
+        strategies = {
+          chat = {
+            keymaps = {
+              send = {
+                modes = { n = "<C-s>", i = "<C-s>" },
+              },
+              send_to_smart = {
+                modes = { n = "<S-CR>" },
+                description = "Send to smart (claude-sonnet)",
+                callback = function(chat)
+                  chat:apply_model("claude-3.7-sonnet")
+                  chat:submit()
+                end,
+              },
+              close = {
+                modes = { n = "q", i = "<C-c>" },
+              },
+              -- Add further custom keymaps here
+            },
+          },
+        },
+      }
+      require("codecompanion").setup(opts)
+      local keymap = vim.keymap
+      keymap.set({ "n", "v" }, "<leader>AA", "<cmd>CodeCompanionActions<cr>")
+      keymap.set({ "n", "v" }, "<leader>aq", ":CodeCompanion ")
+      keymap.set({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionChat Toggle<cr>")
+      keymap.set({ "n", "v" }, "<leader>an", "<cmd>CodeCompanionChat<cr>")
+      keymap.set({ "n", "v" }, "<leader>av", "<cmd>CodeCompanionChat Add<cr>")
+      vim.cmd([[cab cc CodeCompanion]])
+    end,
+    -- keys = {
+    --   {
+    --     "<leader>aa",
+    --     function()
+    --       require("codecompanion").toggle()
+    --     end,
+    --     desc = "CodeCompanion Chat",
+    --   },
+    --   {
+    --     "<leader>aq",
+    --     "<cmd>CodeCompanion<cr>",
+    --     mode = { "n", "x", "v" },
+    --     desc = "CodeCompanion inline chat",
+    --   },
+    --   {
+    --     "<leader>AA",
+    --     function()
+    --       require("codecompanion").actions()
+    --     end,
+    --     mode = { "n", "v" },
+    --     desc = "CodeCompanion actions",
+    --   },
+    -- },
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
     },
   },
 }

@@ -163,12 +163,6 @@ alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 # ======== Load tools ========
 # only load pixi for rdev machines
-{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
-[[ -d $HOME/.pixi ]] && export PATH="$HOME/.pixi/bin:$PATH"
-if [[ $(command -v pixi) ]]; then
-  eval "$(pixi completion --shell zsh)"
-fi
-{{- end }}
 [[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
 
 

@@ -102,8 +102,8 @@ alias hg="h | rg"
 alias wh='which '
 alias wich='which '
 alias wch='which '
-# [[ $(command -v nvim) ]] && alias vim='nvim'
-[[ -f ~/nvim-macos-arm64/bin/nvim ]] && alias vim='~/nvim-macos-arm64/bin/nvim'
+[[ $(command -v nvim) ]] && alias vim='nvim'
+[[ -f ~/nvim-macos-arm64/bin/nvim ]] && alias nnvim='~/nvim-macos-arm64/bin/nvim'
 [[ $(command -v rg) ]] && alias grep='rg' && alias gr='rg'
 [[ $(command -v tmuxinator) ]] && alias mux="tmuxinator "
 if [[ $(command -v bat) ]]; then
