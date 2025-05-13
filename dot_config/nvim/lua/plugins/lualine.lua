@@ -24,6 +24,7 @@ return {
       "snacks_dashboard",
       "DiffviewFiles",
       "DiffviewFileHistory",
+      "DiffviewFilePanel",
     }
     opts.options = {
       theme = "auto",
@@ -35,7 +36,7 @@ return {
     }
     opts.winbar = {
       lualine_c = {
-        get_path,
+        { get_path },
         -- { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
         { "filename", file_status = true, path = 0 },
         { symbols.get },

@@ -23,20 +23,21 @@ require("lazy").setup({
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
       opts = {
-        -- colorscheme = "gruvbox-material",
-        -- colorscheme = "catppuccin",
-        -- colorscheme = "tokyonight",
+        colorscheme = function()
+          local theme = vim.env.THEME or "tokyonight"
+          vim.cmd.colorscheme(theme)
+        end,
         icons = {
           kinds = config_utils.icons.kinds,
         },
       },
     },
-    { import = "disabled" },
     { import = "plugins" },
+    { import = "disabled" },
   },
   defaults = {
     -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
-    -- If you know what you're doing, you can set this to `true` to have all your custom plugins lazy-loaded by default.
+    -- If you know what you're doing, you can` set` this to `true` to have all your custom plugins lazy-loaded by default.
     lazy = false,
     -- It's recommended to leave version=false for now, since a lot the plugin that support versioning,
     -- have outdated releases, which may break your Neovim install.
@@ -45,12 +46,11 @@ require("lazy").setup({
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
   change_detection = {
-    -- automatically check for config file changes and reload the ui
     enabled = true,
     notify = true, -- get a notification when changes are found
   },
   checker = {
-    enabled = false, -- check for plugin updates periodically
+    enabled = true, -- check for plugin updates periodically
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
   ui = { border = "single" },

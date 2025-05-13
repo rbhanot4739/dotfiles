@@ -1,23 +1,28 @@
 return {
   "folke/flash.nvim",
   opts = {
-    remote_op = {
-      restore = true,
-      motion = nil,
-    },
     jump = {
       autojump = true,
-    }, -- automatically jump when there is only one match
+    },
+    highlight = {
+      -- show a backdrop with hl FlashBackdrop
+      backdrop = true,
+      -- Highlight the search matches
+      matches = true,
+    },
+    search = {
+      -- mode = "fuzzy",
+    },
+    label = {
+      style = "inline",
+    },
     modes = {
+      search = { enabled = false, highlight = { backdrop = true } },
       char = {
         keys = { "f", "F", "t", "T" },
-        -- add labels to fF and tT commands
         jump_labels = true,
         multi_line = false,
         jump = {
-          register = false,
-          -- when using jump labels, set to 'true' to automatically jump
-          -- or execute a motion when there is only one match
           autojump = true,
         },
       },

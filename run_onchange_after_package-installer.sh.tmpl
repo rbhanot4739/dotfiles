@@ -29,7 +29,7 @@ if [[ ! -d $HOME/.nvim-env ]]; then
   fi
 fi
 
-setup_shell() {
+setup_zsh() {
 
   # install powerlevel10k
   if [[ ! -d $HOME/powerlevel10k ]]; then
@@ -65,4 +65,5 @@ for plugin_name in "${!PLUGINS[@]}"; do
   fi
 done
 }
-setup_shell
+setup_zsh
+

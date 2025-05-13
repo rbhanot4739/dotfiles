@@ -59,10 +59,11 @@ function M.trim_path(path)
   -- 3. ":h" – Returns the directory part (i.e. the head) of that expanded path.
 
   path = path ~= nil and type(path) == "string" and vim.fn.fnamemodify(path, ":~") or vim.fn.expand("%:~:.:h")
+  -- trim some virtual environment paths
   if path:find("environment") then
     local parts = vim.split(path, "/")
     if #parts >= 2 then
-      path = table.concat({ "..", parts[#parts - 1], parts[#parts] }, "/")
+      path = table.concat({ "...", parts[#parts - 1], parts[#parts] }, "/")
     end
   end
   if string.len(path) > 35 then

@@ -1,7 +1,3 @@
--- local function is_git_root()
---   return require("snacks").git.get_root() ~= nil
--- end
-
 local is_git_root = require("utils").is_git_worktree
 
 local function toggle_diffview(cmd)
@@ -16,6 +12,9 @@ return {
   {
     "pwntester/octo.nvim",
     opts = {
+      suppress_missing_scope = {
+        projects_v2 = true,
+      },
       picker = "snacks",
       picker_config = {
         use_emojis = false, -- only used by "fzf-lua" picker for now
@@ -27,7 +26,8 @@ return {
         },
       },
     },
-    cond = is_git_root,
+    -- cond = is_git_root,
+    cmd = "Octo",
     keys = function()
       return {
         {
@@ -121,18 +121,25 @@ return {
     end,
     keys = {
       {
-        "<leader>gd",
+        "<leader>gdi",
         function()
           toggle_diffview("DiffviewOpen")
         end,
-        desc = "Diff Index",
+        desc = "Diff working tree against Index",
       },
       {
-        "<leader>gD",
+        "<leader>gdm",
+        function()
+          toggle_diffview("DiffviewOpen master")
+        end,
+        desc = "Diff working tree against Main",
+      },
+      {
+        "<leader>gdM",
         function()
           toggle_diffview("DiffviewOpen master..HEAD")
         end,
-        desc = "Diff master",
+        desc = "Diff head against Main",
       },
       {
         "<leader>gf",
@@ -141,19 +148,6 @@ return {
         end,
         desc = "Open diffs for current File",
       },
-      -- {
-      --   "q",
-      --   "<cmd>DiffviewClose<CR>",
-      --   ft = { "DiffviewFiles", "DiffviewFileHistory" },
-      --   desc = "`q` to close diff view",
-      -- },
     },
   },
-  -- {
-  --   "lewis6991/gitsigns.nvim",
-  --   cond = is_git_root,
-  --   opts = {
-  --     current_line_blame = true,
-  --   },
-  -- },
 }

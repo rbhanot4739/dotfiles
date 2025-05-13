@@ -32,11 +32,18 @@ debug_print() {
 }
 
 tm() {
-  bash $HOME/scripts/tmux/manager.sh $@
+	bash $HOME/scripts/tmux/manager.sh $@
 }
-# zle -N tm
 # `-s` binds key to a string command which is cool I guess
 bindkey -s '^O' 'tm\n'
+
+tm_widget() {
+    BUFFER="tm"
+    zle accept-line
+}
+zle -N tm_widget 
+bindkey '' tm_widget
+bindkey -M vicmd '' tm_widget
 
 cd_up_widget() {
 	# echo "cd_up called"
@@ -67,7 +74,6 @@ alias topo="topology-v3 "
 
 # create folowing aliases only if eza is installed else use ls
 if [[ $(command -v eza) ]]; then
-	local eza_params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--icons')
 	alias ls='eza -I "*pyc*" $eza_params'
 	alias lsa='ls --all'
 	# alias l='ls --git-ignore'
@@ -91,7 +97,7 @@ fi
 # some utility aliases
 alias dud='du -d 1 -hc 2> /dev/null | grep -Ev "\.$"|sort -h'
 alias h='history 0'
-alias ssh='ssh '
+alias ssh='TERM=xterm-color ssh '
 alias xx='exit'
 alias ee='$EDITOR ~/.zshrc'
 alias c='clear'
@@ -100,20 +106,15 @@ alias cp='cp -av'
 alias md='mkdir'
 alias hg="h | rg"
 alias wh='which '
+alias W='wc -l'
 alias wich='which '
 alias wch='which '
-[[ $(command -v nvim) ]] && alias vim='nvim'
+[[ $(command -v nvim) ]] && alias vim='nvim'; alias vi='nvim'
 [[ -f ~/nvim-macos-arm64/bin/nvim ]] && alias nnvim='~/nvim-macos-arm64/bin/nvim'
-[[ $(command -v rg) ]] && alias grep='rg' && alias gr='rg'
+[[ $(command -v rg) ]] && alias grep='rg '; alias G='rg '
+[[ $(command -v bat) ]] && alias bat='bat --color always'; alias cat='bat'; alias less='bat --color-always'; alias L='bat --color-always'
+[[ $(command -v gh) ]] &&  alias ghc='gh copilot explain '; alias ghcs='gh copilot suggest '
 [[ $(command -v tmuxinator) ]] && alias mux="tmuxinator "
-if [[ $(command -v bat) ]]; then
-	alias less='bat'
-	alias cat='bat --color always'
-fi
-if [[ $(command -v gh) ]]; then
-	alias ghc='gh copilot explain '
-	alias ghcs='gh copilot suggest '
-fi
 
 # git aliases
 alias gg='lazygit'
@@ -166,4 +167,8 @@ alias dkc=docker-compose
 alias zz='z -'
 alias cm='chezmoi'
 alias cmcd='chezmoi cd'
-alias nvim-minimal="NVIM_APPNAME=nvim-minimal nvim"
+alias mvim="NVIM_APPNAME=nvim-minimal nvim"
+alias tvim="NVIM_APPNAME=lazyvim-test nvim"
+
+# typo prone aliases
+alias ks="ls"

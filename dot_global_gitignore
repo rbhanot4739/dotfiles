@@ -9,3 +9,5 @@ pyrightconfig.json
 cspell.json
 !base_pyrightconfig.json
 .git-blame-ignore-revs
+en.utf-8*
+mise.toml
