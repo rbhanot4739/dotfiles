@@ -6,23 +6,27 @@
 # local fzf_colors=$gruvbox_colors
 # local fzf_colors=$catpuccino_colors
 
-local PREV_WIN_OPTS="--preview-window :hidden --bind '?:change-preview-window(right|down|right,70%|hidden)' --header-first --header 'Press ? enable/toggle b/w preview modes'"
-local FILE_PREV_OPTS="--preview-label='File preview' --preview 'bat --style=snip --color always {}' $PREV_WIN_OPTS"
-local DIR_PREV_OPTS="--preview-label='Files' --preview 'tree -C {}' $PREV_WIN_OPTS"
+local PREV_WIN_OPTS="--preview-window :down,20% --bind '?:change-preview-window(right|hidden|down)'  --header 'Press ? enable/toggle b/w preview modes' --header-label=Keymaps "
+local FILE_PREV_OPTS="--preview-label='{}' --preview 'bat --style=snip --color always {}' $PREV_WIN_OPTS"
+local DIR_PREV_OPTS="--preview-label=' Dir Contents ' --preview 'eza $eza_params {}' $PREV_WIN_OPTS"
 
 # paths to ignore in addition to ~/.ignore
-local -a x_paths=("~/local-repo")
-local xcludes=""
-for xpath in $x_paths; do
-  xcludes="$xcludes --exclude '$xpath' "
-done
+# local -a x_paths=("~/local-repo" "/export/apps" "*pyc")
+# local xcludes=""
+# for xpath in $x_paths; do
+#   xcludes="$xcludes --exclude '$xpath' "
+# done
+local excluded_fts="--exclude '*pyc'"
 
-local find_all_cmd="fd --follow . $xcludes "
+local find_all_cmd="fd --follow . "
 local find_files_cmd="$find_all_cmd --type file "
 local find_dirs_cmd="$find_all_cmd --type directory "
 
-export FZF_DEFAULT_OPTS="--style full --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'" # Starts fzf in lower half of the screen taking 40% height
+local default_header_opts="--header-first --header-border=horizontal"
+local default_binds='--bind=shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
+export FZF_DEFAULT_OPTS="--style default --info=inline-right --height 50% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds" # Starts fzf in lower half of the screen taking 40% height
 
+source $HOME/fzf-themes/${THEME}.sh
 # if [[ $TMUX ]]; then
 #   export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --tmux bottom,50%"
 # fi
@@ -74,7 +78,7 @@ add_to_zsh_history() {
   print -s $@
 }
 
-d() {
+fcd() {
   # fuzzy jump to any directory
   # this is different from `z` as z only shows top few directories which are most accessed
  if  [[ $# -gt 1 ]] || [[ -f $1 ]]; then 
@@ -121,6 +125,9 @@ v() {
       all_dirs=false
     elif [[ -d "$arg" ]] || [[ -L "$arg" ]]; then
       all_files=false
+    else 
+      echo "Invalid argument: $arg doesn't exist"
+      return 1
     fi
   done
 
@@ -152,13 +159,6 @@ gbfa() {
   git checkout $(git branch --all | fzf)
 }
 
-# fuzzy search through man pages with tldr preview
-# fman() {
-#   local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
-#   fd_cmd="fd -t f . --follow $paths"
-#   eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u| fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --height 70% --border=double --preview 'tldr --color=always {} 2>/dev/null' | xargs man
-# }
-
 _fzf_comprun() {
   local command=$1
   shift
@@ -181,13 +181,27 @@ __fzf_list_hosts() {
   echo $hosts | tr ' ' '\n' | sort -u
 }
 
+# man pages
 __fzf_list_man_pages() {
   local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
   fd_cmd="fd -t f . --follow $paths"
   eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' | sort -u
 }
 
+# fuzzy search through man pages with tldr preview
+fman() {
+  # local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
+  # fd_cmd="fd -t f . --follow $paths"
+  # eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u| fzf --layout reverse --prompt '∷ ' --pointer ▶ --marker ⇒ --height 70% --border=double --preview 'tldr --color=always {} 2>/dev/null' | xargs man
+__fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null' | xargs man
+}
+
 _fzf_complete_man() {
   _fzf_complete +m -- "$@" < <(__fzf_list_man_pages)
 }
-# source $HOME/fzf-themes/tokyonight_moon.sh
+
+_nvim_config_switcher() {
+  fd --type=d "vim" ~/.config --exec basename | fzf --prompt="Select config > " --height=~50% --bind 'enter:become(NVIM_APPNAME={} nvim)' --border-label="  Neovim Config Switcher "
+}
+zle -N _fzf_complete
+alias vims="_nvim_config_switcher"

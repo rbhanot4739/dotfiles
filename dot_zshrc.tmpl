@@ -1,149 +1,106 @@
 # vim:ft=zsh
-echo -ne '\e[5 q'    # use beam shape cursor instead of a block
 
-# install powerlevel10k
-if [[ ! -d $HOME/powerlevel10k ]]; then
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
-fi
-
-if [[ -f "/opt/homebrew/bin/brew" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-
-if [[ $(command -v devbox) ]]; then
-eval "$(devbox global shellenv)" 2> /dev/null
-alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
-fi
-(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
-
+# Enable Powerlevel10k instant prompt (should stay at top of ~/.zshrc)
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
-
-
-CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
-# Add the custom completion directory to fpath
-fpath=($CUSTOM_COMPLETION_DIR $fpath)
-autoload -Uz compinit
-compinit
-
-# Define the custom completion function
-_ssh_comp() {
-local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
-hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts | sort -u | tr '\n' ' '))
-  compadd "$@" $hosts
-}
-compdef _ssh_comp ssh
-
-# zstyle ':completion:*:*:ssh:*:hosts' hosts $(awk '/^Host / {print $2}' ~/.ssh/config.custom; awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts | sort -u|uniq)
-
-_man_comp() {
-local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
-fd_cmd="fd -t f . --follow $paths"
-man_pages=($(eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' |sort -u))
-compadd "$@" $man_pages
-}
-compdef _man_comp man
-
-# _vim_completion() {
-#   # Use the _files builtin to generate file completions only, excluding directories
-#   _path_files -W "$PWD" "*(.)"
-# }
-# compdef _vim_completion vim
-
-
-# Enable colors
-autoload -U colors && colors
-
-# needed specifically for Lazygit and more generically this makes configs more Linux compatible
+# ======== Critical Environment Setup ========
 export LANG=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
+export XDG_CONFIG_HOME="$HOME/.config"
+[[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
 
-# ======== History ========
+{{- if (eq .chezmoi.os "darwin") }}
+
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+{{- end }}
+
+# ======== History Configuration ========
 export HISTSIZE=100000
 export HISTFILE=~/.zsh_history
 export SAVEHIST=$HISTSIZE
 export HISTDUP=erase
 
-setopt append_history       # Append history to the history file, rather than overwriting it
-setopt hist_ignore_space    # Ignore commands that start with a space in the history
-setopt hist_ignore_all_dups # remove older duplicate entries from history
-setopt share_history        # share history between different instances of the shell
-setopt hist_reduce_blanks   # remove blanks from history items
-setopt inc_append_history   # save history entries as soon as they are entered
-setopt hist_save_no_dups    # Do not save duplicate commands in the history
-setopt hist_find_no_dups    # Do not display duplicate commands when searching the history
+setopt append_history
+setopt hist_ignore_space
+setopt hist_ignore_all_dups
+setopt share_history
+setopt hist_reduce_blanks
+setopt inc_append_history
+setopt hist_save_no_dups
+setopt hist_find_no_dups
 
-# ======== Plugin mgmt ========
+# ======== Basic Setup ========
+echo -ne '\e[5 q'    # Use beam shape cursor
+autoload -U colors && colors
+
+# ======== Plugin Configuration ========
 ZVM_INIT_MODE=sourcing
 ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
+ZVM_LAZY_KEYBINDINGS=true
 
+# ======== Plugin Management ========
+PLUGIN_DIR="$HOME/.zsh/plugins"
 load_plugins() {
-  # install/load plugins
-  PLUGIN_DIR="$HOME/.zsh/plugins"
-  if [[ ! -d "$PLUGIN_DIR" ]]; then
-    mkdir -p "$PLUGIN_DIR"
-  fi
-
-  
-typeset -A PLUGINS
-PLUGINS=(
-  ["fast-syntax-highlighting"]="https://github.com/zdharma-continuum/fast-syntax-highlighting,"
-  ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions,"
-  ["zsh-completions"]="https://github.com/zsh-users/zsh-completions,"
-  ["zsh-history-substring-search"]="https://github.com/zsh-users/zsh-history-substring-search,"
-  ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab,"
-  ["zsh-vi-mode"]="https://github.com/jeffreytse/zsh-vi-mode,"
-  # ["zsh-abbr"]="https://github.com/olets/zsh-abbr,--recurse-submodules --single-branch --branch main --depth 1"
-)
-
-for plugin_name plugin_info in ${(kv)PLUGINS}; do
-    # Split plugin_info into plugin_url and plugin_args
-    IFS=',' read -r plugin_url plugin_args <<< "$plugin_info"
+    [[ ! -d "$PLUGIN_DIR" ]] && mkdir -p "$PLUGIN_DIR"
+    local plugins=(
+        "zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
+        "zsh-completions/zsh-completions.plugin.zsh"
+        "zsh-history-substring-search/zsh-history-substring-search.plugin.zsh"
+        "fzf-tab/fzf-tab.plugin.zsh"
+        "zsh-vi-mode/zsh-vi-mode.plugin.zsh"
+        "fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+    )
     
-    plugin_path="${PLUGIN_DIR}/$plugin_name"
-    if [[ ! -d "$plugin_path" ]]; then
-        eval "git clone $plugin_url $plugin_args  $plugin_path"
-    else
-        # echo "$plugin_name is already installed...at $plugin_path/$plugin_name.plugin.zsh"
-        source "$plugin_path/$plugin_name.plugin.zsh"
-    fi
-done
+    for plugin in $plugins; do
+        [[ -f "$PLUGIN_DIR/$plugin" ]] && source "$PLUGIN_DIR/$plugin"
+    done
 }
+
+# Load plugins
 load_plugins
 
+# ======== Completion Setup ========
+CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
+fpath=($CUSTOM_COMPLETION_DIR $fpath)
+fpath=("/usr/local/linkedin/etc/zsh" "/export/content/linkedin/etc/zsh" $fpath)
 
-# ======== Completion ========
-# setup directory colors
-# on Mac the command is gdircolors, on Linux it's dircolors
-if command -v gdircolors &> /dev/null; then
-  eval $(gdircolors -b)
-elif command -v dircolors &> /dev/null; then
-  eval $(dircolors -b)
+autoload -Uz compinit
+# Load completions efficiently
+if [ $(date +'%j') != $(stat -f '%Sm' -t '%j' ~/.zcompdump 2>/dev/null) ]; then
+    compinit
+else
+    compinit -C -d ~/.zcompdump
 fi
 
+# setup directory colors
+{{- if (eq .chezmoi.os "darwin") }}
+# on Mac the command is gdircolors, on Linux it's dircolors
+[[ $(command -v gdircolors) ]] && eval $(gdircolors -b)
+{{- else }}
+[[ $(command -v dircolors) ]] && eval $(dircolors -b)
+{{- end }}
+
+# Completion styles
 zstyle ':completion:::::' completer _expand _complete _ignored _approximate
-# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 
+# FZF-tab configuration
 zstyle ':fzf-tab:*' fzf-flags --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'tree -C $realpath'
 zstyle ':fzf-tab:complete:z:*' fzf-preview 'tree -C $realpath'
-# zstyle ':fzf-tab:complete:z:*' fzf-preview 'eza -T -L=1 --color=always $realpath'
 zstyle ':fzf-tab:complete:ls:*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
 zstyle ':fzf-tab:complete:eza:*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
-
-# https://github.com/Aloxaf/fzf-tab/wiki/Preview#variables
 zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' fzf-preview 'echo ${(P)word}'
 
-
-# ======== Setup key bindings ========
+# ======== Key Bindings ========
 # bindkey -e
 bindkey '^A' beginning-of-line
 bindkey '^E' end-of-line
@@ -158,31 +115,38 @@ bindkey '^[[B' history-substring-search-down # down
 # alias dconf='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 # dconf config --local status.showUntrackedFiles no
 # echo "alias dconf='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'" >> $HOME/.bashrc
-alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
+# alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
+# ======== Tool Configuration ========
+export XDG_CONFIG_HOME="$HOME/.config"
+# Editor setup
+if [[ $(command -v nvim) ]]; then
+  export EDITOR=nvim
+  # export MANPAGER='NVIM_APPNAME=minimal-lazy nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
+  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+fi
 
-# ======== Load tools ========
-# only load pixi for rdev machines
-[[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
+# Development tools
+if [[ $(command -v devbox) ]]; then
+  eval "$(devbox global shellenv)" 2> /dev/null
+  alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+fi
 
-
-[[ -f "~/.temporal.zsh" ]] && source ~/.temporal.zsh
+# Additional tools
+eval "$(mise activate zsh)"
 source <(fzf --zsh)
-# eval "$(direnv hook zsh)"
 eval "$(zoxide init zsh)"
 alias zi=__zoxide_zi
 
+# Atuin setup
 if [[ $(command -v atuin) ]]; then
-export ATUIN_NOBIND="true"
-eval "$(atuin init zsh)"
-bindkey '^r' atuin-search
-bindkey '^[[1;2A' atuin-up-search    # bind shift + up to atuin-up-search
+  export ATUIN_NOBIND="true"
+  eval "$(atuin init zsh)"
+  bindkey '^r' atuin-search
+  bindkey '^[[1;2A' atuin-up-search
 fi
 
-[ -f "$HOME/fzf_config.zsh" ] && source "$HOME/"fzf_config.zsh
-[ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
-
-# yazi setup
+# Yazi file manager
 function y() {
   local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
   yazi "$@" --cwd-file="$tmp"
@@ -192,20 +156,33 @@ function y() {
   rm -f -- "$tmp"
 }
 
+# ======== Path Additions ========
 [[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
 [[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
 
-export XDG_CONFIG_HOME="$HOME/.config"
-if [[ $(command -v nvim) ]]; then
- export EDITOR=nvim
- # export MANPAGER='nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
- # export MANPAGER='NVIM_APPNAME=minimal-lazy nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
- export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-fi
+# ======== Theme and Visual Settings ========
+export THEME="nightfox"
+export eza_params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--color=always' '--icons')
 export BAT_THEME="ansi"
 
+# ======== Additional Configurations ========
+[ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
+[[ -f "~/.temporal.zsh" ]] && source ~/.temporal.zsh
+
+# Install powerlevel10k if not present
+if [[ ! -d $HOME/powerlevel10k ]]; then
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
+fi
+
+# Load powerlevel10k
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Direnv (load last to modify PATH)
+(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
+command -v direnv > /dev/null && eval "$(direnv hook zsh)"
+
+
 # zsh abbr config
 ABBR_EXPAND_PUSH_ABBREVIATION_TO_HISTORY=1
 # show hints for abbrereviations
@@ -214,6 +191,3 @@ ABBR_LOG_AVAILABLE_ABBREVIATION=1
 ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
 # abbr file
 # ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"
-# EZA_CONFIG_DIR="$HOME/.config/eza"
-# export VOLTA_HOME="$HOME/.volta"
-# export PATH="$VOLTA_HOME/bin:$PATH"

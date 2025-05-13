@@ -10,12 +10,12 @@ return {
         svn = false,
         cvs = false,
       },
-      copilot_model =  "claude-3.5-sonnet",
+      -- copilot_model = "claude-3.5-sonnet",
     },
   },
   {
     "CopilotC-Nvim/CopilotChat.nvim",
-    enabled = true,
+    enabled = false,
     opts = {
       model = "o3-mini",
       debug = false,
@@ -33,6 +33,37 @@ return {
           normal = "<A-y>",
           insert = "<A-yt>",
         },
+      },
+    },
+  },
+  {
+    "yetone/avante.nvim",
+    event = "VeryLazy",
+    version = false, -- Never set this value to "*"! Never!
+    enabled = false,
+    build = "make",
+    dependencies = {
+
+      {
+        -- Make sure to set this up properly if you have lazy=true
+        "MeanderingProgrammer/render-markdown.nvim",
+        opts = {
+          file_types = { "markdown", "Avante" },
+        },
+        ft = { "markdown", "Avante" },
+      },
+    },
+    opts = {
+      selector = {
+        --- @alias avante.SelectorProvider "native" | "fzf_lua" | "mini_pick" | "snacks" | "telescope" | fun(selector: avante.ui.Selector): nil
+        provider = "snacks",
+        -- Options override for custom providers
+        provider_opts = {},
+      },
+      provider = "copilot",
+      auto_suggestions_provider = "copilot",
+      copilot = {
+        model = "claude-3.5-sonnet", -- your desired model (or use gpt-4o, etc.)
       },
     },
   },
@@ -58,7 +89,7 @@ return {
               "algorithm:histogram",
               "followwrap",
               "linematch:120",
-              "indent-heuristic"
+              "indent-heuristic",
             },
             provider = "default", -- default|mini_diff
           },
@@ -78,7 +109,7 @@ return {
           chat = {
             keymaps = {
               send = {
-                modes = { n = "<C-s>", i = "<C-s>" },
+                modes = { n = "<C-s>", i = "<S-cr>" },
               },
               send_to_smart = {
                 modes = { n = "<S-CR>" },
@@ -89,7 +120,10 @@ return {
                 end,
               },
               close = {
-                modes = { n = "q", i = "<C-c>" },
+                modes = { n = "<C-c>", i = "<C-c>" },
+              },
+              stop = {
+                modes = { n = "<a-x>", i = "<a-x>" },
               },
               -- Add further custom keymaps here
             },
@@ -97,37 +131,40 @@ return {
         },
       }
       require("codecompanion").setup(opts)
-      local keymap = vim.keymap
-      keymap.set({ "n", "v" }, "<leader>AA", "<cmd>CodeCompanionActions<cr>")
-      keymap.set({ "n", "v" }, "<leader>aq", ":CodeCompanion ")
-      keymap.set({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionChat Toggle<cr>")
-      keymap.set({ "n", "v" }, "<leader>an", "<cmd>CodeCompanionChat<cr>")
-      keymap.set({ "n", "v" }, "<leader>av", "<cmd>CodeCompanionChat Add<cr>")
       vim.cmd([[cab cc CodeCompanion]])
     end,
-    -- keys = {
-    --   {
-    --     "<leader>aa",
-    --     function()
-    --       require("codecompanion").toggle()
-    --     end,
-    --     desc = "CodeCompanion Chat",
-    --   },
-    --   {
-    --     "<leader>aq",
-    --     "<cmd>CodeCompanion<cr>",
-    --     mode = { "n", "x", "v" },
-    --     desc = "CodeCompanion inline chat",
-    --   },
-    --   {
-    --     "<leader>AA",
-    --     function()
-    --       require("codecompanion").actions()
-    --     end,
-    --     mode = { "n", "v" },
-    --     desc = "CodeCompanion actions",
-    --   },
-    -- },
+    keys = {
+      {
+        "<leader>aa",
+        mode = { "n", "v" },
+        "<cmd>CodeCompanionChat Toggle<cr>",
+        desc = "CodeCompanion Chat",
+      },
+      {
+        "<leader>aq",
+        ":CodeCompanion",
+        mode = { "n", "x", "v" },
+        desc = "CodeCompanion inline chat",
+      },
+      {
+        "<leader>AA",
+        "<cmd>CodeCompanionActions<cr>",
+        mode = { "n", "v" },
+        desc = "CodeCompanion actions",
+      },
+      {
+        "<leader>an",
+        "<cmd>CodeCompanionChat<cr>",
+        mode = { "n", "v" },
+        desc = "CodeCompanion actions",
+      },
+      {
+        "<leader>av",
+        "<cmd>CodeCompanionChat Add<cr>",
+        mode = { "n", "v" },
+        desc = "CodeCompanion actions",
+      },
+    },
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-treesitter/nvim-treesitter",

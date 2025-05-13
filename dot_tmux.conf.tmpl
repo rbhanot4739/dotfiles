@@ -18,7 +18,6 @@ set -g default-terminal "tmux-256color"
 set -ag terminal-overrides ",screen-256color,xterm-256color:Tc"
 set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'  # undercurl support
 set -as terminal-overrides ',*:Setulc=\E[58::2::::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m'  # underscore colours - needs tmux-3.0
-set -g status-justify centre
 set -g display-panes-time 7000
 # set-option -g extended-keys on
 
@@ -32,10 +31,12 @@ bind-key -T root         C-M-S-Enter send-keys Escape "[13;8u"
 
 
 # ================== Keymaps
-# remap prefix from 'C-b' to 'C-a'
+{{- if not (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
 unbind C-b
 set-option -g prefix M-a
 bind M-a send-prefix
+{{- end }}
+
 bind r source-file ~/.tmux.conf \; display-message "Conf reloaded..."
 
 bind N new-session
@@ -75,6 +76,8 @@ bind -n S-left prev
 bind l last-window
 
 bind -n M-Enter resize-pane -Z    # maximize current pane
+# rename pane-title
+bind i command-prompt -p "New pane title: " "select-pane -T '%%'"
 
 # Split panes
 bind-key "|" split-window -fh -c "#{pane_current_path}"
@@ -158,25 +161,21 @@ bind-key -n MouseUp2Status kill-window -t=
 # Double click on the window list to open a new window
 bind-key -n DoubleClick1Status new-window
 # --------------------------------------------------------------------------------
+
+{{- if not (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+
 # TPM settings
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
 set -g @plugin 'erikw/tmux-dark-notify'
 
-# <<<  ================= theme config =================
-set -g status-position top
-set -g status-left-length 100
-set -g status-right-length 200
+# <<<  theme config
 set -ogq @truncated_path "#(bash $HOME/scripts/truncate_path.sh #{pane_current_path} 2 1)"
 
-# set -g @dark-notify-theme-path-dark "$HOME/scripts/tmux/gruvbox-dark.tmux"
-# set -g @dark-notify-theme-path-light "$HOME/scripts/tmux/gruvbox-light.tmux"
-source $HOME/scripts/tmux/gruvbox-dark.conf
-# set -g @plugin 'egel/tmux-gruvbox'
-# set -g @tmux-gruvbox 'dark'
+source $HOME/scripts/tmux/theme.conf
 # >>>
 
-# <<<  ==================== fingers ==================== 
+# <<<  fingers
 # set -g @plugin 'fcsonline/tmux-thumbs'
 # set -g @thumbs-unique enabled
 # set -g @thumbs-regexp-1 '([\w-]+(?:\.[\w-]*)*)'  # match filenames with extensions
@@ -186,14 +185,14 @@ set -g @fingers-key M-space
 set -g @fingers-jump-key j
 set -g @fingers-pattern-0 '([\w-]+(?:\.[\w-]*)*)'
 
-bind -n C-M-h run -b "#{@fingers-cli} start {left-of}"
-bind -n C-M-j run -b "#{@fingers-cli} start {down-of}"
-bind -n C-M-k run -b "#{@fingers-cli} start {up-of}"
-bind -n C-M-l run -b "#{@fingers-cli} start {right-of}"
-bind -n C-M-o run -b "#{@fingers-cli} start {last}"
+ bind -n C-M-h run -b "#{@fingers-cli} start {left-of}"
+ bind -n C-M-j run -b "#{@fingers-cli} start {down-of}"
+ bind -n C-M-k run -b "#{@fingers-cli} start {up-of}"
+ bind -n C-M-l run -b "#{@fingers-cli} start {right-of}"
+ bind -n C-M-o run -b "#{@fingers-cli} start {last}"
 # >>>
 
-# tmux fzf-url ====================
+# <<< tmux fzf-url
 # set -g @plugin 'junegunn/tmux-fzf-url'
 # set -g @plugin 'wfxr/tmux-fzf-url'
 # set -g @fzf-url-bind 'M-x'
@@ -202,13 +201,12 @@ bind -n C-M-o run -b "#{@fingers-cli} start {last}"
  set -g @plugin 'alberti42/tmux-fzf-links'
  set-option -g @fzf-links-key M-x
  set-option -g @fzf-links-history-lines 2000
+ set-option -g @fzf-links-log-filename "~/fzf_links_log.txt"
  set-option -g @fzf-links-editor-open-cmd "tmux new-window -n 'nvim' nvim +%line '%file'"
  set-option -g @fzf-links-python /opt/homebrew/bin/python3.12
+# >>>
 
-
-# tmux fzf-url ====================
-
-# continuum & resurrect ====================
+# <<< continuum & resurrect
 set -g @plugin 'tmux-plugins/tmux-continuum'
 # restore session automaticlly
 set -g @continuum-save-interval '30'
@@ -222,11 +220,14 @@ set -g @resurrect-processes 'ssh mysql "~ipython" "~lazygit" "~tail->tail *'
 set -g @resurrect-strategy-vim 'session'
 # for neovim
 set -g @resurrect-strategy-nvim 'session'
-# tmux continum & resurrect ====================
+# >>>
  
+set -g @plugin 'joshmedeski/tmux-nerd-font-window-name'
+
 if "test ! -d ~/.tmux/plugins/tpm" \
    "run 'git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins'"
 
 run '~/.tmux/plugins/tpm/tpm'
 if-shell "test -e ~/.local/state/tmux/tmux-dark-notify-theme.conf" \
      "source-file ~/.local/state/tmux/tmux-dark-notify-theme.conf"
+{{- end }}

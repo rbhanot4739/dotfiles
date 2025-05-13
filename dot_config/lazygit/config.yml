@@ -1,3 +1,4 @@
+notARepository: 'quit'
 git:
   paging:
     colorArg: always
@@ -8,6 +9,13 @@ git:
     autoWrapWidth: 100
 
   branchPrefix: "rbhanot/"
+
+gui:
+  sidePanelWidth: 0.2
+  nerdFontsVersion: "3"
+
+os:
+  editPreset: nvim
 
 # Keybindings
 keybinding:

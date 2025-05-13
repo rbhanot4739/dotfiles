@@ -235,13 +235,6 @@ return {
       desc = "Find adjacent files",
     },
     {
-      "<leader>sa",
-      function()
-        Snacks.picker.grep({ ignored = true, cwd = vim.fn.expand("%:p:h") })
-      end,
-      desc = "Grep adjacent files",
-    },
-    {
       "<leader>fP",
       function()
         require("snacks").picker.pick("files", {
@@ -251,6 +244,34 @@ return {
         })
       end,
       desc = "Find Plugin files",
+    },
+    {
+      "<leader>sa",
+      function()
+        Snacks.picker.grep({ ignored = true, cwd = vim.fn.expand("%:p:h") })
+      end,
+      desc = "Grep adjacent files",
+    },
+    {
+      "<leader>sb",
+      function()
+        Snacks.picker.pickers()
+      end,
+      desc = "Snacks builtin pickers",
+    },
+    {
+      "<leader>sb",
+      function()
+        Snacks.picker.pickers()
+      end,
+      desc = "Snacks builtin pickers",
+    },
+    {
+      "<leader>sc",
+      function()
+        Snacks.picker.colorschemes()
+      end,
+      desc = "Search color scheme",
     },
     -- grep mappings
     { "<leader>sw", LazyVim.pick("grep_word"), desc = "Grep Visual selection or word (Root Dir)", mode = { "n", "x" } },
@@ -285,7 +306,7 @@ return {
       desc = "LSP Symbols",
     },
     {
-      "<leader>sS",
+      "<leader>SS",
       function()
         Snacks.picker.lsp_workspace_symbols()
       end,
@@ -297,13 +318,6 @@ return {
         Snacks.picker.smart()
       end,
       desc = "Smart Picker",
-    },
-    {
-      "<leader>sb",
-      function()
-        Snacks.picker.pickers()
-      end,
-      desc = "Snacks builtin pickers",
     },
     -- git
     {
@@ -438,6 +452,10 @@ return {
           picker.title = utils.title(picker.opts.source) .. " (" .. dir .. ")"
           picker:find()
         end,
+        focus_to_cwd = function(picker, _)
+          picker:set_cwd(vim.uv.cwd())
+          picker:find()
+        end,
       },
       ---@class snacks.picker.previewers.Config
       previewers = {
@@ -447,7 +465,7 @@ return {
         },
         git = {
           builtin = false, -- use Neovim for previewing git output (true) or use git (false)
-          args = { "-c", "delta" }, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
+          -- args = { "-c", "delta" }, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
         },
       },
       layouts = {
@@ -465,7 +483,7 @@ return {
             {
               box = "horizontal",
               { win = "list", border = "none" },
-              { win = "preview", title = "{preview}", width = 0.8, border = "left" },
+              { win = "preview", title = "{preview}", width = 0.65, border = "left" },
             },
           },
         },
@@ -473,7 +491,7 @@ return {
           preview = "main",
           layout = {
             box = "vertical",
-            backdrop = false,
+            backdrop = true,
             width = 0,
             height = 0.2,
             position = "bottom",
@@ -496,7 +514,17 @@ return {
         },
         explorer = {
           supports_live = true,
+          cycle = true,
+          layout = { preview = "main" },
           exclude = { "*dist-info*", "*.so", "*.pth", "*egg*", "*typed" },
+          win = {
+            list = {
+              keys = {
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["@"] = { "explorer_focus", desc = "Focus selected", mode = { "n" } },
+              },
+            },
+          },
         },
         smart = {
           filter = { cwd = true },
@@ -619,13 +647,15 @@ return {
             local commit = item.commit
             require("diffview")
             local filename = vim.api.nvim_buf_get_name(picker.finder.filter.current_buf)
-            local cmd = "DiffviewOpen " .. commit .. "^! " .. " -- " .. filename
+            -- local cmd = "DiffviewOpen " .. commit .. "^! " .. " -- " .. filename
+            local cmd = "DiffviewOpen " .. commit
+            vim.print(cmd)
             vim.cmd(cmd)
           end,
           actions = {
-            log_file = function(picker, _)
+            switch_git_log_mode = function(picker, _)
               if not picker.opts["current_file"] and not picker.opts["current_line"] then
-                picker.opts["current_file"] = true
+                picker.opts["current_line"] = true
                 -- picker.opts["follow"] = false
               elseif picker.opts["current_line"] then
                 picker.opts["current_line"] = false
@@ -642,7 +672,7 @@ return {
           win = {
             input = {
               keys = {
-                ["<C-k>"] = { "log_file", desc = "Switch git_log mode", mode = { "i", "n" } },
+                ["<C-k>"] = { "switch_git_log_mode", desc = "Switch git_log mode", mode = { "i", "n" } },
                 ["<S-Cr>"] = { "git_checkout", desc = "Checkout commit", mode = { "i", "n" } },
               },
             },
@@ -732,6 +762,9 @@ return {
         border = "rounded",
       },
       start_insert = true,
+    },
+    words = {
+      enabled = true,
     },
   },
 }

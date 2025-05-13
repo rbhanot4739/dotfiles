@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}')
 
@@ -6,7 +6,7 @@ info="--info=hidden"
 prompt="--prompt='Panes > '"
 border="--border --padding 1,1  --border-label=' Tmux Pane Switcher '"
 header_first="--header-first"
-header="--header-label '' --header 'Pane format: <session name:> <window_name> [cwd for pane]
+header="--header-label '' --header 'format: <session name:> -> <window_name> -> <pane_name> -> [cwd for pane]
 Press Enter to switch to the selected pane'"
 layout=$([[ -n ${TMUX} ]] && echo "--tmux center,90%,80% --padding 2,1,0,1 --margin 0 --reverse" || echo "--height 70% --layout=reverse --margin 15%,15%")
 binds="--bind 'enter:become(tmux switch-client -t \$(echo {} | sed \"s/: .*//\"))'"
@@ -22,7 +22,7 @@ fzf_cmd="fzf --style full"
 [ -n "$prompt" ] && fzf_cmd+=" $prompt"
 [ -n "$preview" ] && fzf_cmd+=" $preview"
 
-tmux_panes=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}: #{window_name}<>#{pane_current_path}" | grep -v "$current_pane" |
+tmux_panes=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}: #S -> #{window_name} -> #{pane_title} <>#{pane_current_path}" | grep -v "$current_pane" |
 	while read -r line; do
     # shell expansion
     path="${line##*<>}"    # this removes everything from beginning of the string upto `*<>`
@@ -47,5 +47,5 @@ tmux_panes=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}: #{window_n
 		echo "$prefix [$truncated_path]"
 	done)
 
-printf "%s\n" "$tmux_panes" | eval "$fzf_cmd -d ':' --with-nth 1,3"
+printf "%s\n" "$tmux_panes" | eval "$fzf_cmd -d ':' --with-nth 3"
 exit 0

@@ -4,9 +4,8 @@
 
 vim.opt.wrap = true
 vim.g.lazyvim_python_lsp = "basedpyright"
-vim.opt.spell = true
-vim.opt.spelllang = { "en_us" }
 vim.opt.laststatus = 3
+vim.o.showtabline = 0
 vim.o.cursorlineopt = "number,line"
 -- vim.g.snacks_animate = false
 vim.g.autoformat = false
@@ -41,3 +40,7 @@ vim.opt.diffopt = {
   "linematch:200",
   "indent-heuristic",
 }
+vim.diagnostic.config({
+  -- virtual_text = { current_line = true },
+  -- virtual_lines = { current_line = true },
+})

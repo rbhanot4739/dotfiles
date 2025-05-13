@@ -4,23 +4,19 @@
 # Session window preview
 
 # THIS IS THE WORKING VERSION OF THE SCRIPT
-
 get_tmux_sessions() {
-	sess_cmd="tmux list-sessions -F '#S#{?session_attached, (attached),}' 2> /dev/null"
-	# if [[ -n "$TMUX" ]]; then
-	# 	sess_cmd+="| grep -v attached"
-	# fi
-	# sessions=$(eval "$sess_cmd" | awk '{print $1}' | cut -d: -f1)
-	# echo "$sessions"
+  sess_cmd="tmux list-sessions -F '#S#{?session_attached, (attached),}' 2> /dev/null"
+	tmux_sessions=$(eval $sess_cmd | while read -r line; do echo    $line; done)
+  # echo $tmux_sessions
   eval $sess_cmd
-
 }
 export -f get_tmux_sessions
 
 get_zoxide_dirs() {
 	path_cmd=$([[ -f $HOME/scripts/truncate_path.sh ]] && echo "$HOME/scripts/truncate_path.sh {x} 2 2" || echo "basename {x}")
-	cmd="zoxide query -l | head -n 10 | xargs -I {x} $path_cmd"
-	eval "$cmd"
+	# cmd="zoxide query -l | head -n 10 | xargs -I {x} $path_cmd |while read -r line; do echo   \$line; done"
+	cmd="zoxide query -l | head -n 20 | xargs -I {x} $path_cmd"
+	eval "$cmd" 
 }
 export -f get_zoxide_dirs
 
@@ -80,7 +76,6 @@ export -f get_current_session
 
 del_session() {
 	clear
-  # old_name=$(echo "$1" | cut -d' ' -f1)
   [[ $1 =~ "attached" ]] && echo "You can't delete the currently attached session !!" && sleep 1 && return
 	echo -n "Are you sure you want to delete session ($1) [y/n]: "
 	read -r -n 1 response
@@ -93,6 +88,7 @@ TRANSFORMER='
  if [[ $FZF_PROMPT =~ Sessions ]]; then
     # enable zoxide only if its installed
     if [[ $(command -v zoxide) ]]; then
+      # echo "change-prompt(Zoxide Dirs (Top 10) > )+reload(get_zoxide_dirs | while read -r line; do echo    \$line; done)"
       echo "change-prompt(Zoxide Dirs (Top 10) > )+reload(get_zoxide_dirs)"
     # enable tmuxinator only if its installed
     elif [[ $(command -v tmuxinator) ]]; then
@@ -161,7 +157,8 @@ tmux_attach_start() {
 	elif [[ $(eval "$tmuxinator_projects") =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
 		tmuxinator start "$session"
 	else
-		if [[ $(get_zoxide_dirs | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+    # selection=$(get_zoxide_dirs |while read -r line; do echo   $line; done| SHELL="$shell" eval "$fzf_cmd -d ' ' --accept-nth 2")
+		if [[ $(get_zoxide_dirs  | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
 			session_dir=$(echo "$session" | awk -F '/' '{print $(NF-1)"/"$NF}')
 			cmd="zoxide query $session_dir"
 			session_dir=$(eval "$cmd")
@@ -201,16 +198,25 @@ handler_request() {
 		tmux_attach_start "$1" "term"
 		return
 	else
+		# tmux_sessions=$(get_tmux_sessions | while read -r line; do echo    $line; done)
 		tmux_sessions=$(get_tmux_sessions)
 		if [[ -z "$TMUX" && -z $tmux_sessions ]]; then
-			echo "No existing tmux sessions found, creating new session 'default'"
-			tmux new-session -s default
-			return
+      # selection=$(get_zoxide_dirs |while read -r line; do echo    $line; done| SHELL="$shell" eval "$fzf_cmd --prompt ' Zoxide > ' -d ' ' --accept-nth 2")
+      selection=$(get_zoxide_dirs | SHELL="$shell" eval "$fzf_cmd --prompt ' Zoxide > ' -d ' ' --accept-nth 1")
+      [[ -z $selection ]] && return
+      session_dir=$(echo "$selection" | awk -F '/' '{print $(NF-1)"/"$NF}')
+      cmd="zoxide query $session_dir"
+      session_dir=$(eval "$cmd")
+      session=$(basename "$session_dir")
+      cd "$session_dir" || exit
+      tmux new-session -s "$session"
+      return
+			# echo "No existing tmux sessions found, creating new session 'default'"
+			# tmux new-session -s default
 		fi
 		shell=$(which bash)
 		# get the selection from fzf
-		selection=$(echo -n -e "$tmux_sessions" | SHELL="$shell" eval "$fzf_cmd -d ' ' --accept-nth 1")
-    # echo "Selection: $selection"
+		selection=$(echo -n -e "$tmux_sessions"  | SHELL="$shell" eval "$fzf_cmd -d ' ' --accept-nth 1")
 		if [[ -n $selection ]]; then
 			tmux_attach_start "$selection" "fzf"
 		fi

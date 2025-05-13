@@ -1,30 +1,26 @@
 return {
   "saghen/blink.cmp",
+  event = { "InsertEnter" },
   dependencies = {
     "mikavilpas/blink-ripgrep.nvim",
     -- "rcarriga/cmp-dap",
     "Kaiser-Yang/blink-cmp-git",
-    "ribru17/blink-cmp-spell",
+    "Kaiser-Yang/blink-cmp-dictionary",
+    "Kaiser-Yang/blink-cmp-avante",
   },
-  keymap = {
-    ["<c-g>"] = {
-      function()
-        -- invoke manually, requires blink >v0.8.0
-        require("blink-cmp").show({ providers = { "ripgrep" } })
-      end,
-    },
-  },
+  -- event = "VeryLazy",
   opts = {
     keymap = {
       preset = "enter",
       ["<Tab>"] = {
-        function(cmp)
-          if cmp.snippet_active() then
-            return cmp.accept()
-          else
-            return cmp.select_next()
-          end
-        end,
+        -- function(cmp)
+        --   if cmp.snippet_active() then
+        --     return cmp.accept()
+        --   else
+        --     return cmp.select_next()
+        --   end
+        -- end,
+        "select_next",
         "snippet_forward",
         "fallback",
       },
@@ -50,16 +46,16 @@ return {
         return {}
       end,
       completion = {
-        trigger = {
-          show_on_blocked_trigger_characters = {},
-          show_on_x_blocked_trigger_characters = nil, -- Inherits from top level `completion.trigger.show_on_blocked_trigger_characters` config when not set
-        },
+        ghost_text = { enabled = true },
+        -- trigger = {
+        --   show_on_blocked_trigger_characters = {},
+        --   show_on_x_blocked_trigger_characters = nil, -- Inherits from top level `completion.trigger.show_on_blocked_trigger_characters` config when not set
+        -- },
         list = {
           selection = { preselect = false, auto_insert = true },
         },
         menu = {
           auto_show = true,
-          draw = {},
         },
       },
     },
@@ -69,6 +65,7 @@ return {
       },
       trigger = {
         show_on_blocked_trigger_characters = {},
+        show_in_snippet = false,
       },
       menu = {
         -- min_width = 10,
@@ -77,6 +74,9 @@ return {
         draw = {
           -- columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } },
         },
+        auto_show = function(ctx)
+          return vim.bo.filetype ~= "markdown"
+        end,
       },
       documentation = { window = { border = "rounded" } },
     },
@@ -97,9 +97,10 @@ return {
     },
     sources = {
       default = {
+        "dictionary",
         "markdown",
         "ripgrep",
-        "spell",
+        -- "avante",
         -- "dap",
       },
       providers = {
@@ -123,8 +124,20 @@ return {
         path = {
           score_offset = 95,
           enabled = function()
-            return vim.bo.filetype ~= "copilot-chat" and vim.bo.filetype ~= "codecompanion"
+            return not vim.tbl_contains({ "copilot-chat", "codecompanion", "AvanteInput" }, vim.bo.filetype)
+            -- return vim.bo.filetype ~= "copilot-chat" and vim.bo.filetype ~= "codecompanion"
           end,
+        },
+        dictionary = {
+          module = "blink-cmp-dictionary",
+          name = "Dict",
+          min_keyword_length = 3,
+          opts = {
+            dictionary_files = { vim.fn.expand("~/words.txt") },
+            get_documentation = function()
+              return nil
+            end,
+          },
         },
         ripgrep = {
           module = "blink-ripgrep",
@@ -148,27 +161,6 @@ return {
           name = "RenderMarkdown",
           module = "render-markdown.integ.blink",
           fallbacks = { "lsp" },
-        },
-        spell = {
-          name = "Spell",
-          module = "blink-cmp-spell",
-          opts = {
-            -- EXAMPLE: Only enable source in `@spell` captures, and disable it
-            -- in `@nospell` captures.
-            enable_in_context = function()
-              local curpos = vim.api.nvim_win_get_cursor(0)
-              local captures = vim.treesitter.get_captures_at_pos(0, curpos[1] - 1, curpos[2] - 1)
-              local in_spell_capture = false
-              for _, cap in ipairs(captures) do
-                if cap.capture == "spell" then
-                  in_spell_capture = true
-                elseif cap.capture == "nospell" then
-                  return false
-                end
-              end
-              return in_spell_capture
-            end,
-          },
         },
         dap = {
           name = "dap",

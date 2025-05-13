@@ -1,5 +1,4 @@
 return {
-
   {
     "gbprod/yanky.nvim",
     opts = { textobj = {

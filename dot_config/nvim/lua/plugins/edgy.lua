@@ -6,7 +6,7 @@ return {
       { ft = "dapui_console", size = { height = 0.2 }, title = "Debug Console" },
     }
     local right = {
-      { ft = "codecompanion", title = " CodeCompanionChat", size = { width = 0.35 } },
+      { ft = "codecompanion", title = " CodeCompanionChat", size = { width = 0.40 } },
       { ft = "dapui_scopes", title = " Scopes" },
       { ft = "dapui_watches", title = " Watches" },
       { ft = "dapui_stacks", title = " Stacks" },

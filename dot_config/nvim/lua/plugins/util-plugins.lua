@@ -11,7 +11,7 @@ return {
         defer_save = { "InsertLeave", "TextChanged" }, -- vim events that trigger a deferred save (saves after `debounce_delay`)
         cancel_deferred_save = { "InsertEnter" }, -- vim events that cancel a pending deferred save
       },
-      debounce_delay = 1000,
+      debounce_delay = 1500,
     },
   },
   -- Todo: Assess if I really need this, as I could not seem to fit this into my workflow
@@ -66,6 +66,7 @@ return {
         function()
           require("quicker").expand({ before = 2, after = 2, add_to_existing = true })
         end,
+        ft = "qf",
         desc = "Expand quickfix context",
       },
       {
@@ -73,6 +74,7 @@ return {
         function()
           require("quicker").collapse()
         end,
+        ft = "qf",
         desc = "Collapse quickfix context",
       },
     },

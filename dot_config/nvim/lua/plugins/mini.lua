@@ -1,3 +1,26 @@
+-- toggle preview with <c-p> in mini.files
+vim.api.nvim_create_autocmd("User", {
+  pattern = "MiniFilesBufferCreate",
+  callback = function(args)
+    vim.keymap.set("n", "<C-p>", function()
+      MiniFiles = require("mini.files")
+      MiniFiles.config.windows.preview = not MiniFiles.config.windows.preview
+      MiniFiles.refresh({ windows = { preview = MiniFiles.config.windows.preview } })
+    end, { desc = "toggle preview" })
+  end,
+})
+
+-- local set_mark = function(id, path, desc)
+--   MiniFiles.set_bookmark(id, path, { desc = desc })
+-- end
+-- vim.api.nvim_create_autocmd("User", {
+--   pattern = "MiniFilesExplorerOpen",
+--   callback = function()
+--     set_mark("c", vim.fn.stdpath("config"), "Config") -- path
+--     set_mark("w", vim.fn.getcwd, "Working directory") -- callable
+--     set_mark("~", "~", "Home directory")
+--   end,
+-- })
 return {
   {
     "echasnovski/mini.operators",
@@ -43,9 +66,9 @@ return {
           end,
         },
         mappings = {
-          go_in = "<CR>",
-          go_out = "<BS>",
-          go_in_plus = "<CR>",
+          go_in = "<s-cr>",
+          go_in_plus = "l",
+          go_out = "h",
           reset = ".",
           go_in_horizontal = "-",
           go_in_horizontal_plus = "_",
@@ -53,7 +76,7 @@ return {
           go_in_vertical_plus = "|",
         },
         windows = {
-          preview = true,
+          preview = false,
           width_nofocus = 20,
           width_focus = 40,
           width_preview = 80,
@@ -69,14 +92,14 @@ return {
         "<leader>e",
         function()
           require("mini.files").open(vim.fn.expand("%"))
-          -- require("mini.files").reveal_cwd()
+          require("mini.files").reveal_cwd()
         end,
         desc = "Explorer Mini.files",
       },
       {
         "<leader>E",
         function()
-          require("mini.files").open(vim.loop.cwd(), true)
+          require("mini.files").open(vim.loop.cwd())
         end,
         desc = "Open mini.files (cwd)",
       },
@@ -98,13 +121,7 @@ return {
     opts = {
       n_lines = 80,
       mappings = {
-        add = ";;",
-        delete = ";d",
-        replace = ";r",
-        find = ";>",
-        find_left = ";<",
-        highlight = ";h",
-        update_n_lines = ";n",
+        add = "gs",
       },
     },
   },

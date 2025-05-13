@@ -3,22 +3,24 @@ return {
     "folke/tokyonight.nvim",
     opts = {
       transparent = false,
-      lazy = true,
-      -- priority = 1000,
+      lazy = false,
+      priority = 1000,
+      lualine_bold = true,
+      on_highlights = function(hl, c)
+        hl["FlashLabel"] = { fg = c.magenta2, bold = true }
+      end,
       styles = {
-        sidebars = "transparent",
-        floats = "transparent",
+        -- sidebars = "transparent",
+        -- floats = "transparent",
       },
     },
   },
-  -- {
-  --   "catppuccin/nvim",
-  --   name = "catppuccin",
-  --   opts = {}
-  -- },
+  {
+    "EdenEast/nightfox.nvim",
+  },
   {
     "sainnhe/gruvbox-material",
-    lazy = false,
+    lazy = true,
     priority = 1000,
     config = function()
       -- a comment
@@ -30,7 +32,6 @@ return {
       vim.g.gruvbox_material_spell_foreground = "colored"
       vim.g.gruvbox_material_diagnostic_virtual_text = "colored"
       vim.g.gruvbox_material_current_word = "high contrast background"
-      vim.cmd.colorscheme("gruvbox-material")
     end,
   },
   -- {
