@@ -8,7 +8,7 @@ if [[ $? -ne 0 ]]; then
   curl -L -o ~/.pixi/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
   chmod +x ~/.pixi/bin/pixi
 fi
-packages=("tmux" "nvim" "ripgrep" "fzf" "fd-find" "zoxide" "eza" "git-delta" "bat" "direnv" "jq" "yq" "sqlite" "lua" "luajit" "luarocks")
+packages=("tmux" "nvim" "ripgrep" "fzf" "fd-find" "zoxide" "eza" "git-delta" "bat" "direnv" "jq" "yq" "sqlite" "lua" "luajit" "luarocks nodejs tealdeer")
 for package in "${packages[@]}"; do
   $HOME/.pixi/bin/pixi global install "$package"
 done
@@ -38,9 +38,7 @@ setup_zsh() {
 
   # install zsh plugins
 PLUGIN_DIR="$HOME/.zsh/plugins"
-if [[ ! -d "$PLUGIN_DIR" ]]; then
-  mkdir -p "$PLUGIN_DIR"
-fi
+[[ ! -d "$PLUGIN_DIR" ]] && mkdir -p "$PLUGIN_DIR"
 
 declare -A PLUGINS=(["fast-syntax-highlighting"]="https://github.com/zdharma-continuum/fast-syntax-highlighting,"
   ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions,"

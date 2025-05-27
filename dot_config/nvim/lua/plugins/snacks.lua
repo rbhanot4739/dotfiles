@@ -441,6 +441,7 @@ return {
     },
   },
   opts = {
+    -- explorer = { enabled = false },
     picker = {
       -- ui_select = true,
       matcher = { frecency = true },

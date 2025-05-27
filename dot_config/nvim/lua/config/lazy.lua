@@ -24,8 +24,21 @@ require("lazy").setup({
       import = "lazyvim.plugins",
       opts = {
         colorscheme = function()
-          local theme = vim.env.THEME or "tokyonight"
-          vim.cmd.colorscheme(theme)
+          -- read theme value from/tmp/theme
+          -- or use the environment variable THEME
+          local theme_file = "/tmp/theme"
+          if vim.fn.filereadable(theme_file) == 1 then
+            local file = io.open(theme_file, "r")
+            if file then
+              local theme = file:read("*l")
+              file:close()
+              if theme == "" then
+                theme = "tokyonight" -- default theme
+              end
+              vim.cmd.colorscheme(theme)
+              return
+            end
+          end
         end,
         icons = {
           kinds = config_utils.icons.kinds,

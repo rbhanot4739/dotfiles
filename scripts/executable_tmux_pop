@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Default dimensions
+width="${2:-95%}"
+height="${3:-95%}"
+
+if [ -z "$1" ]; then
+    echo "Error: No command provided"
+    exit 1
+fi
+
+cmd="$1"
+
+tmux display-popup -w "$width" -h "$height" -xC -yC  "$cmd"
+

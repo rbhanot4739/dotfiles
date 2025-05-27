@@ -1,0 +1,10 @@
+local token_file="$HOME/.config/github-copilot/apps.json"
+if [[ -f "$token_file" ]]; then
+    local token=$(jq -r '.[].oauth_token' "$token_file" 2>/dev/null)
+    if [[ -n "$token" ]]; then
+        export OPENAI_API_BASE=https://api.githubcopilot.com
+        export OPENAI_API_KEY="$token"
+        return 0
+    fi
+fi
+return 1

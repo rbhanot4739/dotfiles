@@ -1,8 +1,7 @@
-theme = nightfox
+theme = dark:nightfox, light:dawnfox
 macos-titlebar-style = hidden
-window-decoration = true
 window-width = 180
-window-height = 50
+window-height = 60
 shell-integration-features = no-cursor,no-sudo,title
 
 keybind = ctrl+one=goto_tab:1

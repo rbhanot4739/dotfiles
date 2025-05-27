@@ -1,15 +1,39 @@
 # vim:ft=zsh
 
-# Enable Powerlevel10k instant prompt (should stay at top of ~/.zshrc)
+### Added by Zinit's installer
+if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+    print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
+    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
+    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
+        print -P "%F{33} %F{34}Installation successful.%f%b" || \
+        print -P "%F{160} The clone has failed.%f%b"
+fi
+
+source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+autoload -Uz _zinit
+# (( ${+_comps} )) && _comps[zinit]=_zinit
+
+(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
+# Enable Powerlevel10k instant prompt
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
 
 # ======== Critical Environment Setup ========
 export LANG=en_US.UTF-8
-export LC_CTYPE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
 export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
+
+typeset -U PATH    # Make PATH unique
+
+{{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+[[ -d $HOME/.pixi/bin ]] && export PATH="$HOME/.pixi/bin:$PATH"
+{{- end }}
 [[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
+[[ -d $HOME/scripts ]] && export PATH="$HOME/scripts:$PATH"
 
 {{- if (eq .chezmoi.os "darwin") }}
 
@@ -19,7 +43,7 @@ fi
 {{- end }}
 
 # ======== History Configuration ========
-export HISTSIZE=100000
+export HISTSIZE=500000
 export HISTFILE=~/.zsh_history
 export SAVEHIST=$HISTSIZE
 export HISTDUP=erase
@@ -41,40 +65,58 @@ autoload -U colors && colors
 ZVM_INIT_MODE=sourcing
 ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
 ZVM_LAZY_KEYBINDINGS=true
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
-# ======== Plugin Management ========
-PLUGIN_DIR="$HOME/.zsh/plugins"
-load_plugins() {
-    [[ ! -d "$PLUGIN_DIR" ]] && mkdir -p "$PLUGIN_DIR"
-    local plugins=(
-        "zsh-autosuggestions/zsh-autosuggestions.plugin.zsh"
-        "zsh-completions/zsh-completions.plugin.zsh"
-        "zsh-history-substring-search/zsh-history-substring-search.plugin.zsh"
-        "fzf-tab/fzf-tab.plugin.zsh"
-        "zsh-vi-mode/zsh-vi-mode.plugin.zsh"
-        "fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
-    )
-    
-    for plugin in $plugins; do
-        [[ -f "$PLUGIN_DIR/$plugin" ]] && source "$PLUGIN_DIR/$plugin"
-    done
-}
+# Load powerlevel10k theme
+zinit ice depth"1" # git clone depth
+zinit light romkatv/powerlevel10k
 
-# Load plugins
-load_plugins
+ZVM_INIT_MODE=sourcing
+ZVM_LAZY_KEYBINDINGS=true
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+zinit ice wait"0" lucid 
+zinit light zsh-users/zsh-autosuggestions 
+
+zinit ice wait"0" lucid 
+zinit light Aloxaf/fzf-tab
+
+zinit ice wait"0" lucid 
+zinit light zdharma-continuum/fast-syntax-highlighting
+
+zinit ice depth=1
+zinit light jeffreytse/zsh-vi-mode
+
+zinit snippet OMZ::plugins/git/git.plugin.zsh
+zinit light 'zsh-users/zsh-history-substring-search'
+zinit ice wait atload'_history_substring_search_config'
+bindkey -M viins '^[[A' history-substring-search-up
+bindkey -M viins '^[[B' history-substring-search-down
+bindkey -M vicmd 'k' history-substring-search-up
+bindkey -M vicmd 'j' history-substring-search-down
+
+# direnv
+zinit from"gh-r" as"program" mv"direnv* -> direnv" \
+    atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
+    pick"direnv" src="zhook.zsh" for \
+        direnv/direnv
 
 # ======== Completion Setup ========
-CUSTOM_COMPLETION_DIR="$HOME/zsh_completions"
+CUSTOM_COMPLETION_DIR=($HOME/zsh_completions $HOME/zsh_functions)
+[[ ! -d $HOME/zsh_completions ]] && mkdir -p $HOME/zsh_completions
+[[ ! -d $HOME/zsh_functions ]] && mkdir -p $HOME/zsh_functions
 fpath=($CUSTOM_COMPLETION_DIR $fpath)
+{{- if (contains "linkedin" .chezmoi.fqdnHostname) }}
 fpath=("/usr/local/linkedin/etc/zsh" "/export/content/linkedin/etc/zsh" $fpath)
+{{- end }}
 
-autoload -Uz compinit
-# Load completions efficiently
-if [ $(date +'%j') != $(stat -f '%Sm' -t '%j' ~/.zcompdump 2>/dev/null) ]; then
-    compinit
-else
-    compinit -C -d ~/.zcompdump
-fi
+# Autoload all functions from zsh_functions directory
+for func in $HOME/zsh_functions/*(.N:t); do
+  autoload -Uz $func
+done
+
+autoload -Uz compinit; compinit
+zinit cdreplay -q
 
 # setup directory colors
 {{- if (eq .chezmoi.os "darwin") }}
@@ -92,33 +134,20 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 
 # FZF-tab configuration
-zstyle ':fzf-tab:*' fzf-flags --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'tree -C $realpath'
-zstyle ':fzf-tab:complete:z:*' fzf-preview 'tree -C $realpath'
-zstyle ':fzf-tab:complete:ls:*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
-zstyle ':fzf-tab:complete:eza:*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
+# zstyle ':fzf-tab:*' fzf-flags --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
+zstyle ':fzf-tab:complete:(cd|z):*' fzf-preview 'tree -C $realpath'
+zstyle ':fzf-tab:complete:(eza|ls):*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' fzf-preview 'echo ${(P)word}'
 
 # ======== Key Bindings ========
-# bindkey -e
 bindkey '^A' beginning-of-line
 bindkey '^E' end-of-line
-
 bindkey "" forward-word    # ctrl+W
 bindkey "" backward-word   # ctrl+B
-bindkey '^[[A' history-substring-search-up    # up
-bindkey '^[[B' history-substring-search-down # down
-
-# ======== Dotfiles mgmt ========
-# git init --bare $HOME/dotfiles
-# alias dconf='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
-# dconf config --local status.showUntrackedFiles no
-# echo "alias dconf='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'" >> $HOME/.bashrc
-# alias dconf='/usr/bin/git --git-dir=/Users/rbhanot/dotfiles/ --work-tree=$HOME'
 
 # ======== Tool Configuration ========
-export XDG_CONFIG_HOME="$HOME/.config"
 # Editor setup
 if [[ $(command -v nvim) ]]; then
   export EDITOR=nvim
@@ -133,18 +162,28 @@ if [[ $(command -v devbox) ]]; then
 fi
 
 # Additional tools
-eval "$(mise activate zsh)"
-source <(fzf --zsh)
-eval "$(zoxide init zsh)"
-alias zi=__zoxide_zi
+if [[ -f ~/.fzf.zsh ]]; then
+  source ~/.fzf.zsh
+elif command -v fzf >/dev/null; then
+  source <(fzf --zsh)
+fi
+bindkey -M emacs '^[[1;2A' fzf-history-widget
+bindkey -M vicmd '^[[1;2A' fzf-history-widget
+bindkey -M viins '^[[1;2A' fzf-history-widget
+
+# Zoxide
+if command -v zoxide >/dev/null; then
+  eval "$(zoxide init zsh)"
+  alias zi=__zoxide_zi
+fi
 
 # Atuin setup
-if [[ $(command -v atuin) ]]; then
-  export ATUIN_NOBIND="true"
-  eval "$(atuin init zsh)"
-  bindkey '^r' atuin-search
-  bindkey '^[[1;2A' atuin-up-search
-fi
+# if [[ $(command -v atuin) ]]; then
+#   export ATUIN_NOBIND="true"
+#   eval "$(atuin init zsh)"
+#   bindkey '^r' atuin-search
+#   bindkey '^[[1;2A' atuin-up-search
+# fi
 
 # Yazi file manager
 function y() {
@@ -157,7 +196,9 @@ function y() {
 }
 
 # ======== Path Additions ========
+{{- if (eq .chezmoi.os "darwin") }}
 [[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
+{{- end }}
 [[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
 
 # ======== Theme and Visual Settings ========
@@ -169,25 +210,17 @@ export BAT_THEME="ansi"
 [ -f "$HOME/custom_config.zsh" ] && source "$HOME/custom_config.zsh"
 [[ -f "~/.temporal.zsh" ]] && source ~/.temporal.zsh
 
-# Install powerlevel10k if not present
-if [[ ! -d $HOME/powerlevel10k ]]; then
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
-fi
-
 # Load powerlevel10k
-source ~/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Direnv (load last to modify PATH)
-(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
-command -v direnv > /dev/null && eval "$(direnv hook zsh)"
+# remove duplicate entries from PATH
 
 
 # zsh abbr config
-ABBR_EXPAND_PUSH_ABBREVIATION_TO_HISTORY=1
+# ABBR_EXPAND_PUSH_ABBREVIATION_TO_HISTORY=1
 # show hints for abbrereviations
-ABBR_GET_AVAILABLE_ABBREVIATION=1
-ABBR_LOG_AVAILABLE_ABBREVIATION=1
-ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
+# ABBR_GET_AVAILABLE_ABBREVIATION=1
+# ABBR_LOG_AVAILABLE_ABBREVIATION=1
+# ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
 # abbr file
 # ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"
