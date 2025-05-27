@@ -42,7 +42,8 @@ zle -N cd_up_widget
 bindkey -M emacs '' cd_up_widget
 bindkey -M vicmd '' cd_up_widget
 bindkey -M viins '' cd_up_widget
-
+zvm_bindkey vicmd '' cd_up_widget
+zvm_bindkey viins '' cd_up_widget
 #  =================================== Aliases ===================================
 
 alias m="mint "
@@ -162,22 +163,14 @@ alias ks="ls"
 # local fzf_colors=$gruvbox_colors
 # local fzf_colors=$catpuccino_colors
 
-local PREV_WIN_OPTS="--preview-window :down,20% --bind '?:change-preview-window(right|hidden|down)'  --header 'Press ? enable/toggle b/w preview modes' --header-label=Keymaps "
-local FILE_PREV_OPTS="--preview-label='{}' --preview 'bat --style=snip --color always {}' $PREV_WIN_OPTS"
-local DIR_PREV_OPTS="--preview-label=' Dir Contents ' --preview 'eza $eza_params {}' $PREV_WIN_OPTS"
-
-# paths to ignore in addition to ~/.ignore
-# local -a x_paths=("~/local-repo" "/export/apps" "*pyc")
-# local xcludes=""
-# for xpath in $x_paths; do
-#   xcludes="$xcludes --exclude '$xpath' "
-# done
+local FILE_PREV_OPTS="--preview 'bat --style=snip --color always {}' --preview-window right:20% --bind '?:toggle-preview'  --header 'Press ? to toggle preview'"
+local DIR_PREV_OPTS="--border-label='Fuzzy Cd' --preview-label=' Dir Contents ' --preview 'eza $eza_params {}' --preview-window :down:20%:wrap --bind '?:toggle-preview'  --header 'Press ? to toggle preview'"
 
 local find_all_cmd="fd --ignore-file ~/.global_gitignore --follow . "
 local find_files_cmd="$find_all_cmd --type file "
 local find_dirs_cmd="$find_all_cmd --type directory "
 
-local default_header_opts="--header-first --header-border=horizontal"
+local default_header_opts="--header-first --header-border=bottom"
 local default_binds='--bind=shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
 export FZF_DEFAULT_OPTS="--style default --info=inline-right --height 50% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds" # Starts fzf in lower half of the screen taking 40% height
 
@@ -187,12 +180,13 @@ source $HOME/fzf-themes/${THEME}.sh
 # fi
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
 
-export FZF_CTRL_R_OPTS=""
+# export FZF_CTRL_R_OPTS=""
+export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview'"
 export FZF_CTRL_T_COMMAND="$find_files_cmd"
 export FZF_CTRL_T_OPTS="$FILE_PREV_OPTS"
 
 export FZF_ALT_C_COMMAND="$find_dirs_cmd"
-export FZF_ALT_C_OPTS="$DIR_PREV_OPTS"
+export FZF_ALT_C_OPTS=" --walker-skip .git,node_modules,build $DIR_PREV_OPTS"
 
 export FZF_COMPLETION_TRIGGER="."
 _fzf_compgen_path() {
@@ -337,14 +331,27 @@ __fzf_list_hosts() {
 }
 
 fssh() {
-  # fuzzy search through ssh hosts
+  # Fuzzy search through SSH hosts and establish SSH connection
+  # Usage: fssh [hostname]
+  # If hostname is provided, connects directly
+  # Otherwise, opens fuzzy finder to select from available hosts
+  
+  local target_host
+  
   if [[ $# -eq 1 ]]; then
-    ssh $1
+    target_host="$1"
   else
-    __fzf_list_hosts | fzf --preview 'ssh -G {}' | xargs ssh
+    target_host="$(__fzf_list_hosts | fzf)" || return 0
   fi
+
+  if [[ -z "$target_host" ]]; then
+    return 0
+  fi
+
+  # Connect using SSH with proper terminal settings
+  TERM=xterm-color ssh "$target_host"
 }
-alias ssh='TERM=xterm-color fssh'
+alias ssh='fssh'
 
 # man pages
 __fzf_list_man_pages() {
@@ -368,13 +375,15 @@ _fzf_complete_man() {
 }
 
 _nvim_config_switcher() {
-  fd --type=d "vim" ~/.config --exec basename | fzf --prompt="Select config > " --height=~50% --bind 'enter:become(NVIM_APPNAME={} nvim)' --border-label="  Neovim Config Switcher "
+  selection=$(fd --type=d "vim" ~/.config --exec basename | fzf --prompt="Select config > " --height=~50% --border-label="  Neovim Config Switcher ")
+  NVIM_APPNAME=$selection nvim $@
 }
 zle -N _fzf_complete
 alias vims="_nvim_config_switcher"
 
 tm() {
-  bash $HOME/scripts/tmux/manager.sh $@
+  # bash $HOME/scripts/tmux/manager.sh $@
+  tmux_sessions $@
 }
 # `-s` binds key to a string command which is cool I guess
 bindkey -s '^O' 'tm\n'
@@ -386,3 +395,4 @@ tm_widget() {
 zle -N tm_widget 
 bindkey '' tm_widget
 bindkey -M vicmd '' tm_widget
+bindkey -M viins '' tm_widget

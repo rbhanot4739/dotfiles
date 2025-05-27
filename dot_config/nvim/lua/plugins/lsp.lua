@@ -20,6 +20,9 @@ return {
         desc = "References",
       }
       local util = require("lspconfig.util")
+      opts["inlay_hints"] = {
+        enabled = false,
+      }
       opts["servers"] = {
         basedpyright = {
           root_dir = function(fname)

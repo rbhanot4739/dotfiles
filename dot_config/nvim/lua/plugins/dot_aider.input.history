@@ -1,0 +1,21 @@
+
+# 2025-05-23 00:53:01.925383
++n
+
+# 2025-05-23 00:53:25.861996
++I want you do read each of the files in this directory, extract all unique plugin names from it and the print it in this format `{"plugin_name", enabled=false}`. A plugin spec spec usually looks like this```{"plugin_name", plugin_spec_key = value}```
+
+# 2025-05-23 00:53:59.237369
++/ls
+
+# 2025-05-23 00:54:33.371497
++/help how do i add files ?
+
+# 2025-05-23 00:55:29.495088
++/add .
+
+# 2025-05-23 00:55:43.605833
++y
+
+# 2025-05-23 00:55:52.276247
++/q

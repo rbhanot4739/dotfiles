@@ -23,6 +23,16 @@ vim.api.nvim_create_autocmd("User", {
 -- })
 return {
   {
+    "echasnovski/mini.diff",
+    config = function()
+      local diff = require("mini.diff")
+      diff.setup({
+        -- Disabled by default
+        source = diff.gen_source.none(),
+      })
+    end,
+  },
+  {
     "echasnovski/mini.operators",
     opts = {
       -- Exchange text regions
@@ -53,6 +63,7 @@ return {
   },
   {
     "echasnovski/mini.files",
+    lazy = false,
     opts = function(_, opts)
       return vim.tbl_deep_extend("force", opts, {
         content = {

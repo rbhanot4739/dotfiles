@@ -38,9 +38,7 @@ setup_zsh() {
 
   # install zsh plugins
 PLUGIN_DIR="$HOME/.zsh/plugins"
-if [[ ! -d "$PLUGIN_DIR" ]]; then
-  mkdir -p "$PLUGIN_DIR"
-fi
+[[ ! -d "$PLUGIN_DIR" ]] && mkdir -p "$PLUGIN_DIR"
 
 declare -A PLUGINS=(["fast-syntax-highlighting"]="https://github.com/zdharma-continuum/fast-syntax-highlighting,"
   ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions,"

@@ -7,6 +7,12 @@ return {
     "Kaiser-Yang/blink-cmp-git",
     "Kaiser-Yang/blink-cmp-dictionary",
     "Kaiser-Yang/blink-cmp-avante",
+    "fang2hou/blink-copilot",
+    -- "Exafunction/codeium.nvim",
+    {
+      "giuxtaposition/blink-cmp-copilot",
+      enabled = false,
+    },
   },
   -- event = "VeryLazy",
   opts = {
@@ -16,6 +22,11 @@ return {
         -- function(cmp)
         --   if cmp.snippet_active() then
         --     return cmp.accept()
+        --   else
+        --     return cmp.select_next()
+        --   end
+        --   if require("copilot.suggestion").is_visible() then
+        --     require("copilot.suggestion").accept()
         --   else
         --     return cmp.select_next()
         --   end
@@ -47,10 +58,6 @@ return {
       end,
       completion = {
         ghost_text = { enabled = true },
-        -- trigger = {
-        --   show_on_blocked_trigger_characters = {},
-        --   show_on_x_blocked_trigger_characters = nil, -- Inherits from top level `completion.trigger.show_on_blocked_trigger_characters` config when not set
-        -- },
         list = {
           selection = { preselect = false, auto_insert = true },
         },
@@ -100,14 +107,27 @@ return {
         "dictionary",
         "markdown",
         "ripgrep",
-        -- "avante",
+        "avante",
+        -- "codeium",
         -- "dap",
       },
       providers = {
+        codeium = { name = "Codeium", module = "codeium.blink", async = true },
         copilot = {
           async = true,
-          -- score_offset = 100,
           score_offset = 100,
+          module = "blink-copilot",
+          -- override = {
+          --   get_trigger_characters = function(self)
+          --     local trigger_characters = self:get_trigger_characters()
+          --     vim.list_extend(trigger_characters, { "\n", "\t", " " })
+          --     return trigger_characters
+          --   end,
+          -- },
+        },
+        lsp = {
+          async = true,
+          score_offset = 99,
           override = {
             get_trigger_characters = function(self)
               local trigger_characters = self:get_trigger_characters()
@@ -115,10 +135,6 @@ return {
               return trigger_characters
             end,
           },
-        },
-        lsp = {
-          async = true,
-          score_offset = 99,
         },
         buffer = { enabled = false, score_offset = 98 },
         path = {
@@ -175,6 +191,13 @@ return {
           enabled = function()
             return vim.tbl_contains({ "octo", "gitcommit", "markdown" }, vim.bo.filetype)
           end,
+        },
+        avante = {
+          module = "blink-cmp-avante",
+          name = "Avante",
+          opts = {
+            -- options for blink-cmp-avante
+          },
         },
       },
     },

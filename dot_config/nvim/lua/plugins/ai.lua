@@ -1,15 +1,12 @@
 return {
   {
     "zbirenbaum/copilot.lua",
+    enable = true,
     opts = {
       suggestion = {
         enabled = false,
-        auto_trigger = true,
-        hide_during_completion = vim.g.ai_cmp,
         keymap = {
-          accept = "<S-Cr>", -- handled by nvim-cmp / blink.cmp
-          next = "<right>",
-          prev = "<left>",
+          accept = "<S-cr>",
         },
       },
       filetypes = {
@@ -27,13 +24,9 @@ return {
     "CopilotC-Nvim/CopilotChat.nvim",
     enabled = false,
     opts = {
-      model = "o3-mini",
+      model = "claude-3.5-sonnet",
       debug = false,
       provider = "copilot",
-      sticky = {
-        "@models Using o3-mini",
-        "#files",
-      },
       mappings = {
         reset = {
           normal = "<C-x>",
@@ -50,8 +43,12 @@ return {
     "yetone/avante.nvim",
     event = "VeryLazy",
     version = false, -- Never set this value to "*"! Never!
-    enabled = true,
-    build = "make",
+    enabled = false,
+    -- commit = "f9aa754",
+    cmd = { "AvanteToggle" },
+    keys = {
+      { "<leader>at", "<cmd>AvanteToggle<cr>", desc = "Avante Toggle" },
+    },
     opts = {
       selector = {
         provider = "snacks",
@@ -61,6 +58,25 @@ return {
       auto_suggestions_provider = "copilot",
       copilot = {
         model = "claude-3.5-sonnet", -- your desired model (or use gpt-4o, etc.)
+      },
+      features = {
+        web_search = false,
+        project_context = true,
+        file_search = true,
+      },
+      behaviour = {
+        auto_suggestions = true,
+        ump_result_buffer_on_finish = true,
+        auto_focus_on_diff_view = true,
+      },
+    },
+    history = {
+      storage_path = vim.fn.stdpath("state") .. "/avante",
+    },
+    windows = {
+      sidebar_header = {
+        align = "left",
+        rounded = "true",
       },
     },
     dependencies = {
@@ -81,13 +97,38 @@ return {
   },
   {
     "olimorris/codecompanion.nvim",
-    enabled = false,
+    enabled = true,
     config = function(_, opts)
       opts = {
+        extensions = {
+          history = {
+            enabled = true,
+            opts = {
+              keymap = "gh",
+              save_chat_keymap = "sc",
+              auto_save = true,
+              expiration_days = 0,
+              picker = "snacks",
+              auto_generate_title = true,
+              title_generation_opts = {
+                adapter = nil, -- e.g "copilot"
+                model = nil, -- e.g "gpt-4o"
+              },
+              continue_last_chat = false,
+              delete_on_clearing_chat = true,
+              dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
+              enable_logging = false,
+            },
+          },
+        },
+        -- log_level = "TRACE",
         display = {
           chat = {
-            show_header_separator = true,
-            start_in_insert_mode = false,
+            show_header_separator = false,
+            start_in_insert_mode = true,
+            auto_scroll = true,
+            show_settings = false,
+            intro_message = "",
             window = { height = 0.8, width = 0.35 },
           },
           diff = {
@@ -112,6 +153,7 @@ return {
               schema = {
                 model = {
                   default = "claude-3.5-sonnet",
+                  -- default = "gpt-4.1",
                 },
               },
             })
@@ -119,9 +161,20 @@ return {
         },
         strategies = {
           chat = {
+            roles = {
+              ---The header name for the LLM's messages
+              ---@type string|fun(adapter: CodeCompanion.Adapter): string
+              llm = function(adapter)
+                return "  CodeCompanion (  " .. adapter.formatted_name .. ")"
+              end,
+
+              ---The header name for your messages
+              ---@type string
+              user = "  " .. (vim.env.USER or "User"),
+            },
             keymaps = {
               send = {
-                modes = { n = "<C-s>", i = "<S-cr>" },
+                modes = { n = "<C-s>", i = "<C-s>" },
               },
               send_to_smart = {
                 modes = { n = "<S-CR>" },
@@ -137,7 +190,6 @@ return {
               stop = {
                 modes = { n = "<a-x>", i = "<a-x>" },
               },
-              -- Add further custom keymaps here
             },
           },
         },
@@ -145,6 +197,7 @@ return {
       require("codecompanion").setup(opts)
       vim.cmd([[cab cc CodeCompanion]])
     end,
+    cmd = { "CodeCompanionHistory" },
     keys = {
       {
         "<leader>aa",
@@ -168,18 +221,42 @@ return {
         "<leader>an",
         "<cmd>CodeCompanionChat<cr>",
         mode = { "n", "v" },
-        desc = "CodeCompanion actions",
+        desc = "CodeCompanion new chat",
       },
       {
         "<leader>av",
         "<cmd>CodeCompanionChat Add<cr>",
         mode = { "n", "v" },
-        desc = "CodeCompanion actions",
+        desc = "send visual selection to chat",
+      },
+      {
+        "<leader>ah",
+        "<cmd>CodeCompanionHistory<cr>",
+        mode = { "n" },
+        desc = "chat history",
       },
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
       "nvim-treesitter/nvim-treesitter",
+      "ravitemer/codecompanion-history.nvim",
+      {
+        "MeanderingProgrammer/render-markdown.nvim", -- Enhanced markdown rendering
+        dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+        ft = { "markdown", "codecompanion" },
+        -- opts = {
+        --   overrides = {
+        --     filetype = {
+        --       codecompanion = {
+        --         -- render_modes = true,
+        --         sign = {
+        --           -- enabled = false, -- Turn off in the status column
+        --         },
+        --       },
+        --     },
+        --   },
+        -- },
+      },
     },
   },
 }

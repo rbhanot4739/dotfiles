@@ -152,3 +152,5 @@ en.utf-8*
 *.woff
 *.woff2
 
+# Aider
+.aider.*
