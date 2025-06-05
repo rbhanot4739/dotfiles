@@ -1,2 +1,18 @@
-*test*
-test/
+# Exclude files and directories that start with "test" anywhere in the repo
+test*
+**/test*
+
+# Exclude Chezmoi-specific patterns for test files
+executable_test*
+**/executable_test*
+dot_test*
+**/dot_test*
+private_test*
+**/private_test*
+encrypted_test*
+**/encrypted_test*
+symlink_test*
+**/symlink_test*
+
+
+
