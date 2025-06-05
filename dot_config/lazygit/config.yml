@@ -11,6 +11,9 @@ git:
   branchPrefix: "rbhanot/"
 
 gui:
+  theme:
+    selectedLineBgColor:
+      - reverse
   sidePanelWidth: 0.2
   nerdFontsVersion: "3"
 

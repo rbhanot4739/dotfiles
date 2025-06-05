@@ -65,23 +65,16 @@
 [interactive]
     diffFilter = delta --color-only
 
-[include]
-  path = ~/delta-themes/tokyonight_moon.gitconfig
-
 [delta]
-    ; features = tokyonight_moon
-    ; plus-style = "syntax #012800"
-    ; minus-style = "syntax #340001"
-    ; syntax-theme = Monokai Extended
     navigate = true    # use n and N to move between diff sections
     line-numbers = true
     ; side-by-side = true
     ; line-numbers-left-format = ""
     ; line-numbers-right-format = "│ "
 
-    # delta detects terminal colors automatically; set one of these to disable auto-detection
-    # dark = true
-    # light = true
+    ; delta detects terminal colors automatically; set one of these to disable auto-detection
+    ; dark = true
+    light = true
 [merge]
     conflictstyle = diff3
 

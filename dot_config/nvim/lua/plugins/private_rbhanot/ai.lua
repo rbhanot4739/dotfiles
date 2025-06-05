@@ -63,8 +63,8 @@ return {
       auto_suggestions_provider = "copilot",
       provider = "copilot",
       copilot = {
-        -- model = "claude-3.5-sonnet", -- your desired model (or use gpt-4o, etc.)
-        model = "claude-sonnet-4", -- your desired model (or use gpt-4o, etc.)
+        model = "claude-3.7-sonnet", -- your desired model (or use gpt-4o, etc.)
+        -- model = "claude-sonnet-4", -- your desired model (or use gpt-4o, etc.)
       },
       -- },
       features = {
@@ -166,8 +166,8 @@ return {
             return require("codecompanion.adapters").extend("copilot", {
               schema = {
                 model = {
-                  default = "claude-sonnet-4",
-                  -- default = "claude-3.5-sonnet",
+                  -- default = "claude-sonnet-4",
+                  default = "claude-3.7-sonnet",
                   -- default = "gpt-4.1",
                 },
               },
