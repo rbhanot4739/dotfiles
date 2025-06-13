@@ -2,7 +2,7 @@
    description = "A devbox shell";
 
    inputs = {
-     nixpkgs.url = "github:NixOS/nixpkgs/a4ff0e3c64846abea89662bfbacf037ef4b34207?narHash=sha256-UAaWOyQhdp7nXzsbmLVC67fo%2BQetzoTm9hsPf9X3yr4%3D";
+     nixpkgs.url = "github:NixOS/nixpkgs/8d6cdc7756817e0c4b24567271634a44bcf80752?narHash=sha256-ibsz06u1jlWyH7YURnRhLQn38Tuc5zwknr00suFjvfA%3D";
    };
 
    outputs = {
@@ -30,7 +30,7 @@
             (builtins.trace "downloading neovim@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/f6qvn8lgs6bizsbhmnf8kx4hnkkq0vqf-neovim-0.11.1";
+              fromPath = "/nix/store/4k6v3m3q2afh57a43cdnhg1vlphz2yhr-neovim-0.11.2";
               inputAddressed = true;
             }))
             (builtins.trace "downloading ripgrep@latest" (builtins.fetchClosure {
@@ -48,19 +48,19 @@
             (builtins.trace "downloading zoxide@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/jv18aslvkghnwypgi58hi7sx4p35cc6d-zoxide-0.9.7";
+              fromPath = "/nix/store/wifvggyv5911qsrk1kzapwkzqad3mzc0-zoxide-0.9.8";
               inputAddressed = true;
             }))
             (builtins.trace "downloading eza@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/wnsjvjqhs6cm38mcg9vrqvv2rh4d3nsk-eza-0.21.3";
+              fromPath = "/nix/store/qaxhgr89vbz3yx12cw6md403rlays627-eza-0.21.4";
               inputAddressed = true;
             }))
             (builtins.trace "downloading eza@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/jikj4s4c56c32hgvkvjv0kxyh7d6flrv-eza-0.21.3-man";
+              fromPath = "/nix/store/855psl13ns20bny0gm5allwpq4f0dgxw-eza-0.21.4-man";
               inputAddressed = true;
             }))
             (builtins.trace "downloading delta@latest" (builtins.fetchClosure {
@@ -78,7 +78,7 @@
             (builtins.trace "downloading direnv@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/9cfr229ml8lkw3rpsfhz318gy833rq44-direnv-2.36.0";
+              fromPath = "/nix/store/g8hmdwd25ddyrbni7whd255cq7i6kk48-direnv-2.36.0";
               inputAddressed = true;
             }))
             (builtins.trace "downloading jq@latest" (builtins.fetchClosure {
@@ -144,7 +144,7 @@
             (builtins.trace "downloading yazi@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/iccd3wvnr89kjqs2gbzqchg3w20b2ja5-yazi-25.4.8";
+              fromPath = "/nix/store/gy7r8iw79rqifckaks26q4dmqplx5qir-yazi-25.5.31";
               inputAddressed = true;
             }))
             (builtins.trace "downloading poppler@latest" (builtins.fetchClosure {
@@ -168,7 +168,7 @@
             (builtins.trace "downloading lazygit@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/ipnky0mcvf6q752v7wqr95qm9dphndbk-lazygit-0.51.0";
+              fromPath = "/nix/store/zfxsqf5wsrb02kkd39lx29qdnhmwkgr8-lazygit-0.52.0";
               inputAddressed = true;
             }))
             (builtins.trace "downloading wordnet@latest" (builtins.fetchClosure {
@@ -186,7 +186,7 @@
             (builtins.trace "downloading gh-dash@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/f3z7ymla8zncv8drg0d0h9bxkz7gy76r-gh-dash-4.15.0";
+              fromPath = "/nix/store/kcmyxgjakkh5bmllhbwf6slfbpxvms3s-gh-dash-4.16.0";
               inputAddressed = true;
             }))
             (builtins.trace "downloading tmux@latest" (builtins.fetchClosure {
@@ -199,12 +199,6 @@
               
               fromStore = "https://cache.nixos.org";
               fromPath = "/nix/store/fzmxcplr3rqr0vm642fyschn4n43q43p-tmux-3.5-man";
-              inputAddressed = true;
-            }))
-            (builtins.trace "downloading gitui@latest" (builtins.fetchClosure {
-              
-              fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/g5983wc9g80bvyk3g7a8j4arxbk594qz-gitui-0.27.0";
               inputAddressed = true;
             }))
             (builtins.trace "downloading nodejs@latest" (builtins.fetchClosure {
@@ -222,7 +216,7 @@
             (builtins.trace "downloading glow@latest" (builtins.fetchClosure {
               
               fromStore = "https://cache.nixos.org";
-              fromPath = "/nix/store/d4m551sl21mnv0m87g3bnifpig20g16r-glow-2.1.0";
+              fromPath = "/nix/store/mw69k6ynypwlwj55hq92swckwldx6m9f-glow-2.1.1";
               inputAddressed = true;
             }))
             (builtins.trace "downloading fzf@latest" (builtins.fetchClosure {

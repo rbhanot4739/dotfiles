@@ -27,7 +27,6 @@
     "jira-cli-go@latest",
     "gh-dash@latest",
     "tmux@latest",
-    "gitui@latest",
     "nodejs@latest",
     "du-dust@latest",
     "glow@latest",
