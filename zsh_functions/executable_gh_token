@@ -1,9 +1,11 @@
 local token_file="$HOME/.config/github-copilot/apps.json"
 if [[ -f "$token_file" ]]; then
-    local token=$(jq -r '.[].oauth_token' "$token_file" 2>/dev/null)
-    if [[ -n "$token" ]]; then
+    local oauth_token=$(jq -r '.[].oauth_token' "$token_file" 2>/dev/null)
+    if [[ -n "$oauth_token" ]]; then
         export OPENAI_API_BASE=https://api.githubcopilot.com
-        export OPENAI_API_KEY="$token"
+        export GITHUB_COPILOT_TOKEN="$oauth_token"
+        local openai_api_token=$(curl -s https://api.github.com/copilot_internal/v2/token -H "Authorization: Bearer $GITHUB_COPILOT_TOKEN" | jq -r .'token')
+        export OPENAI_API_KEY=$openai_api_token
         return 0
     fi
 fi

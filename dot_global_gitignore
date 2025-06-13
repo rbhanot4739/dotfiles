@@ -44,6 +44,7 @@ dataSources/
 pyrightconfig.json
 cspell.json
 node_modules/
+.envrc
 
 # Python specific
 __pycache__/

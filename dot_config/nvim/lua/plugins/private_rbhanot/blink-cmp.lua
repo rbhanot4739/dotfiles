@@ -71,7 +71,7 @@ return {
         enabled = true,
       },
       trigger = {
-        show_on_blocked_trigger_characters = {},
+        -- show_on_blocked_trigger_characters = {},
         show_in_snippet = false,
       },
       menu = {

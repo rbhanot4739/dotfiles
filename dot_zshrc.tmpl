@@ -84,7 +84,7 @@ zinit light Aloxaf/fzf-tab
 zinit ice wait"0" lucid 
 zinit light zdharma-continuum/fast-syntax-highlighting
 
-zinit ice depth=1
+zinit ice depth=1 wait"0"
 zinit light jeffreytse/zsh-vi-mode
 
 zinit snippet OMZ::plugins/git/git.plugin.zsh
@@ -103,9 +103,7 @@ zinit from"gh-r" as"program" mv"direnv* -> direnv" \
 
 # ======== Completion Setup ========
 CUSTOM_COMPLETION_DIR=($HOME/zsh_completions $HOME/zsh_functions)
-[[ ! -d $HOME/zsh_completions ]] && mkdir -p $HOME/zsh_completions
-[[ ! -d $HOME/zsh_functions ]] && mkdir -p $HOME/zsh_functions
-fpath=($CUSTOM_COMPLETION_DIR $fpath)
+typeset -U fpath=($CUSTOM_COMPLETION_DIR $fpath)
 {{- if (contains "linkedin" .chezmoi.fqdnHostname) }}
 fpath=("/usr/local/linkedin/etc/zsh" "/export/content/linkedin/etc/zsh" $fpath)
 {{- end }}

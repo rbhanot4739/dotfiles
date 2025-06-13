@@ -8,7 +8,7 @@ if [[ $? -ne 0 ]]; then
   curl -L -o ~/.pixi/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
   chmod +x ~/.pixi/bin/pixi
 fi
-packages=("tmux" "nvim" "ripgrep" "fzf" "fd-find" "zoxide" "eza" "git-delta" "bat" "direnv" "jq" "yq" "sqlite" "lua" "luajit" "luarocks nodejs tealdeer")
+packages=("tmux" "nvim" "ripgrep" "fzf" "fd-find" "zoxide" "eza" "git-delta" "bat" "direnv" "jq" "yq" "sqlite" "lua" "luajit" "luarocks nodejs tealdeer, lazygit")
 for package in "${packages[@]}"; do
   $HOME/.pixi/bin/pixi global install "$package"
 done

@@ -9,13 +9,13 @@ local find_dirs_cmd="$find_all_cmd --type directory "
 local default_header_opts="--header-first --header-border=bottom --header 'Press ? to toggle preview'"
 local default_binds='--bind "shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all,ctrl-v:become(nvim {}),?:toggle-preview"'
 
-local file_prev_opts="--preview-label='File Contents' --preview 'bat --style=snip --color always {}' --preview-window right:50%"
+local file_prev_opts="'bat --style=snip --color always {}' --preview-label='File Contents'  --preview-window right:50%"
 local file_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))"'
-local file_opts="--border-label='Fuzzy Files' $file_prev_opts $file_binds"
+local file_opts="--border-label='Fuzzy Files' --preview $file_prev_opts $file_binds"
 
-local dir_prev_opts="--preview-label=' Directory Contents ' --preview 'eza $eza_params {}' --preview-window :down:20%:wrap"
+local dir_prev_opts="'eza $eza_params {}' --preview-label=' Directory Contents '  --preview-window :down:20%:wrap"
 local dir_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"'
-local dir_opts="--border-label='Fuzzy Directories' $dir_prev_opts $dir_binds"
+local dir_opts="--border-label='Fuzzy Directories' --preview $dir_prev_opts $dir_binds"
 
 export FZF_DEFAULT_OPTS="--style default --info=inline-right --height 60% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds"
 
@@ -43,7 +43,9 @@ _fzf_comprun() {
   # ssh)          fzf --preview 'dig {}'                   "$@" ;;
   man) fzf --preview 'tldr --color=always {} 2>/dev/null' "$@" ;;
   bat | cat) eval "fzf $file_opts \"\$@\"";;
-  ls | eza) eval "fzf $file_opts \"\$@\"";;
+  ls | eza) eval "fzf --preview \"[[ ! -d {} ]] && $file_prev_opts \" \"\$@\"" ;;
+  # ls | eza) eval "fzf --preview \"[[ ! -d {} ]] && $file_prev_opts || $dir_prev_opts\" \"\$@\"";;
+  # ls | eza) fzf --preview '[[ ! -d {} ]] && bat --color=always {} || eza $eza_params {}' ;;
   *) fzf "$@" ;;
   esac
 }
@@ -195,9 +197,11 @@ fssh() {
   fi
 
   # Connect using SSH with proper terminal settings
+  add_to_zsh_history "ssh $target_host"
   TERM=xterm-color ssh "$target_host"
 }
 alias ssh='fssh'
+alias s='fssh'
 
 # man pages
 __fzf_list_man_pages() {

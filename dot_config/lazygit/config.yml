@@ -1,21 +1,31 @@
 notARepository: 'quit'
+quitOnTopLevelReturn: true
 git:
   paging:
     colorArg: always
-    pager: delta --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+    pager: delta --paging=never
 
   commit:
     autoWrapCommitMessage: true
     autoWrapWidth: 100
 
   branchPrefix: "rbhanot/"
+  branchLogCmd: "git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'"
 
 gui:
   theme:
     selectedLineBgColor:
-      - reverse
-  sidePanelWidth: 0.2
+      - underline
+  sidePanelWidth: 0.3
   nerdFontsVersion: "3"
+  expandFocusedSidePanel: true
+  expandedSidePanelWeight: 3
+  enlargedSideViewLocation: top
+  showFileTree: false
+  showPanelJumps: false
+  showDivergenceFromBaseBranch: arrowAndNumber
+  commandLogSize: 5
+  filterMode: fuzzy
 
 os:
   editPreset: nvim

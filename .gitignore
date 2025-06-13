@@ -14,5 +14,6 @@ encrypted_test*
 symlink_test*
 **/symlink_test*
 
-
+# Aider
+.aider.*
 

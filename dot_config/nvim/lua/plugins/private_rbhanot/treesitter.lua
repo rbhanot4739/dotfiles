@@ -9,8 +9,8 @@ return {
           enable = true,
           set_jumps = true, -- whether to set jumps in the jumplist
           goto_next_start = {
-            -- ["]f"] = "@function.outer",
-            ["]f"] = "@function.name",
+            ["]f"] = "@function.outer",
+            -- ["]f"] = "@function.name",
             ["]c"] = "@class.outer",
             ["]a"] = "@parameter.inner",
           },
@@ -20,8 +20,8 @@ return {
             ["]A"] = "@parameter.inner",
           },
           goto_previous_start = {
-            -- ["[f"] = "@function.outer",
-            ["[f"] = "@function.name",
+            ["[f"] = "@function.outer",
+            -- ["[f"] = "@function.name",
             ["[c"] = "@class.outer",
             ["[a"] = "@parameter.inner",
           },

@@ -1,4 +1,4 @@
-local utils = require("config.utils")
+local utils = require("utils")
 local lsp_symbols = LazyVim.config.kind_filter.default
 table.insert(lsp_symbols, "Constant")
 
@@ -15,6 +15,27 @@ local function enable_dash()
     end
   end
   return true
+end
+
+---@class snacks.gitbrowse.PatchedConfig : snacks.gitbrowse.Config
+---@field commit? string
+---@param opts? snacks.gitbrowse.PatchedConfig
+local open_commit = function(opts, copy)
+  opts = opts or {}
+  copy = copy == nil and false or copy
+  local expand = vim.fn.expand
+  vim.fn.expand = function(what, ...) ---@diagnostic disable-line
+    return opts.commit
+  end
+  if copy then
+    opts["notify"] = false
+    opts["open"] = function(url)
+      vim.fn.setreg("+", url)
+      Snacks.notify("Copied commit url ( " .. url .. " ) to clipboard", { title = "Git Browse" })
+    end
+  end
+  Snacks.gitbrowse.open(opts)
+  vim.fn.expand = expand
 end
 
 ---@param picker snacks.Picker
@@ -274,7 +295,12 @@ return {
       desc = "Search color scheme",
     },
     -- grep mappings
-    { "<leader>sw", LazyVim.pick("grep_word"), desc = "Grep Visual selection or word (Root Dir)", mode = { "n", "x" } },
+    {
+      "<leader>sw",
+      LazyVim.pick("grep_word"),
+      desc = "Grep Visual selection or word (Root Dir)",
+      mode = { "n", "x" },
+    },
     {
       "<leader>sW",
       function()
@@ -533,7 +559,7 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
-                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -572,7 +598,7 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
-                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -584,7 +610,39 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
-                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+              },
+            },
+          },
+        },
+        grep_word = {
+          toggles = {
+            word_grep = "w",
+          },
+          actions = {
+            word_grep = function(picker, _)
+              picker.opts["word_grep"] = picker.opts["word_grep"] == nil and true or not picker.opts["word_grep"]
+              local args = vim.deepcopy(picker.opts.args or {})
+
+              -- remove -w flag if it exists
+              args = vim.tbl_filter(function(arg)
+                return arg ~= "-w"
+              end, args)
+
+              -- Add -w flag if enabled
+              if picker.opts["word_grep"] then
+                table.insert(args, "-w")
+              end
+
+              -- Update args and refresh search
+              picker.opts.args = args
+              picker:find()
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<C-k>"] = { "word_grep", desc = "toggle word boundary search", mode = { "i", "n" } },
               },
             },
           },
@@ -595,7 +653,7 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
-                ["<m-u>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
               },
             },
           },
@@ -644,17 +702,23 @@ return {
             current_file = "cf",
             current_line = "cl",
           },
-          confirm = function(picker, item)
+          confirm = function(_, item)
             local commit = item.commit
             require("diffview")
-            local filename = vim.api.nvim_buf_get_name(picker.finder.filter.current_buf)
+            -- local filename = vim.api.nvim_buf_get_name(picker.finder.filter.current_buf)
             -- local cmd = "DiffviewOpen " .. commit .. "^! " .. " -- " .. filename
-            local cmd = "DiffviewOpen " .. commit
+            local cmd = "DiffviewOpen " .. commit .. "^! "
             vim.print(cmd)
             vim.cmd(cmd)
           end,
           actions = {
-            switch_git_log_mode = function(picker, _)
+            open_commit = function(_, item)
+              open_commit({ what = "commit", commit = item.commit }) ---@diagnostic disable-line
+            end,
+            copy_commit = function(_, item)
+              open_commit({ what = "commit", commit = item.commit }, true) ---@diagnostic disable-line
+            end,
+            switch_mode = function(picker, _)
               if not picker.opts["current_file"] and not picker.opts["current_line"] then
                 picker.opts["current_line"] = true
                 -- picker.opts["follow"] = false
@@ -673,8 +737,10 @@ return {
           win = {
             input = {
               keys = {
-                ["<C-k>"] = { "switch_git_log_mode", desc = "Switch git_log mode", mode = { "i", "n" } },
+                ["<C-k>"] = { "switch_mode", desc = "Switch git_log mode", mode = { "i", "n" } },
                 ["<S-Cr>"] = { "git_checkout", desc = "Checkout commit", mode = { "i", "n" } },
+                ["<c-b>"] = { "open_commit", desc = "Open commit on remote", mode = { "i", "n" } },
+                ["<c-y>"] = { "copy_commit", desc = "Open commit on remote", mode = { "i", "n" } },
               },
             },
           },

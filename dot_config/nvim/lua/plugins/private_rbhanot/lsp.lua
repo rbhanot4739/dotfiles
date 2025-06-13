@@ -7,6 +7,8 @@ return {
       -- https://www.lazyvim.org/plugins/lsp#%EF%B8%8F-customizing-lsp-keymaps
       local keys = require("lazyvim.plugins.lsp.keymaps").get()
       keys[#keys + 1] = { "<C-k>", mode = { "i" }, false }
+      keys[#keys + 1] = { "<leader>cc", mode = { "n", "v" }, false }
+      keys[#keys + 1] = { "<leader>cC", mode = { "n", "v" }, false }
       keys[#keys + 1] = { "<leader>ss", mode = { "n" }, false }
       keys[#keys + 1] = { "<A-n>", mode = { "n" }, false }
       keys[#keys + 1] = { "<A-p>", mode = { "n" }, false }
@@ -24,6 +26,16 @@ return {
         enabled = false,
       }
       opts["servers"] = {
+        ruff = {
+          init_options = {
+            settings = {
+              lint = { ignore = { "F401", "F841" } },
+              format = {
+                ["quote-style"] = "single",
+              },
+            },
+          },
+        },
         basedpyright = {
           root_dir = function(fname)
             local root_files = {
@@ -49,8 +61,9 @@ return {
           settings = {
             basedpyright = {
               -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
+              disableOrganizeImports = true,
+              -- disableTaggedHints = true,
               analysis = {
-                diagnosticMode = "openFilesOnly",
                 typeCheckingMode = "standard",
                 autoImportCompletions = true,
                 autoSearchPaths = true,
@@ -58,6 +71,7 @@ return {
                 diagnosticSeverityOverrides = {
                   -- https://docs.basedpyright.com/latest/configuration/config-files/#type-check-diagnostics-settings
                   reportMissingTypeStubs = false,
+                  -- reportUnusedVariable = "none",
                   analyzeUnannotatedFunctions = true,
                 },
                 exclude = {
@@ -76,17 +90,19 @@ return {
     opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
   },
   -- linter/formatter
-  {
-    "mfussenegger/nvim-lint",
-    linters_by_ft = {
-      -- ruff isn't checking some of the stuff
-      python = { "flake8", "mypy" },
-    },
-  },
+  -- {
+  --   "mfussenegger/nvim-lint",
+  --   opts = {
+  --     linters_by_ft = {
+  --       python = { "ruff", "mypy" },
+  --     },
+  --   },
+  -- },
   {
     "stevearc/conform.nvim",
     opts = {
-      log_level = vim.log.levels.DEBUG,
+      notify_on_error = true,
+      log_level = vim.log.levels.TRACE,
       formatters_by_ft = {
         json = { "fixjson" },
         python = { "ruff_fix", "ruff_format" },
@@ -112,13 +128,14 @@ return {
     "nvimtools/none-ls.nvim",
     dependencies = {
       "davidmh/cspell.nvim",
+      -- "nvimtools/none-ls-extras.nvim",
     },
     event = "VeryLazy",
     opts = function(_, opts)
       local cspell = require("cspell")
-      local null_ls = require("null-ls")
+      -- local null_ls = require("null-ls")
 
-      local config = {
+      local cspell_config = {
         config_file_preferred_name = "cspell.json",
         cspell_config_dirs = { "~/.config/", "/Users/rbhanot/development/work" },
         read_config_synchronously = true,
@@ -138,13 +155,14 @@ return {
         end,
       }
       opts.sources = vim.list_extend(opts.sources or {}, {
+        -- require("none-ls.diagnostics.flake8"),
         cspell.diagnostics.with({
-          config = config,
+          config = cspell_config,
           diagnostics_postprocess = function(diagnostic)
-            diagnostic.severity = vim.diagnostic.severity.WARN
+            diagnostic.severity = vim.diagnostic.severity.HINT
           end,
         }),
-        cspell.code_actions.with({ config = config }),
+        cspell.code_actions.with({ config = cspell_config }),
         -- null_ls.builtins.code_actions.refactoring,
       })
     end,

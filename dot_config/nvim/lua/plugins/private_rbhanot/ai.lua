@@ -43,7 +43,7 @@ return {
     "yetone/avante.nvim",
     event = "VeryLazy",
     version = false, -- Never set this value to "*"! Never!
-    enabled = true,
+    enabled = false,
     cmd = { "AvanteToggle" },
     keys = {
       {
@@ -61,10 +61,11 @@ return {
         provider_opts = {},
       },
       auto_suggestions_provider = "copilot",
-      provider = "copilot",
-      copilot = {
-        model = "claude-3.7-sonnet", -- your desired model (or use gpt-4o, etc.)
-        -- model = "claude-sonnet-4", -- your desired model (or use gpt-4o, etc.)
+      providers = {
+        copilot = {
+          -- model = "claude-3.7-sonnet", -- your desired model (or use gpt-4o, etc.)
+          model = "claude-opus-4", -- your desired model (or use gpt-4o, etc.)
+        },
       },
       -- },
       features = {
@@ -73,7 +74,8 @@ return {
         file_search = true,
       },
       behaviour = {
-        auto_suggestions = true,
+        auto_suggestions = false,
+        enable_cursor_planning_mode = true,
         jump_result_buffer_on_finish = false,
         auto_focus_on_diff_view = false,
         enable_token_counting = false,
@@ -95,7 +97,7 @@ return {
     },
     dependencies = {
       {
-        "stevearc/dressing.nvim",
+        -- "stevearc/dressing.nvim",
         "nvim-lua/plenary.nvim",
         "MunifTanjim/nui.nvim",
         "zbirenbaum/copilot.lua",
@@ -114,41 +116,37 @@ return {
     enabled = true,
     config = function(_, opts)
       opts = {
-        extensions = {
-          history = {
-            enabled = true,
-            opts = {
-              keymap = "gh",
-              save_chat_keymap = "sc",
-              auto_save = true,
-              expiration_days = 0,
-              picker = "snacks",
-              auto_generate_title = true,
-              title_generation_opts = {
-                adapter = nil, -- e.g "copilot"
-                model = nil, -- e.g "gpt-4o"
-              },
-              continue_last_chat = false,
-              delete_on_clearing_chat = true,
-              dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
-              enable_logging = false,
-            },
-          },
-        },
-        -- log_level = "TRACE",
+        --   -- send_code = false,
+        --   extensions = {
+        --     history = {
+        --       enabled = true,
+        --       opts = {
+        --         keymap = "gh",
+        --         save_chat_keymap = "sc",
+        --         auto_save = true,
+        --         expiration_days = 0,
+        --         picker = "snacks",
+        --         auto_generate_title = true,
+        --         title_generation_opts = {
+        --           adapter = nil, -- e.g "copilot"
+        --           model = nil, -- e.g "gpt-4o"
+        --         },
+        --         continue_last_chat = false,
+        --         delete_on_clearing_chat = true,
+        --         dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
+        --         enable_logging = false,
+        --       },
+        --     },
+        --   },
+        --   -- log_level = "TRACE",
         display = {
           chat = {
-            show_header_separator = false,
             start_in_insert_mode = true,
             auto_scroll = true,
-            show_settings = false,
             intro_message = "",
             window = { height = 0.8, width = 0.35 },
           },
           diff = {
-            enabled = true,
-            close_chat_at = 240, -- Close an open chat buffer if the total columns of your display are less than...
-            layout = "vertical", -- vertical|horizontal split for default provider
             opts = {
               "internal",
               "filler",
@@ -158,7 +156,7 @@ return {
               "linematch:120",
               "indent-heuristic",
             },
-            provider = "default", -- default|mini_diff
+            provider = "mini_diff", -- default|mini_diff
           },
         },
         adapters = {
@@ -166,8 +164,8 @@ return {
             return require("codecompanion.adapters").extend("copilot", {
               schema = {
                 model = {
-                  -- default = "claude-sonnet-4",
-                  default = "claude-3.7-sonnet",
+                  default = "claude-sonnet-4",
+                  -- default = "claude-3.7-sonnet",
                   -- default = "gpt-4.1",
                 },
               },
@@ -176,6 +174,25 @@ return {
         },
         strategies = {
           chat = {
+            slash_commands = {
+              ["git_files"] = {
+                description = "List git files",
+                ---@param chat CodeCompanion.Chat
+                callback = function(chat)
+                  local handle = io.popen("git ls-files")
+                  if handle ~= nil then
+                    local result = handle:read("*a")
+                    handle:close()
+                    chat:add_reference({ role = "user", content = result }, "git", "<git_files>")
+                  else
+                    return vim.notify("No git files available", vim.log.levels.INFO, { title = "CodeCompanion" })
+                  end
+                end,
+                opts = {
+                  contains_code = true,
+                },
+              },
+            },
             tools = {
               opts = {
                 auto_submit_errors = true, -- Send any errors to the LLM automatically?
@@ -216,7 +233,7 @@ return {
         },
       }
       require("codecompanion").setup(opts)
-      vim.cmd([[cab cci CodeCompanion]])
+      vim.cmd([[cab cc CodeCompanion]])
       vim.cmd([[cab ccc CodeCompanionChat]])
       vim.cmd([[cab cca CodeCompanionActions]])
       vim.cmd([[cab cch CodeCompanionHistory]])
@@ -224,7 +241,7 @@ return {
     cmd = { "CodeCompanionHistory" },
     keys = {
       {
-        "<leader>cc",
+        "<leader>ct",
         mode = { "n", "v" },
         "<cmd>CodeCompanionChat Toggle<cr>",
         desc = "CodeCompanion Chat",
@@ -235,30 +252,30 @@ return {
         mode = { "n", "x", "v" },
         desc = "CodeCompanion inline chat",
       },
-      -- {
-      --   "<leader>CC",
-      --   "<cmd>CodeCompanionActions<cr>",
-      --   mode = { "n", "v" },
-      --   desc = "CodeCompanion actions",
-      -- },
-      -- {
-      --   "<leader>an",
-      --   "<cmd>CodeCompanionChat<cr>",
-      --   mode = { "n", "v" },
-      --   desc = "CodeCompanion new chat",
-      -- },
-      -- {
-      --   "<leader>av",
-      --   "<cmd>CodeCompanionChat Add<cr>",
-      --   mode = { "n", "v" },
-      --   desc = "send visual selection to chat",
-      -- },
-      -- {
-      --   "<leader>ah",
-      --   "<cmd>CodeCompanionHistory<cr>",
-      --   mode = { "n" },
-      --   desc = "chat history",
-      -- },
+      {
+        "<leader>CA",
+        "<cmd>CodeCompanionActions<cr>",
+        mode = { "n", "v" },
+        desc = "CodeCompanion actions",
+      },
+      {
+        "<leader>cc",
+        "<cmd>CodeCompanionChat<cr>",
+        mode = { "n", "v" },
+        desc = "CodeCompanion new chat",
+      },
+      {
+        "<leader>cv",
+        "<cmd>CodeCompanionChat Add<cr>",
+        mode = { "n", "v" },
+        desc = "send visual selection to chat",
+      },
+      {
+        "<leader>ch",
+        "<cmd>CodeCompanionHistory<cr>",
+        mode = { "n" },
+        desc = "chat history",
+      },
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
