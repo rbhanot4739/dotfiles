@@ -1,8 +1,8 @@
 theme = dark:nightfox, light:dawnfox
 macos-titlebar-style = hidden
-window-width = 180
 window-height = 60
-shell-integration-features = no-cursor,no-sudo,title
+window-width = 180
+shell-integration-features = no-cursor,no-sudo,no-title
 
 keybind = ctrl+one=goto_tab:1
 keybind = ctrl+two=goto_tab:2

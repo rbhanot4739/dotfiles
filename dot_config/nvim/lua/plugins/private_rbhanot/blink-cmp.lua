@@ -46,25 +46,6 @@ return {
     },
     cmdline = {
       enabled = true,
-      sources = function()
-        local type = vim.fn.getcmdtype()
-        if type == "/" or type == "?" then
-          return { "buffer" }
-        end
-        if type == ":" or type == "@" then
-          return { "cmdline" }
-        end
-        return {}
-      end,
-      completion = {
-        ghost_text = { enabled = true },
-        list = {
-          selection = { preselect = false, auto_insert = true },
-        },
-        menu = {
-          auto_show = true,
-        },
-      },
     },
     completion = {
       ghost_text = {
@@ -75,12 +56,6 @@ return {
         show_in_snippet = false,
       },
       menu = {
-        -- min_width = 10,
-        -- max_height = 10,
-        -- border = "rounded",
-        draw = {
-          -- columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } },
-        },
         auto_show = function(ctx)
           return vim.bo.filetype ~= "markdown"
         end,
@@ -112,18 +87,18 @@ return {
         -- "dap",
       },
       providers = {
-        codeium = { name = "Codeium", module = "codeium.blink", async = true },
+        -- codeium = { name = "Codeium", module = "codeium.blink", async = true },
         copilot = {
           async = true,
           score_offset = 100,
           module = "blink-copilot",
-          -- override = {
-          --   get_trigger_characters = function(self)
-          --     local trigger_characters = self:get_trigger_characters()
-          --     vim.list_extend(trigger_characters, { "\n", "\t", " " })
-          --     return trigger_characters
-          --   end,
-          -- },
+          override = {
+            get_trigger_characters = function(self)
+              local trigger_characters = self:get_trigger_characters()
+              vim.list_extend(trigger_characters, { "\n", "\t", " " })
+              return trigger_characters
+            end,
+          },
         },
         lsp = {
           async = true,
@@ -136,29 +111,11 @@ return {
             end,
           },
         },
-        buffer = { enabled = false, score_offset = 98 },
-        path = {
-          score_offset = 95,
-          enabled = function()
-            return not vim.tbl_contains({ "copilot-chat", "codecompanion", "AvanteInput" }, vim.bo.filetype)
-            -- return vim.bo.filetype ~= "copilot-chat" and vim.bo.filetype ~= "codecompanion"
-          end,
-        },
-        dictionary = {
-          module = "blink-cmp-dictionary",
-          name = "Dict",
-          min_keyword_length = 3,
-          opts = {
-            dictionary_files = { vim.fn.expand("~/words.txt") },
-            get_documentation = function()
-              return nil
-            end,
-          },
-        },
+        buffer = { enabled = true, score_offset = 98 , opts = {enable_in_ex_commands = true} },
         ripgrep = {
           module = "blink-ripgrep",
           name = "Ripgrep",
-          score_offset = 90,
+          score_offset = 97,
           opts = {
             prefix_min_len = 5,
             context_size = 3,
@@ -172,6 +129,24 @@ return {
             end
             return items
           end,
+        },
+        path = {
+          score_offset = 96,
+          enabled = function()
+            return not vim.tbl_contains({ "copilot-chat", "codecompanion", "AvanteInput" }, vim.bo.filetype)
+          end,
+        },
+        dictionary = {
+          module = "blink-cmp-dictionary",
+          name = "Dict",
+          score_offset = 80,
+          min_keyword_length = 3,
+          opts = {
+            dictionary_files = { vim.fn.expand("~/words.txt") },
+            get_documentation = function()
+              return nil
+            end,
+          },
         },
         markdown = {
           name = "RenderMarkdown",

@@ -18,7 +18,6 @@ set -ag terminal-overrides ",screen-256color,xterm-256color:Tc"
 set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'  # undercurl support
 set -as terminal-overrides ',*:Setulc=\E[58::2::::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m'  # underscore colours - needs tmux-3.0
 set -g status-keys emacs
-# set-option -g extended-keys on
 
 # send keycodes for these keys as such
 bind-key -T root         S-Enter     send-keys Escape "[13;2u"

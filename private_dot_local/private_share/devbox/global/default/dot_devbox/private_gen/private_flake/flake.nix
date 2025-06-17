@@ -2,7 +2,7 @@
    description = "A devbox shell";
 
    inputs = {
-     nixpkgs.url = "github:NixOS/nixpkgs/8d6cdc7756817e0c4b24567271634a44bcf80752?narHash=sha256-ibsz06u1jlWyH7YURnRhLQn38Tuc5zwknr00suFjvfA%3D";
+     nixpkgs.url = "github:NixOS/nixpkgs/41da1e3ea8e23e094e5e3eeb1e6b830468a7399e?narHash=sha256-jp0D4vzBcRKwNZwfY4BcWHemLGUs4JrS3X9w5k%2FJYDA%3D";
    };
 
    outputs = {
