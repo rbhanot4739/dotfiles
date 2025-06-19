@@ -1,0 +1,20 @@
+#!/bin/zsh
+
+typeset -a themes=(nightfox dawnfox gruvbox-material tokyonight-day tokyonight-moon tokyonight-night tokyonight-storm)
+selected_theme=$(printf '%s\n' "${themes[@]}" | fzf --prompt="Select theme: ")
+
+# Exit if no theme selected (user pressed ESC or Ctrl+C)
+if [[ -z "$selected_theme" ]]; then
+    echo "No theme selected. Exiting."
+    return 1
+fi
+
+# 1. Set environment variable
+export THEME="$selected_theme"
+
+# 2. Write the value to /tmp/theme
+echo "$selected_theme" > /tmp/theme
+
+source ~/fzf_config.zsh
+# 3. Call the script
+tmux-theme-switcher "$selected_theme" 2> /dev/null

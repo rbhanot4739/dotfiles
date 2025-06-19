@@ -1,0 +1,6 @@
+#!/bin/zsh
+
+tm_widget() {
+    BUFFER="tmux_sessions"
+    zle accept-line
+}

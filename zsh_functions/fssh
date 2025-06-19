@@ -1,0 +1,33 @@
+#!/bin/zsh
+
+__fzf_list_hosts() {
+  local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
+  hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
+  echo $hosts | tr ' ' '\n' | sort -u
+}
+
+fssh() {
+  # Fuzzy search through SSH hosts and establish SSH connection
+  # Usage: fssh [hostname]
+  # If hostname is provided, connects directly
+  # Otherwise, opens fuzzy finder to select from available hosts
+  
+  local target_host
+  
+  if [[ $# -eq 1 ]]; then
+    target_host="$1"
+  else
+    target_host="$(__fzf_list_hosts | fzf)" || return 0
+  fi
+
+  if [[ -z "$target_host" ]]; then
+    return 0
+  fi
+
+  # Connect using SSH with proper terminal settings
+  add_to_hist "ssh $target_host"
+  # TERM=xterm-color command ssh "$target_host"
+  command ssh "$target_host"
+}
+
+fssh

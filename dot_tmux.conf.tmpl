@@ -70,6 +70,7 @@ bind-key M-o run-shell 'tmux_sessions'
 bind-key M-w run-shell 'tmux_panes'
 
 bind M command-prompt -p "Show man page for:" "popup -w95% -h95% -xC -yC -E 'man %%'"
+bind G popup -w95% -h95% -xC -yC -d "#{pane_current_path}" 'lazygit'
 
 bind-key M-, display-menu -T "#[align=centre]Quick Actions" -xR -yS \
   "Set pane title"      R "command-prompt -I '#T' -p 'New pane title:' 'select-pane -T \"%%\"'" \

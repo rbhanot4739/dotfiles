@@ -1,0 +1,6 @@
+#!/bin/zsh
+
+cd_up_widget() {
+  cd ..
+  zle accept-line
+}

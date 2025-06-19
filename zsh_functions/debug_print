@@ -1,0 +1,8 @@
+#!/bin/zsh
+
+debug_print() {
+  if [[ "$DEBUG" -eq 1 ]]; then
+    echo "DEBUG: $@"
+  fi
+}
+

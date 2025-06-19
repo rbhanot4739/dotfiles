@@ -1,50 +1,5 @@
 # vim: set filetype=sh:
 
-#  =================================== Functions ===================================
-get_hidden_files() {
-	if [[ $1 == "long" ]]; then
-		local params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--icons' '--header')
-		if [[ $2 ]]; then
-			OLDDIR=$(pwd)
-			cd $2
-			eza $params --group-directories-first -snew -dl .* 2>/dev/null
-			cd $OLDDIR
-		else
-			eza $params --group-directories-first -snew -dl .* 2>/dev/null
-		fi
-	else
-		if [[ $1 ]]; then
-			OLDDIR=$(pwd)
-			cd $1
-			eza --group-directories-first -snew -d .* 2>/dev/null
-			cd $OLDDIR
-		else
-			eza --group-directories-first -snew -d .* 2>/dev/null
-		fi
-
-	fi
-}
-
-debug_print() {
-	if [[ "$DEBUG" -eq 1 ]]; then
-		echo "DEBUG: $@"
-	fi
-}
-
-cd_up_widget() {
-	# echo "cd_up called"
-	cd ..
-	# zle reset-prompt
-	zle accept-line
-}
-
-zle -N cd_up_widget
-bindkey -M emacs '^[[1;3A' cd_up_widget
-bindkey -M vicmd '^[[1;3A' cd_up_widget
-bindkey -M viins '^[[1;3A' cd_up_widget
-
-# zvm_bindkey vicmd '' cd_up_widget
-# zvm_bindkey viins '' cd_up_widget
 #  =================================== Aliases ===================================
 
 alias m="mint "
@@ -64,8 +19,6 @@ alias topo="topology-v3 "
 if [[ $(command -v eza) ]]; then
 	alias ls='eza -I "*pyc*" $eza_params'
 	alias lsa='ls --all'
-	# alias l='ls --git-ignore'
-	# print tree format
 	alias lt='ls -T -L=3'
 	alias ll='ls --header --long --sort=modified'
 	alias l='ll'
@@ -83,7 +36,6 @@ if [[ $(command -v eza) ]]; then
 fi
 
 # some utility aliases
-# alias dud='du -d 1 -hc 2> /dev/null | grep -Ev "\.$"|sort -h'
 alias h='history 0'
 # alias ssh='TERM=xterm-color ssh '
 alias xx='exit'
@@ -162,5 +114,21 @@ alias tvim="NVIM_APPNAME=lazyvim-test nvim"
 
 # typo prone aliases
 alias ks="ls"
+
+alias ssh='fssh'
+alias s='fssh'
+alias man='fman'
+alias vims="nvim_conf_switcher"
+alias tm='tmux_sessions'
+
+zle -N cd_up_widget
+bindkey -M emacs '^[[1;3A' cd_up_widget
+bindkey -M vicmd '^[[1;3A' cd_up_widget
+bindkey -M viins '^[[1;3A' cd_up_widget
+
+zle -N tm_widget 
+bindkey '^[,' tm_widget
+bindkey -M vicmd '^[,' tm_widget
+bindkey -M viins '^[,' tm_widget
 
 source $HOME/fzf_config.zsh

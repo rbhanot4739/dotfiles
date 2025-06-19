@@ -1,0 +1,61 @@
+#!/bin/zsh
+
+v() {
+  # Opens files or directories using the default editor.
+  #
+  # If arguments are provided, it checks if they are files or directories.
+  # If all arguments are files, it opens them directly.
+  # If all arguments are directories, it uses `fd` to find files in those directories and then pipe it through to  `fzf` to select files
+  # If no arguments are provided, it uses `fzf` to select files from the current directory.
+  #
+  # Arguments:
+  #   $@ - List of files or directories to open.
+  #
+  # Returns:
+  #   0 if files are successfully opened, 1 otherwise.
+  #
+  # Example usage:
+  #   v file1.txt file2.txt
+  #   v /path/to/directory1 /path/to/directory2 /path/to/directory3 ...
+  #   v
+  #
+  # Note: The function uses:
+  #   - `fd` to find files
+  #   - `fzf` for fuzzy file selection.
+  #   - adds the opened files to the zsh history.
+  #  - opens the files using the default editor.
+  #
+
+  local all_dirs=true
+  local all_files=true
+
+  for arg in "$@"; do
+    if [[ -f "$arg" ]]; then
+      all_dirs=false
+    elif [[ -d "$arg" ]] || [[ -L "$arg" ]]; then
+      all_files=false
+    else 
+      echo "Invalid argument: $arg doesn't exist"
+      return 1
+    fi
+  done
+
+  if [[ $# -gt 0 ]]; then
+    local args=$@
+    if $all_files; then
+      ${EDITOR} $@
+      return 0
+    elif $all_dirs; then
+      cmd="$find_files_cmd $args | fzf $file_opts --select-1 --exit-0 +m"
+      selected_files=$(eval $cmd)
+    else
+      echo "Arguments must of same type i.e. either all files or directories"
+      return 1
+    fi
+  else
+    cmd="$find_files_cmd | fzf $file_opts --select-1 --exit-0 +m"
+    selected_files="$(eval $cmd)"
+  fi
+
+  [[ ! -z $selected_files ]] && add_to_hist "${EDITOR} ${selected_files}" && ${EDITOR} "${selected_files}" || return 1
+}

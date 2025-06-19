@@ -1,0 +1,26 @@
+#!/bin/zsh
+
+get_hidden_files() {
+	local eza_extra_flags=""
+	local target_dir="."
+
+	if [[ "$1" == "long" ]]; then
+		eza_extra_flags="-l"
+		[[ -n "$2" ]] && target_dir="$2"
+	elif [[ -n "$1" ]]; then
+		target_dir="$1"
+	fi
+
+	(
+		cd "$target_dir" || exit 1
+
+		# Use zsh globbing to find hidden files. (N) creates an empty list on no match.
+		local hidden_files=(.*(N))
+
+		# Only run eza if the glob found any files.
+		if (( ${#hidden_files[@]} > 0 )); then
+			# Use eza's ignore-glob to filter out . and .. from the list.
+			eza $eza_params -d $eza_extra_flags --ignore-glob='.|..' -- "${hidden_files[@]}"
+		fi
+	) 2>/dev/null
+}

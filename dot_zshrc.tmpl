@@ -102,8 +102,8 @@ zinit from"gh-r" as"program" mv"direnv* -> direnv" \
         direnv/direnv
 
 # ======== Completion Setup ========
-CUSTOM_COMPLETION_DIR=($HOME/zsh_completions $HOME/zsh_functions)
-typeset -U fpath=($CUSTOM_COMPLETION_DIR $fpath)
+CUSTOM_PATHS=($HOME/zsh_completions $HOME/zsh_functions)
+typeset -U fpath=($CUSTOM_PATHS $fpath)
 {{- if (contains "linkedin" .chezmoi.fqdnHostname) }}
 fpath=("/usr/local/linkedin/etc/zsh" "/export/content/linkedin/etc/zsh" $fpath)
 {{- end }}
@@ -200,8 +200,7 @@ function y() {
 [[ -d $HOME/.cargo ]] && export PATH="$PATH:$HOME/.cargo/bin"
 
 # ======== Theme and Visual Settings ========
-export THEME="nightfox"
-export eza_params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--color=always' '--icons')
+export eza_params=('--git' '--group' '--group-directories-first' '--time-style=long-iso' '--color-scale=all' '--color=always' '--icons' '-snew')
 export BAT_THEME="ansi"
 
 # ======== Additional Configurations ========
@@ -210,9 +209,6 @@ export BAT_THEME="ansi"
 
 # Load powerlevel10k
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-# remove duplicate entries from PATH
-
 
 # zsh abbr config
 # ABBR_EXPAND_PUSH_ABBREVIATION_TO_HISTORY=1

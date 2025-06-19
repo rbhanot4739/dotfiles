@@ -1,0 +1,14 @@
+#!/bin/zsh
+
+fcd() {
+  # fuzzy jump to any directory
+  # this is different from `z` as z only shows top few directories which are most accessed
+ if  [[ $# -gt 1 ]] || [[ -f $1 ]]; then 
+  echo "Only a single directory name can be provided"
+  exit 
+  fi
+
+  cmd="$find_dirs_cmd $1 | fzf $FZF_ALT_C_OPTS --select-1 --exit-0"
+  item=$(eval $cmd)
+  [[ ! -z $item ]] && add_to_hist "cd $item" && cd $item
+}

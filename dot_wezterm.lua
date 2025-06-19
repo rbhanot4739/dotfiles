@@ -76,16 +76,5 @@ config.keys = {
 		}),
 	},
 }
-config.ssh_domains = {
-	{
-		-- This name identifies the domain
-		name = "ld",
-		-- The hostname or address to connect to. Will be used to match settings
-		-- from your ssh config file
-		remote_address = "rbhanot-ld3.linkedin.biz",
-		-- The username to use on the remote host
-		username = "rbhanot",
-	},
-}
 -- and finally, return the configuration to wezterm
 return config

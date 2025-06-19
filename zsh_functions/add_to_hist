@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+add_to_hist() {
+  print -s $@
+}
