@@ -198,7 +198,8 @@ fssh() {
 
   # Connect using SSH with proper terminal settings
   add_to_zsh_history "ssh $target_host"
-  TERM=xterm-color command ssh "$target_host"
+  # TERM=xterm-color command ssh "$target_host"
+  command ssh "$target_host"
 }
 alias ssh='fssh'
 alias s='fssh'

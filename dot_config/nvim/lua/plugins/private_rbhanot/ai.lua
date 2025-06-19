@@ -215,10 +215,10 @@ return {
                 modes = { n = "<C-s>", i = "<C-s>" },
               },
               send_to_smart = {
-                modes = { n = "<S-CR>" },
-                description = "Send to smart (claude-sonnet)",
+                modes = { n = "<S-CR>", i = "<S-CR>" },
+                description = "Send to smart (gemini2.5-pro)",
                 callback = function(chat)
-                  chat:apply_model("claude-3.7-sonnet-thought")
+                  chat:apply_model("gemini-2.5-pro-preview-06-05")
                   chat:submit()
                 end,
               },

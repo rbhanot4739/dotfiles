@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 local token_file="$HOME/.config/github-copilot/apps.json"
 if [[ -f "$token_file" ]]; then
     local oauth_token=$(jq -r '.[].oauth_token' "$token_file" 2>/dev/null)
