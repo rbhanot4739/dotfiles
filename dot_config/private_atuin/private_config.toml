@@ -38,7 +38,7 @@ sync_frequency = "0m"
 
 ## which search mode to use
 ## possible values: prefix, fulltext, fuzzy, skim
-search_mode = "fuzzy"
+search_mode = "skim"
 
 ## which filter mode to use
 ## possible values: global, host, session, directory
@@ -64,10 +64,10 @@ style = "auto"
 
 ## the maximum number of lines the interface should take up
 ## set it to 0 to always go full screen
-inline_height = 20
+# inline_height = 20
 
 ## Invert the UI - put the search bar at the top , Default to `false`
-# invert = false
+invert = true
 
 ## enable or disable showing a preview of the selected command
 ## useful when the command is longer than the terminal width and is cut off
@@ -102,18 +102,34 @@ history_filter = [
   "^ .*",   # any command starting with a space
   # "^mysql.+-p.+.*$",  # command containing `-p` flag which usually means a password inline
   "^#.*",    # commented commands
-  "^z",  # zoxide go to home
-  "^zi", # interactive zoxide
   "^r$",
-  "^ee",
+  "^ee$|vim ~/.zshrc$|vim $HOME/.zshrc$",
+  "^xx$|^exit$",
+  "^c$|^clear$",
+  "^z|^cd",  # zoxide go to home
+  "^zi$", # interactive zoxide
+  "^ee$",
+  "^eza|^ls|^ll",
+  "^fcd",
+  "^fssh$|^ssh$",
+  "^fman$|^man$",
   "^cm apply",
-  "^gs",
-  "^gpl",
-  "^gps",
-  "^git status",
-  "^git pull",
-  "^git push"
+  "^cmcd$|chezmoi cd$",
+  "^cmad$",
+  "gg|lazygit",
+  "^ga .$git add .$",
+  "^gl$|^git log$",
+  "^gs$|^git status",
+  "^gpl$|^git pull",
+  "^gps|^git push",
+  "^gcm",
+  "^h\\s+$|^history",
+  "^tm .*$|^tmux$",
+  "^v$|^vim$",
+  "set-theme|set-tokens|ghm"
 ]
+
+store_failed = false
 
 ## prevent commands run with cwd matching any of these regexes from being written
 ## to history. Note that these regular expressions are unanchored, i.e. if they don't

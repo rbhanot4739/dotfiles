@@ -1,0 +1,4 @@
+[env]
+PROJECT_NAME = "{{ config_root | basename }}"
+LI_ENV_PATH = "{{ config_root }}/../build/{{env.PROJECT_NAME}}/environments/development-venv"
+_.python.venv =  "{{env.LI_ENV_PATH}}"

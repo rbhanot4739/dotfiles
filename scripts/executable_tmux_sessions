@@ -124,7 +124,7 @@ header="--header-label ' Keymaps ' --header '
 binds="--bind \"$fzf_binds\" --bind \"$del_bind\" --bind \"$rename_bind\""
 prompt="--prompt ' Tmux Sessions > '"
 fzf_transform=' --bind "?:transform:$TRANSFORMER"'
-layout$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70%,border-native --reverse" || echo "--height 70% --layout=reverse --margin 5%,15%,10%,15%")
+layout=$([[ -n ${TMUX} ]] && echo "--tmux center,70%,70%,border-native --reverse" || echo "--height 70% --layout=reverse --margin 5%,15%,10%,15%")
 
 fzf_cmd="fzf --style full"
 [ -n "$info" ] || fzf_cmd+=" $info"

@@ -121,14 +121,40 @@ alias man='fman'
 alias vims="nvim_conf_switcher"
 alias tm='tmux_sessions'
 
+# Widgets
 zle -N cd_up_widget
 bindkey -M emacs '^[[1;3A' cd_up_widget
 bindkey -M vicmd '^[[1;3A' cd_up_widget
 bindkey -M viins '^[[1;3A' cd_up_widget
 
+# tmux session switcher widget
 zle -N tm_widget 
 bindkey '^[,' tm_widget
 bindkey -M vicmd '^[,' tm_widget
 bindkey -M viins '^[,' tm_widget
+
+expand_alias_or_space() {
+  zle _expand_alias
+  if [[ $LBUFFER[-1] == ' ' ]]; then
+      # If expansion happened, _expand_alias already added the space
+      return
+  else
+      # No expansion occurred, insert a literal space
+      zle self-insert
+  fi
+}
+
+zle -N expand_alias_or_space
+bindkey " " expand_alias_or_space
+
+# set theme
+set-theme-widget() {
+  set-theme
+  zle reset-prompt
+}
+zle -N set-theme-widget
+bindkey '^[.' set-theme-widget
+bindkey -M vicmd '^[.' set-theme-widget
+bindkey -M viins '^[.' set-theme-widget
 
 source $HOME/fzf_config.zsh

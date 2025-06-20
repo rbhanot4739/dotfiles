@@ -31,7 +31,7 @@ typeset -U PATH    # Make PATH unique
 
 {{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
 [[ -d $HOME/.pixi/bin ]] && export PATH="$HOME/.pixi/bin:$PATH"
-{{- end }}
+# {{- end }}
 [[ -d $HOME/.local/bin ]] && export PATH="$HOME/.local/bin:$PATH"
 [[ -d $HOME/scripts ]] && export PATH="$HOME/scripts:$PATH"
 
@@ -48,14 +48,14 @@ export HISTFILE=~/.zsh_history
 export SAVEHIST=$HISTSIZE
 export HISTDUP=erase
 
-setopt append_history
-setopt hist_ignore_space
-setopt hist_ignore_all_dups
-setopt share_history
-setopt hist_reduce_blanks
-setopt inc_append_history
-setopt hist_save_no_dups
-setopt hist_find_no_dups
+setopt APPEND_HISTORY
+setopt HIST_IGNORE_SPACE
+setopt HIST_IGNORE_ALL_DUPS
+setopt SHARE_HISTORY
+setopt HIST_REDUCE_BLANKS
+setopt INC_APPEND_HISTORY
+setopt HIST_SAVE_NO_DUPS
+setopt HIST_FIND_NO_DUPS
 
 # ======== Basic Setup ========
 echo -ne '\e[5 q'    # Use beam shape cursor
@@ -90,7 +90,9 @@ zinit light jeffreytse/zsh-vi-mode
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit light 'zsh-users/zsh-history-substring-search'
 zinit ice wait atload'_history_substring_search_config'
+bindkey -M vicmd '^[[A' history-substring-search-up
 bindkey -M viins '^[[A' history-substring-search-up
+bindkey -M vicmd '^[[B' history-substring-search-down
 bindkey -M viins '^[[B' history-substring-search-down
 bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
@@ -132,8 +134,8 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 
 # FZF-tab configuration
-# zstyle ':fzf-tab:*' fzf-flags --height 50% --margin 1,2 --layout=reverse --border rounded --multi '--bind=shift-tab:up,tab:down,ctrl-space:toggle'
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
+zstyle ':fzf-tab:*' fzf-flags --height 50%
 zstyle ':fzf-tab:complete:(cd|z):*' fzf-preview 'tree -C $realpath'
 zstyle ':fzf-tab:complete:(eza|ls):*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
@@ -165,23 +167,71 @@ if [[ -f ~/.fzf.zsh ]]; then
 elif command -v fzf >/dev/null; then
   source <(fzf --zsh)
 fi
-bindkey -M emacs '^[[1;2A' fzf-history-widget
-bindkey -M vicmd '^[[1;2A' fzf-history-widget
-bindkey -M viins '^[[1;2A' fzf-history-widget
 
 # Zoxide
 if command -v zoxide >/dev/null; then
   eval "$(zoxide init zsh)"
   alias zi=__zoxide_zi
 fi
+# Replace the current Atuin setup (lines 177-194) with this:
 
 # Atuin setup
-# if [[ $(command -v atuin) ]]; then
-#   export ATUIN_NOBIND="true"
-#   eval "$(atuin init zsh)"
-#   bindkey '^r' atuin-search
-#   bindkey '^[[1;2A' atuin-up-search
-# fi
+if [[ $(command -v atuin) ]]; then
+    export ATUIN_NOBIND="true"
+    eval "$(atuin init zsh)"
+
+    # Function to set Atuin key bindings
+    function zvm_after_init() {
+        bindkey -M emacs '' atuin-search
+        bindkey -M vicmd '' atuin-search  
+        bindkey -M viins '' atuin-search
+
+        bindkey '^[[1;2A' atuin-up-search
+        bindkey -M vicmd '^[[1;2A' atuin-up-search
+        bindkey -M viins '^[[1;2A' atuin-up-search
+    }
+else
+  # fallback to ignore history patterns if Atuin is not available
+  HIST_IGNORE_REGEXES=(
+      '^#.*'
+      '^r$'
+      '^ee$'
+      '^xx$'
+      '^c$'
+      '^z'
+      '^zi'
+      '^cm apply'
+      '^cmcd$'
+      '^gs'
+      '^h$'
+      '^gpl'
+      '^gps'
+      '^git status'
+      '^git pull'
+      '^git push'
+      '^v$'
+    )
+  # Join the array into a single regex pattern
+  HIST_IGNORE_PATTERN_STRING="^($(IFS='|'; echo "${HIST_IGNORE_REGEXES[*]}"))"
+
+  function zshaddhistory() {
+    emulate -L zsh
+    local cmd=${1%%$'\n'}
+
+    # Ignore command if it matches the regex
+    [[ $cmd =~ $HIST_IGNORE_PATTERN_STRING ]] && return 1
+
+    # Ignore command if previous command exited with non-zero status
+    [[ $? -ne 0 ]] && return 1
+    return 0
+  }
+
+  function zvm_after_init() {
+      bindkey -M emacs '^[[1;2A' fzf-history-widget
+      bindkey -M vicmd '^[[1;2A' fzf-history-widget
+      bindkey -M viins '^[[1;2A' fzf-history-widget
+  }
+fi
 
 # Yazi file manager
 function y() {
@@ -194,6 +244,7 @@ function y() {
 }
 
 # ======== Path Additions ========
+
 {{- if (eq .chezmoi.os "darwin") }}
 [[ -d /Users/Shared/DBngin/ ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
 {{- end }}
@@ -209,7 +260,7 @@ export BAT_THEME="ansi"
 
 # Load powerlevel10k
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
+{{/*
 # zsh abbr config
 # ABBR_EXPAND_PUSH_ABBREVIATION_TO_HISTORY=1
 # show hints for abbrereviations
@@ -218,3 +269,4 @@ export BAT_THEME="ansi"
 # ABBR_LOG_AVAILABLE_ABBREVIATION_AFTER=1
 # abbr file
 # ABBR_USER_ABBREVIATIONS_FILE="$HOME/abbrs.zsh"
+*/}}

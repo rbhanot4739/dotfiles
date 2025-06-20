@@ -1,0 +1,25 @@
+[tools]
+ripgrep = "latest"
+neovim = "latest"
+fzf = "latest"
+fd = "latest"
+zoxide = "latest"
+eza = "latest"
+delta = "latest"
+bat = "latest"
+jq = "latest"
+yq = "latest"
+sqlite = "latest"
+lua = "latest"
+sd = "latest"
+yazi = "latest"
+lazygit = "latest"
+"aqua:ankitpokhrel/jira-cli" = "latest"
+"aqua:tealdeer-rs/tealdeer" = "latest"
+"aqua:atuinsh/atuin" = "latest"
+"aqua:dlvhdr/gh-dash" = "latest"
+tmux = "latest"
+
+[settings]
+experimental = true
+vfox = true

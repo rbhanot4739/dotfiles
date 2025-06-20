@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Array of files and directories to add to chezmoi
+files_to_add=(
+    ~/.config/atuin
+    ~/.config/cspell.json
+    ~/.config/gh-dash
+    ~/.config/ghostty
+    ~/.config/glow
+    ~/.config/karabiner
+    ~/.config/lazygit
+    ~/.config/mise
+    ~/.config/nvim
+    ~/.config/starship.toml
+    ~/.config/yazi
+    ~/.config/zsh-abbr
+    ~/.local/share/devbox/global/default/devbox.json
+    ~/base_pyrightconfig.json
+    ~/custom_config.zsh
+    ~/delta-themes
+    ~/fzf_config.zsh
+    ~/fzf-themes
+    ~/minimal.lua
+    ~/project-mise.toml
+    ~/scripts
+    ~/tmux-themes
+    ~/zsh_functions/
+    ~/.global_gitignore
+    ~/.ideavimrc
+    ~/.p10k.zsh
+    ~/.wezterm.lua
+    ~/.work-gitconfig
+)
+
+# Add files to chezmoi using the array
+if chezmoi add "${files_to_add[@]}"; then
+    # Echo confirmation message with each file on a new line
+    printf "Added following files to chezmoi:\n\n"
+    printf '%s\n' "${files_to_add[@]}"
+else
+    echo "Error: Failed to add files to chezmoi" >&2
+    exit 1
+fi
