@@ -14,4 +14,4 @@ __fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null' | xarg
   fi
 }
 
-fman
+fman "$@"

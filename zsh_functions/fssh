@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 __fzf_list_hosts() {
-  local hosts=($(awk '/^Host / {print $2}' ~/.ssh/config.custom))
+  local hosts=($(awk '/^Host / && $2 !~ /^\*/ {print $2}' ~/.ssh/config.custom))
   hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
   echo $hosts | tr ' ' '\n' | sort -u
 }
@@ -26,8 +26,8 @@ fssh() {
 
   # Connect using SSH with proper terminal settings
   add_to_hist "ssh $target_host"
-  # TERM=xterm-color command ssh "$target_host"
-  command ssh "$target_host"
+  TERM=xterm-color command ssh "$target_host"
+  # command ssh "$target_host"
 }
 
-fssh
+fssh "$@"

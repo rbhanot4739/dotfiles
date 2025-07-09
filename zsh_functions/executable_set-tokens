@@ -1,26 +1,43 @@
 #!/bin/zsh
 
+# _set_jira_token() {
+#   export JIRA_AUTH_TYPE=bearer
+#   export JIRA_API_TOKEN=$(rg password ~/.netrc | awk '{print $2}')
+#   return 0
+# }
+
+TOKEN_FILE="/tmp/openai/tokens.json"
+
+GH_TOKEN=$(jq -r '.[].oauth_token' "$HOME/.config/github-copilot/apps.json" 2>/dev/null)
+
+_read_tokens() {
+    [[ -f "$TOKEN_FILE" ]] || return 1
+    local base=$(jq -r '.OPENAI_API_BASE' "$TOKEN_FILE" 2>/dev/null)
+    local key=$(jq -r '.OPENAI_API_KEY' "$TOKEN_FILE" 2>/dev/null)
+    [[ -n "$base" && -n "$key" && "$key" != "null" ]] || return 1
+    export OPENAI_API_BASE="$base" OPENAI_API_KEY="$key"
+    # [[ -n "$GH_TOKEN" ]] && export GITHUB_COPILOT_TOKEN="$GH_TOKEN"
+}
+
+_write_tokens() {
+    mkdir -p "$(dirname "$TOKEN_FILE")"
+    echo "{\"OPENAI_API_BASE\":\"$1\",\"OPENAI_API_KEY\":\"$2\"}" > "$TOKEN_FILE"
+    chmod 600 "$TOKEN_FILE"
+}
+
+_fetch_tokens() {
+    [[ -n "$GH_TOKEN" ]] || return 1
+    # export GITHUB_COPILOT_TOKEN="$GH_TOKEN"
+    local api_key=$(curl -s https://api.github.com/copilot_internal/v2/token -H "Authorization: Bearer $GH_TOKEN" | jq -r '.token')
+    [[ -n "$api_key" && "$api_key" != "null" ]] || return 1
+    _write_tokens "https://api.githubcopilot.com" "$api_key"
+    export OPENAI_API_BASE="https://api.githubcopilot.com" OPENAI_API_KEY="$api_key"
+
+}
 _set_gh_tokens() {
-local token_file="$HOME/.config/github-copilot/apps.json"
-if [[ -f "$token_file" ]]; then
-    local oauth_token=$(jq -r '.[].oauth_token' "$token_file" 2>/dev/null)
-    if [[ -n "$oauth_token" ]]; then
-        export OPENAI_API_BASE=https://api.githubcopilot.com
-        export GITHUB_COPILOT_TOKEN="$oauth_token"
-        local openai_api_token=$(curl -s https://api.github.com/copilot_internal/v2/token -H "Authorization: Bearer $GITHUB_COPILOT_TOKEN" | jq -r .'token')
-        export OPENAI_API_KEY=$openai_api_token
-        return 0
-    fi
-fi
-return 1
+    _read_tokens || _fetch_tokens
 }
 
-_set_jira_token() {
-  export JIRA_AUTH_TYPE=bearer
-  export JIRA_API_TOKEN=$(rg password ~/.netrc | awk '{print $2}')
-  return 0
-}
-
-_set_gh_tokens
-_set_jira_token
+[[ "$1" == "refresh" ]] && _fetch_tokens || _set_gh_tokens
+# _set_jira_token
 

@@ -13,8 +13,41 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   end
 end
 vim.opt.rtp:prepend(lazypath)
+-- vim.opt.rtp:append(vim.fn.stdpath("config") .. "/code-companion-extensions")
 
 local config_utils = require("config.utils")
+
+function Load_colorscheme(theme)
+  local bg_mode = ""
+  local mode_file = "/tmp/.bg_mode"
+  if vim.fn.filereadable(mode_file) == 1 then
+    local file = io.open(mode_file, "r")
+    if file then
+      local content = file:read("*l")
+      file:close()
+      if content and content ~= "" then
+        bg_mode = content
+      end
+    end
+  end
+
+  local theme_file = string.format("/tmp/.theme_%s", bg_mode)
+  theme = "tokyonight" -- default theme
+
+  if vim.fn.filereadable(theme_file) == 1 then
+    local file = io.open(theme_file, "r")
+    if file then
+      local content = file:read("*l")
+      file:close()
+      if content and content ~= "" then
+        theme = content
+      end
+    end
+  end
+
+  vim.cmd.colorscheme(theme)
+end
+
 require("lazy").setup({
 
   spec = {
@@ -23,23 +56,7 @@ require("lazy").setup({
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
       opts = {
-        colorscheme = function()
-          local theme_file = "/tmp/theme"
-          local theme = "tokyonight" -- default theme
-
-          if vim.fn.filereadable(theme_file) == 1 then
-            local file = io.open(theme_file, "r")
-            if file then
-              local content = file:read("*l")
-              file:close()
-              if content and content ~= "" then
-                theme = content
-              end
-            end
-          end
-
-          vim.cmd.colorscheme(theme)
-        end,
+        colorscheme = Load_colorscheme,
         icons = {
           kinds = config_utils.icons.kinds,
         },
@@ -57,7 +74,7 @@ require("lazy").setup({
     version = false, -- always use the latest git commit
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "tokyonight", "habamax" } },
+  install = { colorscheme = { "habamax" } },
   change_detection = {
     enabled = true,
     notify = true, -- get a notification when changes are found

@@ -26,11 +26,11 @@
     "wordnet@latest",
     "jira-cli-go@latest",
     "gh-dash@latest",
-    "tmux@latest",
     "nodejs@latest",
     "du-dust@latest",
     "glow@latest",
-    "fzf@latest"
+    "fzf@latest",
+    "lynx@latest"
   ],
   "shell": {
     "init_hook": [

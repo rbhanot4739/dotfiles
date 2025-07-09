@@ -3,34 +3,19 @@
 # Wrapper script that takes theme as an argument
 # Usage: ./switch-theme.sh [theme_name]
 
-THEME_DIR="$HOME/tmux-themes"
+THEMES_DIR="$HOME/tmux-themes"
+DEFAULT_THEME="gruvbox"
 
-# Get theme from argument or environment, default to gruvbox
-THEME_NAME=${1:-${THEME:-gruvbox}}
+# Get theme from argument or file, with fallback to default
+theme="${1:-$(cat /tmp/theme 2>/dev/null | tr -d '[:space:]')}"
+theme="${theme:-$DEFAULT_THEME}"
 
-case "$THEME_NAME" in
-    *gruvbox*)
-        tmux source-file "$THEME_DIR/gruvbox.conf"
-        tmux display-message "Loaded Gruvbox theme"
-        ;;
-    *nightfox*)
-        tmux source-file "$THEME_DIR/nightfox.conf"
-        tmux display-message "Loaded Nightfox theme"
-        ;;
-    *dawnfox*)
-        tmux source-file "$THEME_DIR/dawnfox.conf"
-        tmux display-message "Loaded Dawnfox theme"
-        ;;
-    *tokyonight*)
-        tmux source-file "$THEME_DIR/tokyonight.conf"
-        tmux display-message "Loaded Tokyo Night theme"
-        ;;
-    *)
-        tmux source-file "$THEME_DIR/gruvbox.conf"
-        tmux display-message "Loaded default theme (gruvbox)"
-        ;;
-esac
+# Source theme file (fallback to default if theme file doesn't exist)
+if [[ ! -f "$THEMES_DIR/${theme}.conf" ]]; then
+    theme="$DEFAULT_THEME"
+fi
+tmux source-file "$THEMES_DIR/${theme}.conf"
 
-# Set tmux environment variable for other uses
-tmux set-environment -g THEME "$THEME_NAME"
+# Set tmux environment variable
+tmux set-environment -g THEME "$theme"
 

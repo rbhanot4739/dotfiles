@@ -2,8 +2,8 @@ notARepository: 'quit'
 quitOnTopLevelReturn: true
 git:
   paging:
-    colorArg: always
-    pager: delta --paging=never
+      colorArg: always
+      pager: delta --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}" --light
 
   commit:
     autoWrapCommitMessage: true
@@ -23,7 +23,7 @@ gui:
   enlargedSideViewLocation: top
   showFileTree: false
   showPanelJumps: false
-  showDivergenceFromBaseBranch: arrowAndNumber
+  # showDivergenceFromBaseBranch: arrowAndNumber
   commandLogSize: 5
   filterMode: fuzzy
 

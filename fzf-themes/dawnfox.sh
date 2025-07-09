@@ -1,25 +1,27 @@
-  # dawnfox
-  # *background: #faf4ed
-  # *foreground: #575279
-  # *color0:  #575279
-  # *color1:  #b4637a
-  # *color2:  #618774
-  # *color3:  #ea9d34
-  # *color4:  #286983
-  # *color5:  #907aa9
-  # *color6:  #56949f
-  # *color7:  #e5e9f0
-  # *color8:  #5f5695
-  # *color9:  #c26d85
-  # *color10: #629f81
-  # *color11: #eea846
-  # *color12: #2d81a3
-  # *color13: #9a80b9
-  # *color14: #5ca7b4
-  # *color15: #e6ebf3
+# "name" : "dawnfox",
+# "background" : "#faf4ed",
+# "foreground" : "#575279",
+# "cursorColor": "#575279",
+# "selectionBackground": "#d0d8d8",
+# "black" : "#575279",
+# "blue" : "#286983",
+# "cyan" : "#56949f",
+# "green" : "#618774",
+# "purple" : "#907aa9",
+# "red" : "#b4637a",
+# "white" : "#e5e9f0",
+# "yellow" : "#ea9d34",
+# "brightBlack" : "#5f5695",
+# "brightBlue" : "#2d81a3",
+# "brightCyan" : "#5ca7b4",
+# "brightGreen" : "#629f81",
+# "brightPurple" : "#9a80b9",
+# "brightRed" : "#c26d85",
+# "brightWhite" : "#e6ebf3",
+# "brightYellow" : "#eea846"
 
   export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=bg+:#e5e9f0 \
+    --color=bg+:#d0d8d8 \
     --color=bg:#faf4ed \
     --color=border:#286983 \
     --color=fg:#575279 \

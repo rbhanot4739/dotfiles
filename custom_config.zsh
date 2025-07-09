@@ -2,6 +2,7 @@
 
 #  =================================== Aliases ===================================
 
+# work specific aliases
 alias m="mint "
 alias mf="mint format"
 alias mb="mint build"
@@ -14,6 +15,8 @@ alias rcfg="rexec mint build-cfg"
 alias rundep="rexec mint undeploy"
 alias rdep="rexec mint deploy"
 alias topo="topology-v3 "
+alias gos="go-status"
+
 
 # create folowing aliases only if eza is installed else use ls
 if [[ $(command -v eza) ]]; then
@@ -37,7 +40,6 @@ fi
 
 # some utility aliases
 alias h='history 0'
-# alias ssh='TERM=xterm-color ssh '
 alias xx='exit'
 alias ee='$EDITOR ~/.zshrc'
 alias c='clear'
@@ -64,7 +66,8 @@ fi
 [[ $(command -v dust) ]] && alias du='dust -prb'
 
 # git aliases
-alias gg='lazygit'
+# [[ $(command -v lazygit) ]] && alias lazygit='lazygit --use-config-file $HOME/.config/lazygit/config.yml,$HOME/.config/lazygit/pager.yml'; alias gg='lazygit' || alias gg='git'
+alias gg="lazygit"
 alias g="git "
 alias ga='git add '
 alias gco='git co '
@@ -107,8 +110,8 @@ alias vrel='vagrant reload'
 alias dk=docker
 alias dkc=docker-compose
 alias zz='z -'
-alias cm='chezmoi'
-alias cmcd='chezmoi cd'
+alias cz='chezmoi'
+alias czcd='chezmoi cd'
 alias mvim="NVIM_APPNAME=nvim-minimal nvim"
 alias tvim="NVIM_APPNAME=lazyvim-test nvim"
 
@@ -145,7 +148,7 @@ expand_alias_or_space() {
 }
 
 zle -N expand_alias_or_space
-bindkey " " expand_alias_or_space
+# bindkey " " expand_alias_or_space
 
 # set theme
 set-theme-widget() {
@@ -157,4 +160,6 @@ bindkey '^[.' set-theme-widget
 bindkey -M vicmd '^[.' set-theme-widget
 bindkey -M viins '^[.' set-theme-widget
 
+# set tokens
+set-tokens
 source $HOME/fzf_config.zsh

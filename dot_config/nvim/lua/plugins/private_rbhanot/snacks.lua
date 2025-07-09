@@ -187,6 +187,8 @@ return {
         sess_picker()
       end,
     },
+    { "<leader>sT", false },
+    { "<leader>st", false },
     { "<leader>e", false },
     { "<leader>gd", false },
     {

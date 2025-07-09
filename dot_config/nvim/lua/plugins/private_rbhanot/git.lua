@@ -103,7 +103,7 @@ return {
           file_history = {
             layout = "diff2_horizontal",
             disable_diagnostics = true,
-            winbar_info = true,
+            winbar_info = false,
           },
         },
         keymaps = {
@@ -125,21 +125,30 @@ return {
         function()
           toggle_diffview("DiffviewOpen")
         end,
-        desc = "Diff working tree against Index",
+        desc = "Diff working tree(Index) against HEAD",
       },
       {
         "<leader>gdm",
         function()
           toggle_diffview("DiffviewOpen master")
         end,
-        desc = "Diff working tree against Main",
+        desc = "Diff working tree(Index) against Main",
       },
       {
         "<leader>gdM",
         function()
           toggle_diffview("DiffviewOpen master..HEAD")
         end,
-        desc = "Diff head against Main",
+        desc = "Diff HEAD(latest commit) against Main",
+      },
+      {
+        "<leader>gdf",
+        function()
+          local file = vim.fn.expand("%:p")
+          vim.print("Diffing file: " .. file)
+          toggle_diffview("DiffviewOpen -- " .. file)
+        end,
+        desc = "Diff current File against HEAD",
       },
       {
         "<leader>gf",
@@ -150,4 +159,5 @@ return {
       },
     },
   },
+  { "gitsigns.nvim", opts = {} },
 }

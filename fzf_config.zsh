@@ -2,22 +2,22 @@
 
 # =================================== Fzf config ===================================
 
-local find_all_cmd="fd --ignore-file ~/.global_gitignore --follow ."
-local find_files_cmd="$find_all_cmd --type file "
-local find_dirs_cmd="$find_all_cmd --type directory "
+find_all_cmd="fd --ignore-file ~/.global_gitignore --follow ."
+find_files_cmd="$find_all_cmd --type file "
+find_dirs_cmd="$find_all_cmd --type directory "
 
-local default_header_opts="--header-first --header-border=bottom --header 'Press ? to toggle preview'"
-local default_binds='--bind "shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all,ctrl-v:become(nvim {}),?:toggle-preview"'
+default_header_opts="--header-first --header-border=bottom --header 'Press ? to toggle preview'"
+default_binds='--bind "shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all,ctrl-v:become(nvim {}),?:toggle-preview"'
 
-local file_prev_opts="'bat --style=snip --color always {}' --preview-label='File Contents'  --preview-window right:50%"
-local file_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))"'
-local file_opts="--border-label='Fuzzy Files' --preview $file_prev_opts $file_binds"
+file_prev_opts="'bat --style=snip --color always {}' --preview-label='File Contents'  --preview-window right:50%"
+file_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))"'
+file_opts="--border-label='Fuzzy Files' --preview $file_prev_opts $file_binds"
 
-local dir_prev_opts="'eza $eza_params {}' --preview-label=' Directory Contents '  --preview-window :down:20%:wrap"
-local dir_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"'
-local dir_opts="--border-label='Fuzzy Directories' --preview $dir_prev_opts $dir_binds"
+dir_prev_opts="'eza $eza_params {}' --preview-label=' Directory Contents '  --preview-window :down:20%:wrap"
+dir_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"'
+dir_opts="--border-label='Fuzzy Directories' --preview $dir_prev_opts $dir_binds"
 
-export FZF_DEFAULT_OPTS="--style default --info=inline-right --height 60% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds"
+export FZF_DEFAULT_OPTS="--style full --info=inline-right --height 60% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds"
 
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
 
@@ -57,6 +57,17 @@ _fzf_compgen_dir() {
   [[ "$1" == "." ]] && eval "$find_dirs_cmd --strip-cwd-prefix=always" || eval "$find_dirs_cmd $1"
 }
 
+background_mode=$(cat /tmp/.bg_mode 2>/dev/null | tr -d "[:space:]")
 
-local fzf_theme=$(cat /tmp/theme 2>/dev/null || echo "$THEME")
-source $HOME/fzf-themes/${fzf_theme}.sh
+fzf() {
+    selected_theme="${1:-$(cat /tmp/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")}"
+    # selected_theme="${selected_theme:-nordfox}"
+    # local current_theme=$(cat /tmp/. 2>/dev/null | tr -d "[:space:]")
+    local theme_file="$HOME/fzf-themes/${selected_theme:-nordfox}.sh"
+    
+    if [[ -f "$theme_file" ]]; then
+        source "$theme_file"
+    fi
+    
+    command fzf "$@"
+}

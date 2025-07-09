@@ -28,10 +28,23 @@ return {
     },
   },
   {
+    "sainnhe/everforest",
+    config = function()
+      vim.g.everforest_better_performance = 1
+      vim.g.everforest_background = "hard"
+      vim.g.everforest_float_style = "dim"
+      vim.g.everforest_enable_italic = 1
+      vim.g.everforest_enable_bold = 1
+      vim.g.everforest_disable_italic_comment = false
+      vim.g.everforest_spell_foreground = "colored"
+      vim.g.everforest_diagnostic_virtual_text = "colored"
+      vim.g.everforest_current_word = "high contrast background"
+    end,
+  },
+  {
     "sainnhe/gruvbox-material",
     lazy = true,
     config = function()
-      -- a comment
       vim.g.gruvbox_material_enable_italic = 1
       vim.g.gruvbox_material_enable_bold = 1
       vim.g.gruvbox_material_disable_italic_comment = false
@@ -42,21 +55,4 @@ return {
       vim.g.gruvbox_material_current_word = "high contrast background"
     end,
   },
-  -- {
-  --   "f-person/auto-dark-mode.nvim",
-  --   opts = {
-  --     update_interval = 1000,
-  --     fallback = "dark",
-  --     set_dark_mode = function()
-  --       vim.api.nvim_set_option_value("background", "dark", {})
-  --       -- vim.cmd("colorscheme tokyonight-moon")
-  --       vim.cmd("colorscheme nightfox")
-  --     end,
-  --     set_light_mode = function()
-  --       vim.api.nvim_set_option_value("background", "light", {})
-  --       -- vim.cmd("colorscheme tokyonight-day")
-  --       vim.cmd("colorscheme dawnfox")
-  --     end,
-  --   },
-  -- },
 }

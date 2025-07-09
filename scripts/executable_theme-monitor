@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# Configuration
+THEME_SCRIPT="${1:-theme-switcher}" # Command to call (can be passed as argument)
+CHECK_INTERVAL=2                    # For polling mode
+DEBOUNCE_DELAY=0.1                  # Delay to prevent rapid successive calls
+LAST_THEME_FILE="/tmp/.bg_mode"
+
+# Function to get current macOS theme
+get_macos_theme() {
+	# More efficient: read once and check the output directly
+	local interface_style
+	interface_style=$(defaults read -g AppleInterfaceStyle 2>/dev/null)
+	
+	if [[ "$interface_style" == "Dark" ]]; then
+		echo "dark"
+	else
+		echo "light"
+	fi
+}
+
+# Function to handle theme change
+handle_theme_change() {
+	local old_theme="$1"
+	local new_theme="$2"
+
+	echo "[$(date '+%H:%M:%S.%3N')] Theme changed: $old_theme → $new_theme"
+
+	# Update state file BEFORE executing theme-switcher so it can read the new value
+	echo "$new_theme" >"$LAST_THEME_FILE"
+
+	# Execute theme-switcher command asynchronously to prevent blocking
+	if command -v "$THEME_SCRIPT" &>/dev/null; then
+		# Run synchronously for immediate execution
+		if ! $THEME_SCRIPT; then
+			echo "Error: $THEME_SCRIPT failed"
+		fi
+	else
+		echo "Warning: '$THEME_SCRIPT' command not found in PATH"
+		echo "Make sure '$THEME_SCRIPT' is in your PATH or provide full path"
+	fi
+}
+
+# Debounce function to prevent rapid successive calls
+debounce_theme_change() {
+	local old_theme="$1"
+	local new_theme="$2"
+	
+	# Kill any existing background debounce process
+	if [[ -n "$DEBOUNCE_PID" ]]; then
+		kill "$DEBOUNCE_PID" 2>/dev/null
+	fi
+	
+	# Start new debounce timer
+	(
+		sleep "$DEBOUNCE_DELAY"
+		handle_theme_change "$old_theme" "$new_theme"
+	) &
+	DEBOUNCE_PID=$!
+}
+
+# Monitoring with fswatch (efficient)
+monitor_with_fswatch() {
+	# Get initial theme
+	last_theme=$(get_macos_theme)
+	echo "$last_theme" >"$LAST_THEME_FILE"
+	echo "Initial theme: $last_theme"
+
+	# Monitor preferences file
+	fswatch -o ~/Library/Preferences/.GlobalPreferences.plist | while read; do
+		current_theme=$(get_macos_theme)
+
+		if [ "$current_theme" != "$last_theme" ]; then
+			handle_theme_change "$last_theme" "$current_theme"
+			last_theme="$current_theme"
+		fi
+	done
+}
+
+# Monitoring with polling (fallback)
+monitor_with_polling() {
+	echo "Using polling mode (checking every ${CHECK_INTERVAL}s)..."
+
+	# Get initial theme
+	last_theme=$(get_macos_theme)
+	echo "$last_theme" >"$LAST_THEME_FILE"
+	echo "Initial theme: $last_theme"
+
+	while true; do
+		current_theme=$(get_macos_theme)
+
+		if [ "$current_theme" != "$last_theme" ]; then
+			handle_theme_change "$last_theme" "$current_theme"
+			last_theme="$current_theme"
+		fi
+
+		sleep "$CHECK_INTERVAL"
+	done
+}
+
+# Main
+# Trap to handle clean exit
+cleanup() {
+	echo -e '\nTheme monitor stopped'
+	# Kill any running debounce process
+	if [[ -n "$DEBOUNCE_PID" ]]; then
+		kill "$DEBOUNCE_PID" 2>/dev/null
+	fi
+	exit
+}
+trap cleanup INT TERM
+
+# Check if fswatch is available
+if command -v fswatch &>/dev/null; then
+	monitor_with_fswatch
+else
+	echo "Note: Install fswatch for more efficient monitoring: brew install fswatch"
+	monitor_with_polling
+fi

@@ -24,13 +24,13 @@ vim.api.nvim_create_autocmd("User", {
 return {
   {
     "echasnovski/mini.diff",
-    config = function()
-      local diff = require("mini.diff")
-      diff.setup({
-        -- Disabled by default
-        source = diff.gen_source.none(),
-      })
-    end,
+    -- config = function()
+    --   local diff = require("mini.diff")
+    --   diff.setup({
+    --     -- Disabled by default
+    --     source = diff.gen_source.none(),
+    --   })
+    -- end,
   },
   {
     "echasnovski/mini.operators",
@@ -87,9 +87,9 @@ return {
           go_in_vertical_plus = "|",
         },
         windows = {
-          preview = false,
+          preview = true,
           width_nofocus = 20,
-          width_focus = 40,
+          width_focus = 30,
           width_preview = 80,
         },
         options = {
