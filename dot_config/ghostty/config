@@ -1,4 +1,4 @@
-theme = dark:nightfox, light:dawnfox
+theme = dark:nightfox, light:nightfox
 macos-titlebar-style = hidden
 window-height = 60
 window-width = 180

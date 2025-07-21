@@ -23,7 +23,7 @@ return {
         desc = "Paste yank ring",
       },
       {
-        "<leader>p",
+        "<leader>y",
         function()
           Snacks.picker.yanky()
         end,

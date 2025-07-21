@@ -37,7 +37,7 @@ map("n", "<BS>", "<C-6>", { remap = true })
 map("n", "<cr>", "za", { remap = true })
 
 -- map jk to go to normal mode in terminal
-map({ "t" }, "jk", [[<C-\><C-n>]], { desc = "open with system app" })
+map({ "t" }, "jk", [[<C-\><C-n>]], { desc = "go to normal mode in term" })
 -- map("n", "gX", function()
 --   local line = vim.api.nvim_get_current_line()
 --   local url = string.match(line, "https?://[%w-_%.%?%.:/%+=&]+")
@@ -52,6 +52,7 @@ map("n", "<leader>C", "cig", { remap = true })
 map("n", "<leader>D", "dig", { remap = true })
 map("n", "<leader>V", "vig", { remap = true })
 
+-- Close gitsigns buffer with q
 map("n", "q", function()
   if not vim.wo.diff then
     return "q"
@@ -65,6 +66,31 @@ map("n", "q", function()
       return ""
     end
   end
-
   return "q"
 end, { expr = true, silent = true })
+
+-- delete some lazyvim mappings
+-- vim.keymap.del("n", "<c-_>")
+
+local Snacks = require("snacks")
+local copilot_exists = pcall(require, "copilot")
+
+if copilot_exists then
+  Snacks.toggle({
+    name = "Copilot Completion",
+    color = {
+      enabled = "azure",
+      disabled = "orange",
+    },
+    get = function()
+      return not require("copilot.client").is_disabled()
+    end,
+    set = function(state)
+      if state then
+        require("copilot.command").enable()
+      else
+        require("copilot.command").disable()
+      end
+    end,
+  }):map("<leader>at")
+end

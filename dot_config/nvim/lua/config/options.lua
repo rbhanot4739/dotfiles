@@ -29,8 +29,9 @@ if vim.env.SSH_TTY then
     },
   }
 end
+
 vim.o.foldlevelstart = 99
--- vim.o.foldlevelstart = 4
+
 vim.g.ai_cmp = false
 vim.opt.diffopt = {
   "internal",
@@ -45,3 +46,4 @@ vim.diagnostic.config({
   -- virtual_text = { current_line = true },
   -- virtual_lines = { current_line = true },
 })
+

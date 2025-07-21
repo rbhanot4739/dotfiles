@@ -1,6 +1,0 @@
-#!/bin/zsh
-
-# set keys
-gh_token
-# get model list
-curl -s https://api.githubcopilot.com/models -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" -H "Copilot-Integration-Id: vscode-chat" | jq -r ".data[] | select(.model_picker_enabled == true) | .id"

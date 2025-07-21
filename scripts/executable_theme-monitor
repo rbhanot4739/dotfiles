@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
+# export PATH="/opt/homebrew/bin:$HOME/scripts:$HOME/.pixi/bin:$PATH"
 # Configuration
 THEME_SCRIPT="${1:-theme-switcher}" # Command to call (can be passed as argument)
 CHECK_INTERVAL=2                    # For polling mode
 DEBOUNCE_DELAY=0.1                  # Delay to prevent rapid successive calls
-LAST_THEME_FILE="/tmp/.bg_mode"
+LAST_THEME_FILE="$HOME/.bg_mode"
 
 # Function to get current macOS theme
 get_macos_theme() {

@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+# tmux-create-panes: Create a new tmux window with multiple panes from command-line parameters or stdin.
+# Usage: tmux-create-panes [-n WINDOW_NAME] -c COMMAND [-p PARAM1 PARAM2 ...]
+# If -p is not used, parameters are read from stdin, one per line.
+#
+# Examples:
+#   # Create 3 panes in the current window running ls on different dirs
+#   tmux-create-panes -c ls -p /home /etc /var
+#
+#   # Create a new window named "SSH Connections" with two panes
+#   echo -e "host1\nhost2" | tmux-create-panes -n "SSH Connections" -c ssh
+#
+#   # Create a new window with a default name
+#   tmux-create-panes -n -c ls -p /home /etc
+
+# Parse options
+CREATE_NEW_WINDOW=0
+WINDOW_NAME=""
+CMD=""
+PARAMS=()
+
+# Parse arguments
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+  -n)
+    CREATE_NEW_WINDOW=1
+    shift
+    # Check if the next argument is not a flag
+    if [ "$#" -gt 0 ] && [[ ! "$1" == -* ]]; then
+      WINDOW_NAME="$1"
+      shift
+    fi
+    ;;
+  -c)
+    shift
+    if [ "$#" -lt 1 ]; then
+      echo "Error: Command argument missing after -c" >&2
+      exit 1
+    fi
+    CMD="$1"
+    shift
+    ;;
+  -p)
+    shift
+    if [ "$#" -lt 1 ]; then
+      echo "Error: At least one parameter required after -p" >&2
+      exit 1
+    fi
+    # All remaining arguments are parameters
+    PARAMS=("$@")
+    break
+    ;;
+  *)
+    echo "Error: Parameters must be passed with -p flag." >&2
+    exit 1
+    ;;
+  esac
+done
+
+# If parameters were not passed with -p, try to read from stdin
+if [ ${#PARAMS[@]} -eq 0 ] && [ ! -t 0 ]; then
+  mapfile -t PARAMS
+  # remove any empty lines
+  for i in "${!PARAMS[@]}"; do
+    [ -z "${PARAMS[$i]}" ] && unset "PARAMS[$i]"
+  done
+  # re-index
+  PARAMS=("${PARAMS[@]}")
+fi
+
+# Check if command is provided
+if [ -z "$CMD" ]; then
+  echo "Error: Command is required via -c" >&2
+  echo "Usage: $0 [-n WINDOW_NAME] -c COMMAND [-p PARAM1 PARAM2 ...]"
+  exit 1
+fi
+
+# Make sure we have at least one parameter
+if [ ${#PARAMS[@]} -eq 0 ]; then
+  echo "Error: No parameters provided. Use -p or pipe parameters via stdin." >&2
+  echo "Usage: $0 [-n WINDOW_NAME] -c COMMAND [-p PARAM1 PARAM2 ...]"
+  exit 1
+fi
+
+# If window name not specified but create flag is on, use default name
+if [ "$CREATE_NEW_WINDOW" -eq 1 ] && [ -z "$WINDOW_NAME" ]; then
+  WINDOW_NAME="multi-pane-${CMD}"
+fi
+
+SESSION_CREATED=0
+# Check if we're already in a tmux session
+if [ -z "$TMUX" ]; then
+  echo "Not in a tmux session. Starting a new one."
+  # Create a detached session. We will attach at the end.
+  tmux new-session -d -s "tmux-create-panes-$$"
+  # In this case, we must create a new window.
+  CREATE_NEW_WINDOW=1
+  if [ -z "$WINDOW_NAME" ]; then
+    WINDOW_NAME="multi-pane-${CMD}"
+  fi
+  SESSION_CREATED=1
+fi
+
+# Create panes and execute commands
+# The first parameter is handled differently depending on whether a new window is created.
+FIRST_CMD="$CMD \"${PARAMS[0]}\"; exec $SHELL"
+if [ "$CREATE_NEW_WINDOW" -eq 1 ]; then
+  # Create a new window and run the first command in it.
+  tmux new-window -n "$WINDOW_NAME" "$FIRST_CMD"
+else
+  # Split the current pane and run the command in the new pane, leaving the original untouched.
+  tmux split-window -h "$FIRST_CMD"
+fi
+
+# The new pane is now active. We can split it for the remaining commands.
+if ((${#PARAMS[@]} > 1)); then
+  for ((i = 1; i < ${#PARAMS[@]}; i++)); do
+    # Quote parameter to handle spaces
+    NEXT_CMD="$CMD \"${PARAMS[$i]}\"; exec $SHELL"
+    tmux split-window -h "$NEXT_CMD"
+  done
+fi
+
+
+# Arrange all panes in the current window in a tiled layout for a balanced view.
+tmux select-layout tiled
+
+# If we created a new session, attach to it
+if [ "$SESSION_CREATED" -eq 1 ]; then
+  tmux attach-session -t "tmux-create-panes-$$"
+fi

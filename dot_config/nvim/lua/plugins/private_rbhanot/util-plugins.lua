@@ -84,11 +84,17 @@ return {
     "olimorris/persisted.nvim",
     event = "BufReadPre", -- Ensure the plugin loads only when a buffer has been loaded
     cmd = { "SessionSelect", "SessionLoad" },
+    lazy = false,
     opts = {
       use_git_branch = true,
       autosave = true,
-      on_autoload_no_session = function()
-        vim.notify("No existing session to load.")
+      autoload = false, -- Automatically load the session for the cwd on Neovim startup?
+      should_save = function()
+        -- Do not save if the alpha dashboard is the current filetype
+        if vim.bo.filetype == "lazy" then
+          return false
+        end
+        return true
       end,
     },
     config = function(_, opts)
@@ -100,31 +106,6 @@ return {
       persisted.setup(opts)
     end,
   },
-  -- {
-  --   "rmagatti/auto-session",
-  --   lazy = false,
-  --   enabled = false,
-  --   keys = {
-  --     { "<leader>qs", [[<cmd>SessionSearch<cr>]], desc = "SessionSearch" },
-  --   },
-  --   opts = {
-  --     bypass_save_filetypes = { "alpha", "dashboard", "snacks_dashboard" },
-  --     suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
-  --     use_git_branch = true,
-  --     cwd_change_handling = true,
-  --     auto_restore = false,
-  --     session_lens = {
-  --       theme_conf = {
-  --         border = true,
-  --         layout_config = {
-  --           width = 0.8, -- Can set width and height as percent of window
-  --           height = 0.5,
-  --         },
-  --       },
-  --     },
-  --   },
-  -- },
-
   {
     "chrisgrieser/nvim-rip-substitute",
     cmd = "RipSubstitute",
@@ -166,6 +147,49 @@ return {
         "<cmd>lua require('spider').motion('b')<CR>",
         mode = { "n", "o", "x" },
         desc = "Move to start of previous word",
+      },
+    },
+  },
+  {
+    "WilliamHsieh/overlook.nvim",
+    opts = {},
+
+    -- Optional: set up common keybindings
+    keys = {
+      {
+        "<leader>pd",
+        function()
+          require("overlook.api").peek_definition()
+        end,
+        desc = "Overlook: Peek definition",
+      },
+      {
+        "<leader>pm",
+        function()
+          require("overlook.api").peek_mark()
+        end,
+        desc = "Overlook: Peek mark",
+      },
+      {
+        "<leader>pf",
+        function()
+          require("overlook.api").switch_focus()
+        end,
+        desc = "Overlook: switch focus",
+      },
+      {
+        "<leader>pc",
+        function()
+          require("overlook.api").close_all()
+        end,
+        desc = "Overlook: Close all popup",
+      },
+      {
+        "<leader>pu",
+        function()
+          require("overlook.api").restore_popup()
+        end,
+        desc = "Overlook: Restore popup",
       },
     },
   },

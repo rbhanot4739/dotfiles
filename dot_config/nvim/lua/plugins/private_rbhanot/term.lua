@@ -33,35 +33,41 @@ function ft_repl_toggle(ft)
 end
 
 return {
-  "akinsho/toggleterm.nvim",
-  version = "*",
-  enabled = false,
-  opts = {
-    winbar = {
-      enabled = true,
-      name_formatter = function(term) --  term: Terminal
-        return term.name
-      end,
+  {
+    "akinsho/toggleterm.nvim",
+    version = "*",
+    enabled = false,
+    opts = {
+      winbar = {
+        enabled = true,
+        name_formatter = function(term) --  term: Terminal
+          return term.name
+        end,
+      },
+      open_mapping = "", -- use <c-/>
+      insert_mappings = true,
+      terminal_mappings = true,
     },
-    open_mapping = "", -- use <c-/>
-    insert_mappings = true,
-    terminal_mappings = true,
-  },
-  keys = {
-    { "", "<cmd>lua require('toggleterm').toggle()<CR>", { desc = "Toggle terminal", noremap = true, silent = true } },
-    {
-      "<C-/>",
-      "<cmd>lua require('toggleterm').toggle()<CR>",
-      { desc = "Toggle terminal", noremap = true, silent = true },
-    },
-    {
-      "<M-/>",
-      mode = { "n", "t" },
-      function()
-        local ft = vim.bo.filetype
-        ft_repl_toggle(ft)
-      end,
-      { desc = "Open repl in floating window", noremap = true, silent = true },
+    keys = {
+      {
+        "",
+        "<cmd>lua require('toggleterm').toggle()<CR>",
+        { desc = "Toggle terminal", noremap = true, silent = true },
+      },
+      {
+        "<C-/>",
+        "<cmd>lua require('toggleterm').toggle()<CR>",
+        { desc = "Toggle terminal", noremap = true, silent = true },
+      },
+      {
+        "<M-/>",
+        mode = { "n", "t" },
+        function()
+          local ft = vim.bo.filetype
+          ft_repl_toggle(ft)
+        end,
+        { desc = "Open repl in floating window", noremap = true, silent = true },
+      },
     },
   },
 }

@@ -1,0 +1,12 @@
+[delta "everforest-light-improved"]
+  minus-style                   = syntax "#fbe3da"
+  minus-non-emph-style          = syntax "#fbe3da"
+  minus-emph-style              = syntax "#8b0000" "#ffffff"
+  minus-empty-line-marker-style = syntax "#fbe3da"
+  line-numbers-minus-style      = "#f85552"
+  plus-style                    = syntax "#f0f1d2"
+  plus-non-emph-style           = syntax "#f0f1d2"
+  plus-emph-style               = syntax "#006400" "#ffffff"
+  plus-empty-line-marker-style  = syntax "#f0f1d2"
+  line-numbers-plus-style       = "#35a77c"
+  line-numbers-zero-style       = "#829181"
