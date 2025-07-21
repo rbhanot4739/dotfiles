@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 
   # nightfox
   # *background: #192330
@@ -18,22 +20,11 @@
   # *color13: #baa1e2
   # *color14: #7ad5d6
   # *color15: #e4e4e5
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=bg+:#719cd6 \
-    --color=bg:#192330 \
-    --color=border:#719cd6 \
-    --color=fg:#cdcecf\
-    --color=fg+:#192330\
-    --color=gutter:#719cd6 \
-    --color=header:#81b29a \
-    --color=hl+:#e0c989 \
-    --color=hl:#7ad5d6 \
-    --color=info:#e4e4e5 \
-    --color=marker:#c94f6d \
-    --color=pointer:#c94f6d \
-    --color=prompt:#baa1e2\
-    --color=query:#e4e4e5:regular \
-    --color=scrollbar:#719cd6 \
-    --color=separator:#f4a261 \
-    --color=spinner:#c94f6d \
-    "
+theme_opts=(
+    --color=bg+:#719cd6,bg:#192330,border:#719cd6
+    --color=fg:#cdcecf,fg+:#192330,gutter:#719cd6
+    --color=header:#81b29a,hl+:#e0c989,hl:#7ad5d6
+    --color=info:#e4e4e5,marker:#c94f6d,pointer:#c94f6d
+    --color=prompt:#baa1e2,query:#e4e4e5:regular
+    --color=scrollbar:#719cd6,separator:#f4a261,spinner:#c94f6d
+)

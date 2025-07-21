@@ -1,10 +1,12 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
+local mode_file_name = os.getenv("HOME") .. "/.bg_mode"
+
 -- File watcher to monitor theme changes
 local function setup_theme_watcher()
 	-- Get current bg_mode to determine which file to watch
-	local bg_mode_file = io.open("/tmp/.bg_mode", "r")
+	local bg_mode_file = io.open(mode_file_name, "r")
 	local bg_mode = "dark" -- default
 	if bg_mode_file then
 		bg_mode = bg_mode_file:read("*line") or "dark"
@@ -13,8 +15,8 @@ local function setup_theme_watcher()
 
 	-- Watch both light and dark theme files
 	local theme_files = {
-		"/tmp/.theme_light",
-		"/tmp/.theme_dark",
+		os.getenv("HOME") .. "/.theme_light",
+		os.getenv("HOME") .. "/.theme_dark",
 	}
 
 	for _, file_path in ipairs(theme_files) do
@@ -63,14 +65,14 @@ function scheme_for_appearance(appearance)
 	end
 
 	-- Write bg_mode to file
-	local bg_file = io.open("/tmp/.bg_mode", "w")
+	local bg_file = io.open(mode_file_name, "w")
 	if bg_file then
 		bg_file:write(bg_mode)
 		bg_file:close()
 	end
 
 	-- Read theme from file
-	local file = io.open("/tmp/.theme_" .. bg_mode, "r")
+	local file = io.open(os.getenv("HOME") .. "/.theme_" .. bg_mode, "r")
 	if file then
 		local theme = file:read("*line")
 		file:close()

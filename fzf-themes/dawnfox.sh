@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 # "name" : "dawnfox",
 # "background" : "#faf4ed",
 # "foreground" : "#575279",
@@ -20,22 +22,12 @@
 # "brightWhite" : "#e6ebf3",
 # "brightYellow" : "#eea846"
 
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=bg+:#d0d8d8 \
-    --color=bg:#faf4ed \
-    --color=border:#286983 \
-    --color=fg:#575279 \
-    --color=fg+:#575279 \
-    --color=gutter:#faf4ed \
-    --color=header:#618774\
-    --color=hl+:#eea846 \
-    --color=hl:#56949f \
-    --color=info:#575279 \
-    --color=marker:#b4637a \
-    --color=pointer:#b4637a \
-    --color=prompt:#907aa9\
-    --color=query:#575279:regular \
-    --color=scrollbar:#286983 \
-    --color=separator:#ea9d34 \
-    --color=spinner:#b4637a \
-    "
+
+theme_opts=(
+    --color=bg+:#d0d8d8,bg:#faf4ed,border:#286983
+    --color=fg:#575279,fg+:#575279,gutter:#faf4ed
+    --color=header:#618774,hl+:#eea846,hl:#56949f
+    --color=info:#575279,marker:#b4637a,pointer:#b4637a
+    --color=prompt:#907aa9,query:#575279:regular
+    --color=scrollbar:#286983,separator:#ea9d34,spinner:#b4637a
+)

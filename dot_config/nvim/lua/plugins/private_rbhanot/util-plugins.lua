@@ -100,31 +100,6 @@ return {
       persisted.setup(opts)
     end,
   },
-  -- {
-  --   "rmagatti/auto-session",
-  --   lazy = false,
-  --   enabled = false,
-  --   keys = {
-  --     { "<leader>qs", [[<cmd>SessionSearch<cr>]], desc = "SessionSearch" },
-  --   },
-  --   opts = {
-  --     bypass_save_filetypes = { "alpha", "dashboard", "snacks_dashboard" },
-  --     suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
-  --     use_git_branch = true,
-  --     cwd_change_handling = true,
-  --     auto_restore = false,
-  --     session_lens = {
-  --       theme_conf = {
-  --         border = true,
-  --         layout_config = {
-  --           width = 0.8, -- Can set width and height as percent of window
-  --           height = 0.5,
-  --         },
-  --       },
-  --     },
-  --   },
-  -- },
-
   {
     "chrisgrieser/nvim-rip-substitute",
     cmd = "RipSubstitute",

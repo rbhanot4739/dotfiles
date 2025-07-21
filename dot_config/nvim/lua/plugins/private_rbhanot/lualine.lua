@@ -34,19 +34,19 @@ return {
         winbar = excluded_fts,
       },
     }
-    opts.tabline = {
+    opts.winbar = {
       lualine_c = {
         { get_path },
         -- { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
         { "filename", file_status = true, path = 0 },
         { symbols.get },
       },
-      lualine_x = {
+      lualine_a = {
         {
           function()
             return "󱉭  " .. vim.fs.basename(LazyVim.root.cwd())
           end,
-          color = { fg = Snacks.util.color("Special") },
+          -- color = { fg = Snacks.util.color("Special") },
         },
       },
       lualine_z = {

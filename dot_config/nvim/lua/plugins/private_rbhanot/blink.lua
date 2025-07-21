@@ -6,7 +6,6 @@ return {
     -- "rcarriga/cmp-dap",
     "Kaiser-Yang/blink-cmp-git",
     "Kaiser-Yang/blink-cmp-dictionary",
-    "Kaiser-Yang/blink-cmp-avante",
     "fang2hou/blink-copilot",
     -- "Exafunction/codeium.nvim",
     {
@@ -82,7 +81,6 @@ return {
         "dictionary",
         "markdown",
         "ripgrep",
-        "avante",
       },
       per_filetype = {
         codecompanion = {
@@ -170,13 +168,6 @@ return {
           enabled = function()
             return vim.tbl_contains({ "octo", "gitcommit", "markdown" }, vim.bo.filetype)
           end,
-        },
-        avante = {
-          module = "blink-cmp-avante",
-          name = "Avante",
-          opts = {
-            -- options for blink-cmp-avante
-          },
         },
       },
     },

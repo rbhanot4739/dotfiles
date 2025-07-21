@@ -1,18 +1,10 @@
-export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-  --color=bg+:#283457 \
-  --color=bg:#16161e \
-  --color=border:#27a1b9 \
-  --color=fg:#c0caf5 \
-  --color=gutter:#16161e \
-  --color=header:#ff9e64 \
-  --color=hl+:#2ac3de \
-  --color=hl:#2ac3de \
-  --color=info:#545c7e \
-  --color=marker:#ff007c \
-  --color=pointer:#ff007c \
-  --color=prompt:#2ac3de \
-  --color=query:#c0caf5:regular \
-  --color=scrollbar:#27a1b9 \
-  --color=separator:#ff9e64 \
-  --color=spinner:#ff007c \
-"
+#!/bin/zsh
+
+theme_opts=(
+    --color=bg+:#283457,bg:#16161e,border:#27a1b9
+    --color=fg:#c0caf5,gutter:#16161e,header:#ff9e64
+    --color=hl+:#2ac3de,hl:#2ac3de,info:#545c7e
+    --color=marker:#ff007c,pointer:#ff007c,prompt:#2ac3de
+    --color=query:#c0caf5:regular,scrollbar:#27a1b9,separator:#ff9e64
+    --color=spinner:#ff007c
+)

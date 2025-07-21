@@ -16,6 +16,7 @@ else
 end
 
 local M = {}
+local in_memory_cache = {}
 
 -- Configuration
 local CONFIG = {
@@ -100,9 +101,8 @@ local function write_cache(models, timestamp)
   return true
 end
 
-local function is_cache_fresh()
-  local _, timestamp = read_cache()
-  return timestamp > 0 and (os.time() - timestamp) < CONFIG.cache_duration
+local function is_cache_fresh(timestamp)
+  return timestamp and timestamp > 0 and (os.time() - timestamp) < CONFIG.cache_duration
 end
 
 local function cache_exists()
@@ -119,55 +119,6 @@ local function get_cache_age_days()
   return timestamp > 0 and math.floor((os.time() - timestamp) / (24 * 60 * 60)) or 0
 end
 
--- Model fetching
-local function fetch_copilot_models_from_ghm()
-  -- Only skip ghm if cache exists AND is fresh
-  if cache_exists() and is_cache_fresh() then
-    local cached_models, _ = read_cache()
-    if log.trace then
-      log:trace("Cache exists and is fresh, avoiding ghm call")
-    end
-    return cached_models
-  end
-
-  if log.trace then
-    if not cache_exists() then
-      log:trace("No cache file exists, calling ghm to create initial cache")
-    else
-      log:trace("Cache stale (%d days), calling ghm to refresh", get_cache_age_days())
-    end
-  end
-
-  local handle = io.popen("zsh -c 'source ~/.zshrc && ghm' 2>/dev/null")
-  if not handle then
-    return nil
-  end
-
-  local result = handle:read("*a")
-  local exit_code = handle:close()
-
-  if not exit_code or result == "" then
-    return nil
-  end
-
-  -- Parse model names from output
-  local models = {}
-  for line in result:gmatch("[^\r\n]+") do
-    local clean_line = line:gsub("\27%[[%d;]*m", ""):gsub("[%c%z]", ""):match("^%s*(.-)%s*$")
-    local model = clean_line:match("(gpt[%w%-%._]*)")
-      or clean_line:match("(claude[%w%-%._]*)")
-      or clean_line:match("(gemini[%w%-%._]*)")
-      or clean_line:match("(o%d+[%w%-%._]*)")
-      or clean_line:match("([%a][%w%-%._]*)")
-
-    if model and #model >= 3 and #model <= 50 and model:match("^[%w][%w%-%._]*$") then
-      table.insert(models, model)
-    end
-  end
-
-  return #models > 0 and models or nil
-end
-
 local function get_copilot_models()
   -- Return fallback models if fetching is disabled (prevents startup calls)
   if not CONFIG.fetch_enabled then
@@ -177,37 +128,52 @@ local function get_copilot_models()
     return FALLBACK_MODELS
   end
 
-  -- Use cached models if cache exists and is fresh
-  if cache_exists() and is_cache_fresh() then
-    local cached_models, _ = read_cache()
-    if cached_models then
-      if log.trace then
-        log:trace("Using cached models (%d models, %d days old)", #cached_models, get_cache_age_days())
-      end
-      return cached_models
-    end
-  end
+  local cached_models, timestamp = read_cache()
 
-  -- Fetch fresh models (either no cache exists or cache is stale)
-  if log.trace then
-    if not cache_exists() then
-      log:trace("No cache file, fetching initial models")
-    else
-      log:trace("Cache stale (%d days), fetching fresh models", get_cache_age_days())
-    end
-  end
-
-  local fresh_models = fetch_copilot_models_from_ghm()
-  if fresh_models then
-    write_cache(fresh_models, os.time())
+  -- Use cached models if they are fresh
+  if cached_models and is_cache_fresh(timestamp) then
     if log.trace then
-      log:trace("Cached %d fresh models", #fresh_models)
+      log:trace("Using fresh cached models (%d models, %d days old)", #cached_models, get_cache_age_days())
     end
-    return fresh_models
+    return cached_models
   end
 
-  -- Fallback to cached or hardcoded models
-  local cached_models, _ = read_cache()
+  -- Fetch fresh models if cache is stale or doesn't exist
+  if log.trace then
+    log:trace("Cache stale or missing, fetching fresh models...")
+  end
+
+  local handle = io.popen("zsh -c 'source ~/.zshrc && ghm' 2>&1")
+  if handle then
+    local result = handle:read("*a")
+    handle:close()
+
+    if result and result ~= "" then
+      local fresh_models = {}
+      for line in result:gmatch("[^\r\n]+") do
+        local clean_line = line:gsub("\27%[[%d;]*m", ""):gsub("[%c%z]", ""):match("^%s*(.-)%s*$")
+        local model = clean_line:match("(gpt[%w%-%._]*)")
+          or clean_line:match("(claude[%w%-%._]*)")
+          or clean_line:match("(gemini[%w%-%._]*)")
+          or clean_line:match("(o%d+[%w%-%._]*)")
+          or clean_line:match("([%a][%w%-%._]*)")
+
+        if model and #model >= 3 and #model <= 50 and model:match("^[%w][%w%-%._]*$") then
+          table.insert(fresh_models, model)
+        end
+      end
+
+      if #fresh_models > 0 then
+        write_cache(fresh_models, os.time())
+        if log.trace then
+          log:trace("Fetched and cached %d fresh models", #fresh_models)
+        end
+        return fresh_models
+      end
+    end
+  end
+
+  -- Fallback to stale cache or hardcoded models
   if cached_models then
     vim.notify(
       "Failed to fetch fresh models, using cached list",
@@ -228,25 +194,37 @@ end
 
 -- Model retrieval for different adapters
 local function get_adapter_models(adapter_name, adapter)
+  -- Use in-memory cache first for performance
+  if in_memory_cache[adapter_name] then
+    if log.trace then
+      log:trace("Using in-memory cache for adapter: %s", adapter_name)
+    end
+    return in_memory_cache[adapter_name]
+  end
+
   -- Try adapter schema first
   if adapter.schema and adapter.schema.model and adapter.schema.model.choices then
     local choices = adapter.schema.model.choices
     if type(choices) == "function" then
       local ok, result = pcall(choices)
       if ok and type(result) == "table" and #result > 0 then
-        return result
+        in_memory_cache[adapter_name] = result
+        return in_memory_cache[adapter_name]
       end
     elseif type(choices) == "table" and #choices > 0 then
-      return choices
+      in_memory_cache[adapter_name] = choices
+      return in_memory_cache[adapter_name]
     end
   end
 
   -- Use dynamic or predefined models
   if adapter_name == "copilot" then
-    return get_copilot_models()
+    in_memory_cache[adapter_name] = get_copilot_models()
+    return in_memory_cache[adapter_name]
   end
 
-  return PREDEFINED_MODELS[adapter_name] or {}
+  in_memory_cache[adapter_name] = PREDEFINED_MODELS[adapter_name] or {}
+  return in_memory_cache[adapter_name]
 end
 
 -- Chat utilities
@@ -349,25 +327,61 @@ local function show_picker(chat, opts)
   end)
 end
 
--- Setup and exports
 function M.setup(opts)
   opts = opts or {}
-  local config = vim.tbl_deep_extend("force", { keymap = "gm" }, opts)
+  local config = vim.tbl_deep_extend("force", {
+    keymaps = {
+      pick_model = "gm",
+      refresh_models = "gM",
+    },
+  }, opts)
 
   vim.api.nvim_create_autocmd("FileType", {
     pattern = "codecompanion",
     callback = function(args)
-      vim.keymap.set("n", config.keymap, function()
-        show_picker(get_current_chat(), config)
-      end, {
-        desc = "Show model picker",
-        buffer = args.buf,
-      })
+      -- Keymap for picking a model
+      if config.keymaps.pick_model then
+        vim.keymap.set("n", config.keymaps.pick_model, function()
+          show_picker(get_current_chat(), config)
+        end, {
+          desc = "Show model picker",
+          buffer = args.buf,
+        })
+      end
+
+      -- Keymap for refreshing models
+      if config.keymaps.refresh_models then
+        vim.keymap.set("n", config.keymaps.refresh_models, function()
+          local chat = get_current_chat()
+          if not chat then
+            vim.notify("No active chat found to refresh models for.", vim.log.levels.WARN, { title = "CodeCompanion" })
+            return
+          end
+
+          vim.notify("Refreshing Copilot models...", vim.log.levels.INFO, { title = "CodeCompanion" })
+          local models = M.exports.refresh_copilot_models()
+
+          if models and #models > 0 then
+            vim.notify(
+              string.format("Refreshed and cached %d models.", #models),
+              vim.log.levels.INFO,
+              { title = "CodeCompanion" }
+            )
+            -- Now show the picker with the new models
+            show_picker(chat, config)
+          else
+            vim.notify("Failed to refresh models.", vim.log.levels.WARN, { title = "CodeCompanion" })
+          end
+        end, {
+          desc = "Refresh Copilot models and show picker",
+          buffer = args.buf,
+        })
+      end
     end,
   })
 
   if log.trace then
-    log:trace("Chat model picker extension loaded with keymap: %s", config.keymap)
+    log:trace("Chat model picker extension loaded with keymaps: %s", vim.inspect(config.keymaps))
   end
 
   return M
@@ -388,6 +402,7 @@ M.exports = {
   refresh_copilot_models = function()
     CONFIG.fetch_enabled = true
     os.remove(CONFIG.cache_file)
+    in_memory_cache.copilot = nil -- Invalidate in-memory cache
     return get_copilot_models()
   end,
   get_cache_info = function()

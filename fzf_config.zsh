@@ -6,8 +6,9 @@ find_all_cmd="fd --ignore-file ~/.global_gitignore --follow ."
 find_files_cmd="$find_all_cmd --type file "
 find_dirs_cmd="$find_all_cmd --type directory "
 
-default_header_opts="--header-first --header-border=bottom --header 'Press ? to toggle preview'"
-default_binds='--bind "shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all,ctrl-v:become(nvim {}),?:toggle-preview"'
+# default_header_opts="--header-first --header-border=bottom --header 'Press ? to toggle preview'"
+# default_binds='--bind "shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all,ctrl-v:become(nvim {}),?:toggle-preview"'
+# export FZF_DEFAULT_OPTS="--style full --info=inline-right --height 60% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds"
 
 file_prev_opts="'bat --style=snip --color always {}' --preview-label='File Contents'  --preview-window right:50%"
 file_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))"'
@@ -17,7 +18,6 @@ dir_prev_opts="'eza $eza_params {}' --preview-label=' Directory Contents '  --pr
 dir_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"'
 dir_opts="--border-label='Fuzzy Directories' --preview $dir_prev_opts $dir_binds"
 
-export FZF_DEFAULT_OPTS="--style full --info=inline-right --height 60% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds"
 
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
 
@@ -59,15 +59,50 @@ _fzf_compgen_dir() {
 
 background_mode=$(cat /tmp/.bg_mode 2>/dev/null | tr -d "[:space:]")
 
+# fzf() {
+#     selected_theme="${1:-$(cat /tmp/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")}"
+#     # selected_theme="${selected_theme:-nordfox}"
+#     # local current_theme=$(cat /tmp/. 2>/dev/null | tr -d "[:space:]")
+#     local theme_file="$HOME/fzf-themes/${selected_theme:-nordfox}.sh"
+#
+#     if [[ -f "$theme_file" ]]; then
+#         source "$theme_file"
+#     fi
+#
+#     command fzf "$@"
+# }
+
+
+
 fzf() {
-    selected_theme="${1:-$(cat /tmp/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")}"
-    # selected_theme="${selected_theme:-nordfox}"
-    # local current_theme=$(cat /tmp/. 2>/dev/null | tr -d "[:space:]")
-    local theme_file="$HOME/fzf-themes/${selected_theme:-nordfox}.sh"
-    
+    # Define base options locally.
+    local -a default_opts
+    default_opts=(
+        --style full --info=inline-right --height 60% --margin 1,2 --layout=reverse
+        --border rounded --multi --cycle
+        --header 'Press ? to toggle preview' --header-first --header-border=bottom
+        --bind 'shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
+        --bind 'ctrl-v:become(nvim {})'
+        --bind '?:toggle-preview'
+    )
+
+    # --- FINAL CORRECTED THEME SOURCING ---
+    local background_mode selected_theme theme_file
+    local -a theme_opts
+
+    background_mode=$(cat $HOME/.bg_mode 2>/dev/null | tr -d "[:space:]")
+    selected_theme=$(cat $HOME/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")
+    theme_file="$HOME/fzf-themes/${selected_theme:-nordfox}.sh"
+
     if [[ -f "$theme_file" ]]; then
+        # Use 'noglob' to prevent Zsh from interpreting any characters
+        # in the theme file (like '#') as glob patterns.
+        set -o noglob
         source "$theme_file"
+        set +o noglob
     fi
-    
-    command fzf "$@"
+    # --- END CORRECTION ---
+
+    # Execute the real fzf command with all options combined.
+    command fzf "${default_opts[@]}" "${theme_opts[@]}" "$@"
 }

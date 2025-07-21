@@ -7,6 +7,7 @@ return {
   require("plugins.rbhanot.debugger"),
   require("plugins.rbhanot.edgy"),
   require("plugins.rbhanot.flash"),
+  require("plugins.rbhanot.folds"),
   -- require("plugins.rbhanot.fzf"),
   require("plugins.rbhanot.git"),
   require("plugins.rbhanot.lsp"),

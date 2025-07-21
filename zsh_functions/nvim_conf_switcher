@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-_nvim_config_switcher() {
-  selection=$(fd --type=d "vim" ~/.config --exec basename | fzf --prompt="Select config > " --height=~50% --border-label="  Neovim Config Switcher ")
+nvim_conf_switcher() {
+  selection=$(fd --type=d "vim" ~/.config --exec basename | fzf --prompt="Select config > "  --border-label="  Neovim Config Switcher ")
   NVIM_APPNAME=$selection nvim $@
 }

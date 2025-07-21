@@ -1,20 +1,10 @@
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=fg:${FOREGROUND} \
-    --color=bg:${BACKGROUND} \
-    --color=hl:${BRIGHT_YELLOW} \
-    --color=fg+:bold:${FOREGROUND} \
-    --color=bg+:${COMMENT} \
-    --color=hl+:${BRIGHT_YELLOW} \
-    --color=gutter:${BACKGROUND} \
-    --color=info:${ORANGE} \
-    --color=separator:${BACKGROUND} \
-    --color=border:${MILK} \
-    --color=label:${SOFT_YELLOW} \
-    --color=prompt:${LIGHT_BLUE} \
-    --color=spinner:${BRIGHT_YELLOW} \
-    --color=pointer:bold:${BRIGHT_YELLOW} \
-    --color=marker:${ERROR_RED} \
-    --color=header:${ORANGE} \
-    --color=preview-fg:${FOREGROUND} \
-    --color=preview-bg:${BACKGROUND} \
-    "
+#!/bin/zsh
+
+theme_opts=(
+    --color=fg:${FOREGROUND},bg:${BACKGROUND},hl:${BRIGHT_YELLOW}
+    --color=fg+:bold:${FOREGROUND},bg+:${COMMENT},hl+:${BRIGHT_YELLOW}
+    --color=gutter:${BACKGROUND},info:${ORANGE},separator:${BACKGROUND}
+    --color=border:${MILK},label:${SOFT_YELLOW},prompt:${LIGHT_BLUE}
+    --color=spinner:${BRIGHT_YELLOW},pointer:bold:${BRIGHT_YELLOW},marker:${ERROR_RED}
+    --color=header:${ORANGE},preview-fg:${FOREGROUND},preview-bg:${BACKGROUND}
+)

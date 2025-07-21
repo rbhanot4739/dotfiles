@@ -1,3 +1,5 @@
+#!/bin/zsh
+
   # nightfox
     # "name" : "nordfox",
     # "background" : "#2e3440",
@@ -21,22 +23,11 @@
     # "brightWhite" : "#e7ecf4",
     # "brightYellow" : "#f0d399"
 
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=bg+:#8cafd2 \
-    --color=bg:#2e3440\
-    --color=border:#8cafd2 \
-    --color=fg:#cdcecf\
-    --color=fg+:#2e3440\
-    --color=gutter:#8cafd2 \
-    --color=header:#b1d196 \
-    --color=hl+:#ebcb8b \
-    --color=hl:#93ccdc \
-    --color=info:#e7ecf4 \
-    --color=marker:#d06f79 \
-    --color=pointer:#d06f79 \
-    --color=prompt:#c895bf\
-    --color=query:#e7ecf4:regular \
-    --color=scrollbar:#8cafd2 \
-    --color=separator:#ebcb8b \
-    --color=spinner:#d06f79 \
-    "
+theme_opts=(
+    --color=bg+:#8cafd2,bg:#2e3440,border:#8cafd2
+    --color=fg:#cdcecf,fg+:#2e3440,gutter:#8cafd2
+    --color=header:#b1d196,hl+:#ebcb8b,hl:#93ccdc
+    --color=info:#e7ecf4,marker:#d06f79,pointer:#d06f79
+    --color=prompt:#c895bf,query:#e7ecf4:regular
+    --color=scrollbar:#8cafd2,separator:#ebcb8b,spinner:#d06f79
+)

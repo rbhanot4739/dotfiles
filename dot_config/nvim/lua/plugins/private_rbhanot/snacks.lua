@@ -741,7 +741,7 @@ return {
               keys = {
                 ["<C-k>"] = { "switch_mode", desc = "Switch git_log mode", mode = { "i", "n" } },
                 ["<S-Cr>"] = { "git_checkout", desc = "Checkout commit", mode = { "i", "n" } },
-                ["<c-b>"] = { "open_commit", desc = "Open commit on remote", mode = { "i", "n" } },
+                ["<c-o>"] = { "open_commit", desc = "Open commit on remote", mode = { "i", "n" } },
                 ["<c-y>"] = { "copy_commit", desc = "Open commit on remote", mode = { "i", "n" } },
               },
             },

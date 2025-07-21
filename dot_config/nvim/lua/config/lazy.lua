@@ -19,7 +19,7 @@ local config_utils = require("config.utils")
 
 function Load_colorscheme(theme)
   local bg_mode = ""
-  local mode_file = "/tmp/.bg_mode"
+  local mode_file = os.getenv("HOME") .. "/.bg_mode"
   if vim.fn.filereadable(mode_file) == 1 then
     local file = io.open(mode_file, "r")
     if file then
@@ -31,7 +31,7 @@ function Load_colorscheme(theme)
     end
   end
 
-  local theme_file = string.format("/tmp/.theme_%s", bg_mode)
+  local theme_file = string.format(os.getenv("HOME") .. "/.theme_%s", bg_mode)
   theme = "tokyonight" -- default theme
 
   if vim.fn.filereadable(theme_file) == 1 then

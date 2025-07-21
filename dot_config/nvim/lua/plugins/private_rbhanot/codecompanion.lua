@@ -1,3 +1,4 @@
+vim.g.codecompanion_auto_tool_mode = true
 return {
   "olimorris/codecompanion.nvim",
   dependencies = {
@@ -27,7 +28,7 @@ return {
     opts = {
       send_code = false,
       prompt_library = {
-        ["Create a PR"] = {
+        ["Create PR"] = {
           strategy = "chat",
           description = "Create a PR with the current changes",
           opts = {
@@ -118,7 +119,10 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
       extensions = {
         ["chat-model-toggle"] = {
           opts = {
-            keymap = "gm", -- Model picker keymap
+            keymaps = {
+              pick_model = "gm", -- Model picker keymap
+              refresh_models = "gM", -- Refresh models cache
+            },
           },
         },
         history = {
@@ -147,7 +151,7 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
           start_in_insert_mode = true,
           auto_scroll = true,
           intro_message = "",
-          window = { height = 0.8, width = 0.35 },
+          window = { height = 0.8, width = 0.40 },
         },
         diff = {
           opts = {
@@ -167,7 +171,8 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
           return require("codecompanion.adapters").extend("copilot", {
             schema = {
               model = {
-                default = "claude-sonnet-4",
+                -- default = "claude-sonnet-4",
+                default = "gpt-4.1",
               },
             },
           })
@@ -218,10 +223,9 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
             },
             send_to_smart = {
               modes = { n = "<S-CR>", i = "<S-CR>" },
-              description = "Send to smart (claude-3.7-sonnet-thought)",
+              description = "Send to reasoning model",
               callback = function(chat)
-                -- chat:apply_model("gemini-2.5-pro-preview-06-05")
-                chat:apply_model("claude-3.7-sonnet-thought")
+                chat:apply_model("claude-opus-4")
                 chat:submit()
               end,
             },
