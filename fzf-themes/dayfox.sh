@@ -1,41 +1,21 @@
-# "name" : "dayfox",
-# "background" : "#f6f2ee",
-# "foreground" : "#3d2b5a",
-# "cursorColor": "#3d2b5a",
-# "selectionBackground": "#e7d2be",
-# "black" : "#352c24",
-# "blue" : "#2848a9",
-# "cyan" : "#287980",
-# "green" : "#396847",
-# "purple" : "#6e33ce",
-# "red" : "#a5222f",
-# "white" : "#f2e9e1",
-# "yellow" : "#ac5402",
-# "brightBlack" : "#534c45",
-# "brightBlue" : "#4863b6",
-# "brightCyan" : "#488d93",
-# "brightGreen" : "#577f63",
-# "brightPurple" : "#8452d5",
-# "brightRed" : "#b3434e",
-# "brightWhite" : "#f4ece6",
-# "brightYellow" : "#b86e28"
+#!/bin/zsh
 
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=bg+:#e7d2be \
-    --color=bg:#f6f2ee \
-    --color=border:#287980 \
-    --color=fg:#3d2b5a \
-    --color=fg+:#3d2b5a \
-    --color=gutter:#f6f2ee \
-    --color=header:#577f63\
-    --color=hl+:#b86e28 \
-    --color=hl:#287980\
-    --color=info:#3d2b5a \
-    --color=marker:#b3434e \
-    --color=pointer:#b3434e \
-    --color=prompt:#8452d5\
-    --color=query:#4863b6:regular \
-    --color=scrollbar:#287980 \
-    --color=separator:#b3434e \
-    --color=spinner:#ac5402 \
-    "
+theme_opts=(
+    --color=bg:#f6f2ee              # Main background
+    --color=bg+:#e7d2be             # Selected item background
+    --color=fg:#3d2b5a              # Default text
+    --color=hl:#287980              # Search highlights
+    --color=hl+:#b86e28             # Highlights on selected
+    --color=border:#287980          # Window borders
+    --color=gutter:#f6f2ee          # Left margin
+    --color=header:#577f63          # Header text
+    --color=info:#3d2b5a            # Status info
+    --color=label:#3d2b5a           # Labels
+    --color=marker:#b3434e          # Multi-select markers
+    --color=pointer:#b3434e         # Selection arrow
+    --color=prompt:#8452d5          # Input prompt
+    --color=query:#4863b6:regular   # Search input text
+    --color=scrollbar:#287980       # Scrollbar
+    --color=separator:#b3434e       # Separators
+    --color=spinner:#ac5402         # Loading spinner
+)

@@ -1,0 +1,58 @@
+# =====================================
+# Locale
+# =====================================
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+
+# =====================================
+# XDG Base Directories
+# =====================================
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
+
+# =====================================
+# Editor and Pager
+# =====================================
+if command -v nvim >/dev/null; then
+  export EDITOR="nvim"
+  # export MANPAGER='NVIM_APPNAME=minimal-lazy nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
+else
+  export EDITOR="vi"
+fi
+
+export VISUAL="$EDITOR"
+
+# =====================================
+# Bat Configuration
+# =====================================
+if command -v bat >/dev/null; then
+  export PAGER="bat"
+  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+else
+  export PAGER="less -R"
+  export MANPAGER="less -R"
+fi
+
+
+# =====================================
+# Homebrew
+# =====================================
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# =====================================
+# PATH Modifications
+# =====================================
+[[ -d "$HOME/.pixi/bin"     ]] && export PATH="$HOME/.pixi/bin:$PATH"
+[[ -d "$HOME/.pixi/envs/nodejs/bin"  ]] && export PATH="$HOME/.pixi/envs/nodejs/bin:$PATH"
+[[ -d "$HOME/.local/bin"    ]] && export PATH="$HOME/.local/bin:$PATH"
+[[ -d "$HOME/scripts"       ]] && export PATH="$HOME/scripts:$PATH"
+[[ -d "$HOME/.cargo/bin"    ]] && export PATH="$PATH:$HOME/.cargo/bin"
+[[ -d "/Users/Shared/DBngin/mysql/8.0.19/bin" ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
+
+typeset -U PATH  # Deduplicate PATH entries
+
+export GEMINI_API_KEY=$(cat "$HOME/.gem_key")
+# export GEMINI_MODEL="gemini-2.5-flash"

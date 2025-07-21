@@ -1,0 +1,53 @@
+; vim: set filetype=gitconfig:
+
+[delta "tokyonight-night"]
+  minus-style                   = syntax "#37222c"
+  minus-non-emph-style          = syntax "#37222c"
+  minus-emph-style              = syntax "#713137"
+  minus-empty-line-marker-style = syntax "#37222c"
+  line-numbers-minus-style      = "#914c54"
+  plus-style                    = syntax "#20303b"
+  plus-non-emph-style           = syntax "#20303b"
+  plus-emph-style               = syntax "#2c5a66"
+  plus-empty-line-marker-style  = syntax "#20303b"
+  line-numbers-plus-style       = "#449dab"
+  line-numbers-zero-style       = "#3b4261"
+
+  [delta "tokyonight-moon"]
+  minus-style                   = syntax "#3a273a"
+  minus-non-emph-style          = syntax "#3a273a"
+  minus-emph-style              = syntax "#6b2e43"
+  minus-empty-line-marker-style = syntax "#3a273a"
+  line-numbers-minus-style      = "#e26a75"
+  plus-style                    = syntax "#273849"
+  plus-non-emph-style           = syntax "#273849"
+  plus-emph-style               = syntax "#305f6f"
+  plus-empty-line-marker-style  = syntax "#273849"
+  line-numbers-plus-style       = "#b8db87"
+  line-numbers-zero-style       = "#3b4261"
+
+[delta "tokyonight-day"]
+minus-style                   = syntax "#ddcace"
+minus-non-emph-style          = syntax "#ddcace"
+minus-emph-style              = syntax "#d59a9d"
+minus-empty-line-marker-style = syntax "#ddcace"
+line-numbers-minus-style      = "#c47981"
+plus-style                    = syntax "#c8d6dc"
+plus-non-emph-style           = syntax "#c8d6dc"
+plus-emph-style               = syntax "#95bec7"
+plus-empty-line-marker-style  = syntax "#c8d6dc"
+line-numbers-plus-style       = "#4197a4"
+line-numbers-zero-style       = "#a8aecb"
+
+[delta "everforest-light"]
+  minus-style                   = syntax "#fbe3da"
+  minus-non-emph-style          = syntax "#fbe3da"
+  minus-emph-style              = syntax "#f85552" "#ffffff"
+  minus-empty-line-marker-style = syntax "#fbe3da"
+  line-numbers-minus-style      = "#e67e80"
+  plus-style                    = syntax "#f0f1d2"
+  plus-non-emph-style           = syntax "#f0f1d2"
+  plus-emph-style               = syntax "#83c092" "#ffffff"
+  plus-empty-line-marker-style  = syntax "#f0f1d2"
+  line-numbers-plus-style       = "#83c092"
+  line-numbers-zero-style       = "#829181"

@@ -1,14 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Wrapper script that takes theme as an argument
 # Usage: ./switch-theme.sh [theme_name]
 
 THEMES_DIR="$HOME/tmux-themes"
-DEFAULT_THEME="gruvbox"
+# DEFAULT_THEME="gruvbox"
 
 # Get theme from argument or file, with fallback to default
-theme="${1:-$(cat /tmp/theme 2>/dev/null | tr -d '[:space:]')}"
-theme="${theme:-$DEFAULT_THEME}"
+# theme="${1:-$(cat /tmp/theme 2>/dev/null | tr -d '[:space:]')}"
+# theme="${theme:-$DEFAULT_THEME}"
+read -r theme _ < <(get-theme)
+
 
 # Source theme file (fallback to default if theme file doesn't exist)
 if [[ ! -f "$THEMES_DIR/${theme}.conf" ]]; then

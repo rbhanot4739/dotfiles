@@ -17,7 +17,7 @@ typeset -a dark_themes=(
     tokyonight-storm
 )
 
-bg_mode=$(cat /tmp/.bg_mode 2>/dev/null | tr -d "[:space:]")
+bg_mode=$(cat $HOME/.bg_mode 2>/dev/null | tr -d "[:space:]")
 theme_var="${bg_mode}_themes"
 selected_theme=$(printf '%s\n' "${(P@)theme_var}" | fzf --prompt="Select theme: ")
 
@@ -27,7 +27,6 @@ if [[ -z "$selected_theme" ]]; then
     return 1
 fi
 
-# echo "$selected_theme" > /tmp/theme
-echo "$selected_theme" > "/tmp/.theme_${bg_mode}"
+echo "$selected_theme" > "$HOME/.theme_${bg_mode}"
 
 source ~/scripts/theme-switcher

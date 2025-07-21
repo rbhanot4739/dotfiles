@@ -1,3 +1,33 @@
+vim.g.codecompanion_auto_tool_mode = true
+local function get_adapter()
+  local home = os.getenv("HOME")
+  local non_work = {
+    home .. "/development/personal",
+    home .. "/scripts",
+    home .. "/tmux-themes",
+    home .. "/fzf-themes",
+  }
+
+  local filepath = vim.api.nvim_buf_get_name(0)
+  local parent_dir = vim.fn.fnamemodify(filepath, ":h")
+
+  local adapter
+  local is_non_work = false
+  for _, path in ipairs(non_work) do
+    if string.find(parent_dir, path, 1, true) then
+      is_non_work = true
+      break
+    end
+  end
+
+  if is_non_work then
+    adapter = "gemini"
+  else
+    adapter = "copilot"
+  end
+  return adapter
+end
+
 return {
   "olimorris/codecompanion.nvim",
   dependencies = {
@@ -27,7 +57,42 @@ return {
     opts = {
       send_code = false,
       prompt_library = {
-        ["Create a PR"] = {
+        ["leetcode_doc"] = {
+          strategy = "inline",
+          description = "Generate LeetCode problem solution description",
+          opts = {
+            index = 10,
+            short_name = "leetcode_doc",
+            is_default = true,
+            auto_submit = true,
+            stop_context_insertion = false,
+            modes = { "v" },
+          },
+          prompts = {
+            {
+              role = "system",
+              content = function(context)
+                return "I want you to act as a senior "
+                  .. context.filetype
+                  .. " developer. I will send you a "
+                  .. context.filetype
+                  .. "function containing solution to a Leetcode problem and I want you to generate the docstring for the function using the google format. Docstring should explain in detail the key algorithm and data structures used, high level space and time complexity and edge cases handled."
+              end,
+            },
+            {
+              role = "user",
+              content = function(context)
+                local text = require("codecompanion.helpers.actions").get_code(context.start_line, context.end_line)
+                return text
+              end,
+              opts = {
+                placement = "add",
+                contains_code = true,
+              },
+            },
+          },
+        },
+        ["Create PR"] = {
           strategy = "chat",
           description = "Create a PR with the current changes",
           opts = {
@@ -47,6 +112,7 @@ return {
               role = "user",
               content = function()
                 vim.g.codecompanion_auto_tool_mode = true
+
                 return [[
 ### Instructions
 
@@ -66,26 +132,27 @@ return {
     - Be concise, clear, and explain the changes being introduced in the diff
     - Follow the conventional commit format (e.g., `feat:`, `fix:`, `docs:`, etc.)
     - Be suitable for a pull request
-    - 
 
     Use the @{cmd_runner} tool to:
-    1. Run appropriate git commands to get the staged changes
-    2. Generate an appropriate commit message based on the diff
-    3. Commit the changes with the generated message
+    1. Run appropriate git commands to get the staged changes.
+    2. Generate an appropriate commit message based on the diff.
+    3. Commit the changes with the generated message.
 
 #### Step 2: Pull Request Creation/Update
 
-- Compare the current branch with `main` or `master` and if there are no new commits, notify the user and exit.
-- If there are new commits, proceed to create or update a pull request:
-  - If the current branch is not pushed to the remote repository, push it first.
-  - If no pull request exists, create a new one with the generated title and body.
-  - If a pull request already exists for the current branch:
-    - If there are no new commits since last PR notify the user and exit.
-    - If there are new commits, update the PR body with the generated commit message by just appending it to the existing body.
+  - Compare the current branch with `main` or `master` and if there are no new commits, notify the user and exit.
+  - If there are new commits, proceed to create or update a pull request:
+    - If the current branch is not pushed to the remote repository, push it first.
+    - If no pull request exist for the checked out branch, create a new one with the title and body using the template below.
+    - If a pull request already exists for the current branch:
+      - If there are no new commits since last PR notify the user and exit.
+      - If there are new commits, update the PR body based on the changes in the new commit. Update the **Why**, **What**, and **Testing Done** sections as needed by appending the context of new commit without removing the previous content.
 
 Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
 - If the `gh` CLI is not installed, notify the user and exit
 - If the `gh` CLI is installed, check if the current branch is already pushed to the remote repository
+
+##### Pull Request Template
 
 **Pull Request Title**: Derive from the commit message body and ensure it's clear and concise
 
@@ -94,18 +161,24 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
 ```md
 ## Problem & Solution Overview
 
-### Why 
+### Why
 
-### What 
+### What
 
 ## Testing Done
 
 ```
 
+Use the following guidelines to fill in the sections:
+  - Use @{list_code_usages} and @{get_changed_files} tools to gather information about the changes made in the current branch.
 - **Why section**: Explain the problem that the changes are solving (e.g., Bugfix, Feature, Enhancement, etc.)
-- **What section**: Explain what specific changes were made to solve the problem
-- **Testing Done section**: Explain how the changes were tested and what tests were created/updated
+- **What section**:
+    - Include functions, classes, interfaces, constants etc in the PR body in the What section.
+    - Use proper markdown formatting to quote code references like class, function/method, interface, constant/variable names etc.
+- **Testing Done section**: Add details about tests updated or added to verify the changes. Include naames of test files, test cases, and any relevant testing strategies used.
 
+#### Step 3: Share PR Link
+Share PR link in the chat after successful creation or update.
 ]]
               end,
               opts = {
@@ -118,7 +191,10 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
       extensions = {
         ["chat-model-toggle"] = {
           opts = {
-            keymap = "gm", -- Model picker keymap
+            keymaps = {
+              pick_model = "gm", -- Model picker keymap
+              refresh_models = "gM", -- Refresh models cache
+            },
           },
         },
         history = {
@@ -147,7 +223,7 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
           start_in_insert_mode = true,
           auto_scroll = true,
           intro_message = "",
-          window = { height = 0.8, width = 0.35 },
+          window = { height = 0.8, width = 0.40 },
         },
         diff = {
           opts = {
@@ -163,11 +239,19 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
         },
       },
       adapters = {
+        gemini = function()
+          return require("codecompanion.adapters").extend("gemini", {
+            env = {
+              api_key = "cmd: echo $GEMINI_API_KEY",
+            },
+          })
+        end,
         copilot = function()
           return require("codecompanion.adapters").extend("copilot", {
             schema = {
               model = {
-                default = "claude-sonnet-4",
+                -- default = "claude-sonnet-4",
+                default = "gpt-4.1",
               },
             },
           })
@@ -175,6 +259,7 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
       },
       strategies = {
         chat = {
+          adapter = get_adapter(),
           opts = { completion_provider = "blink" },
           slash_commands = {
             ["git_files"] = {
@@ -218,10 +303,9 @@ Use the @{cmd_runner} tool to run `gh` CLI commands with the following logic:
             },
             send_to_smart = {
               modes = { n = "<S-CR>", i = "<S-CR>" },
-              description = "Send to smart (claude-3.7-sonnet-thought)",
+              description = "Send to reasoning model",
               callback = function(chat)
-                -- chat:apply_model("gemini-2.5-pro-preview-06-05")
-                chat:apply_model("claude-3.7-sonnet-thought")
+                chat:apply_model("claude-sonnet-4")
                 chat:submit()
               end,
             },

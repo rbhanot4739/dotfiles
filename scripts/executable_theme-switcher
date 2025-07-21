@@ -1,22 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-background_mode=$(cat /tmp/.bg_mode 2>/dev/null | tr -d "[:space:]")
-
-selected_theme="${1:-$(cat /tmp/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")}"
-selected_theme="${selected_theme:-gruvbox-material}"
-
-echo "Switching to theme: $selected_theme with background mode: $background_mode"
+read -r theme bg_mode < <(get-theme)
+echo "Switching to theme: $theme with background mode: $bg_mode"
 
 # Update neovim load_colorscheme
-nvr --serverlist | xargs -I {} nvr --servername {} -c "lua Load_colorscheme();"
-
-# Source fzf configuration
-# source ~/fzf-themes/${selected_theme}.sh
-source ~/fzf_config.zsh
+nvr --serverlist | xargs -I {} nvr --servername {} -c "lua Load_colorscheme();" 
 
 # Update tmux theme
-tmux-theme-switcher "$selected_theme" 2> /dev/null
-# tmux source-file ~/.tmux.conf
+if [[ -n $TMUX ]]; then
+  tmux-theme-switcher "$theme" 2> /dev/null
+fi
 
-# update lazygit theme
-sd 'pager: (.*) --\w+$' "pager: \$1 --${background_mode}" $HOME/.config/lazygit/config.yml
+# update delta theme
+declare -A special_themes=(
+  ["everforest"]=1
+  ["gruvbox"]=1
+  ["gruvbox-material"]=1
+)
+if [[ -v special_themes["$theme"] ]]; then
+    theme="${theme}-${bg_mode}"
+fi
+
+sd '^(\s*features\s*=).*$' "\$1 ${theme}" "$HOME"/.delta-gitconfig
+
+# update delta bg_mode in lazygit
+sd '(pager: delta[^"]*?)(?: --(light|dark))?([^"]*")' "\$1 --${bg_mode}\$3" "$HOME"/.config/lazygit/config.yml

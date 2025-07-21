@@ -12,13 +12,13 @@ return {
       "nvim-lua/plenary.nvim",
     },
     keys = {
-      { "<leader>on", "<cmd>ObsidianNew<CR>", { noremap = true, silent = true, desc = "Obsidian New Note" } },
-      { "<leader>of", "<cmd>ObsidianQuickSwitch<CR>", { noremap = true, silent = true, desc = "Obsidian Find notes" } },
-      { "<leader>og", "<cmd>ObsidianSearch<CR>", { noremap = true, silent = true, desc = "Obsidian Grep notes" } },
-      { "<leader>ol", "<cmd>ObsidianLinks<CR>", { noremap = true, silent = true, desc = "Obsidian Links" } },
-      { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", { noremap = true, silent = true, desc = "Obsidian Backlinks" } },
-      { "<leader>ot", "<cmd>ObsidianTags<cr>", { noremap = true, silent = true, desc = "Obsidian Tags" } },
-      { "<leader>oT", "<cmd>ObsidianTOC<cr>", { noremap = true, silent = true, desc = "Obsidian TOC" } },
+      { "<leader>on", "<cmd>ObsidianNew<CR>", noremap = true, silent = true, desc = "Obsidian New Note" },
+      { "<leader>of", "<cmd>ObsidianQuickSwitch<CR>", noremap = true, silent = true, desc = "Obsidian Find notes" },
+      { "<leader>og", "<cmd>ObsidianSearch<CR>", noremap = true, silent = true, desc = "Obsidian Grep notes" },
+      { "<leader>ol", "<cmd>ObsidianLinks<CR>", noremap = true, silent = true, desc = "Obsidian Links" },
+      { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", noremap = true, silent = true, desc = "Obsidian Backlinks" },
+      { "<leader>ot", "<cmd>ObsidianTags<cr>", noremap = true, silent = true, desc = "Obsidian Tags" },
+      { "<leader>oT", "<cmd>ObsidianTOC<cr>", noremap = true, silent = true, desc = "Obsidian TOC" },
     },
     opts = {
       completion = {

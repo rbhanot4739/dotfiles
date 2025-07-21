@@ -1,10 +1,10 @@
 #!/bin/zsh
 
-__fzf_list_hosts() {
-  local hosts=($(awk '/^Host / && $2 !~ /^\*/ {print $2}' ~/.ssh/config.custom))
-  hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
-  echo $hosts | tr ' ' '\n' | sort -u
-}
+# __fzf_list_hosts() {
+#   local hosts=($(awk '/^Host / && $2 !~ /^\*/ {print $2}' ~/.ssh/config.custom))
+#   hosts+=($(awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
+#   echo $hosts | tr ' ' '\n' | sort -u
+# }
 
 fssh() {
   # Fuzzy search through SSH hosts and establish SSH connection
@@ -24,10 +24,14 @@ fssh() {
     return 0
   fi
 
-  # Connect using SSH with proper terminal settings
-  add_to_hist "ssh $target_host"
-  TERM=xterm-color command ssh "$target_host"
-  # command ssh "$target_host"
+  echo -e "$target_host" | tmux-create-panes -c "TERM=xterm-color command ssh"
+  # add_to_hist "ssh $target_host"
+  # if [[ -n $TMUX ]]; then
+  #   # If inside a tmux session, use tmux's SSH command
+  #   # tmux split-window "command ssh $target_host"
+  #   return 0
+  # fi
+  # # TERM=xterm-color command ssh "$target_host"
 }
 
 fssh "$@"

@@ -14,22 +14,24 @@ files_to_add=(
     ~/.config/starship.toml
     ~/.config/yazi
     ~/.config/zsh-abbr
-    ~/.local/share/devbox/global/default/devbox.json
-    ~/base_pyrightconfig.json
-    ~/custom_config.zsh
-    ~/delta-themes
-    ~/fzf_config.zsh
-    ~/fzf-themes
-    ~/minimal.lua
-    ~/project-mise.toml
-    ~/scripts
-    ~/tmux-themes
-    ~/zsh_functions/
+    ~/.delta-gitconfig
     ~/.global_gitignore
     ~/.ideavimrc
+    ~/.local/share/devbox/global/default/devbox.json
     ~/.p10k.zsh
     ~/.wezterm.lua
     ~/.work-gitconfig
+    ~/Brewfile
+    ~/base_pyrightconfig.json
+    ~/custom_config.zsh
+    ~/delta-themes.gitconfig
+    ~/fzf-themes
+    ~/fzf_config.zsh
+    ~/minimal.lua
+    ~/project-mise.toml
+    ~/scripts/
+    ~/tmux-themes/
+    ~/zsh_functions/
 )
 
 # Add files to chezmoi using the array
@@ -39,5 +41,4 @@ if chezmoi add "${files_to_add[@]}"; then
     printf '%s\n' "${files_to_add[@]}"
 else
     echo "Error: Failed to add files to chezmoi" >&2
-    exit 1
 fi

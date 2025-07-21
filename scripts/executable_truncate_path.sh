@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 current_path="$1"
 # characters to keep from each path component

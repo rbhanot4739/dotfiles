@@ -62,12 +62,14 @@ return {
             basedpyright = {
               -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
               disableOrganizeImports = true,
-              -- disableTaggedHints = true,
+              disableTaggedHints = false,
               analysis = {
                 typeCheckingMode = "standard",
                 autoImportCompletions = true,
                 autoSearchPaths = true,
                 logLevel = "Trace",
+                useTypingExtensions = true,
+                autoFormatStrings = true,
                 diagnosticSeverityOverrides = {
                   -- https://docs.basedpyright.com/latest/configuration/config-files/#type-check-diagnostics-settings
                   reportMissingTypeStubs = false,
@@ -100,12 +102,31 @@ return {
   -- },
   {
     "stevearc/conform.nvim",
+    keys = {
+      {
+        "<leader>cf",
+        mode = { "n", "v" },
+        function()
+          require("conform").format({ async = true }, function(err)
+            if not err then
+              local mode = vim.api.nvim_get_mode().mode
+              if vim.startswith(string.lower(mode), "v") then
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+              end
+            end
+          end)
+        end,
+        desc = "Toggle Conform",
+      },
+    },
     opts = {
       notify_on_error = true,
       log_level = vim.log.levels.TRACE,
       formatters_by_ft = {
         json = { "fixjson" },
         python = { "ruff_fix", "ruff_format" },
+        go = { "gofumpt", "goimports" },
+        sh = { "shfmt" },
       },
       formatters = {
         injected = {

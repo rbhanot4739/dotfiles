@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+background_mode=$(cat "$HOME"/.bg_mode 2>/dev/null | tr -d "[:space:]")
+selected_theme="${1:-$(cat "$HOME"/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")}"
+selected_theme="${selected_theme:-tokyonight-night}"
+
+echo "$selected_theme $background_mode"

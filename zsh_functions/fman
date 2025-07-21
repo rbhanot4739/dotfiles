@@ -1,17 +1,27 @@
 #!/bin/zsh
 
-__fzf_list_man_pages() {
-  local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
-  fd_cmd="fd -t f . --follow $paths"
-  eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' | sort -u
-}
+# __fzf_list_man_pages() {
+#   local paths="/usr/share/man /opt/homebrew/share/man $HOME/.local/share/devbox/global/default/.devbox/nix/profile/default/share/man"
+#   fd_cmd="fd -t f . --follow $paths"
+#   eval $fd_cmd | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}' | sort -u
+# }
 
 fman() {
+  local selection
+
   if [[ $# -eq 1 ]]; then
-    man $1
+    selection="$1"
   else
-__fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null' | xargs man
+    # __fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null' | xargs man
+
+    selection=$(__fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null')
   fi
+  [[ -z "$selection" ]] && return 0
+
+  # Check if the selection is a valid
+  add_to_hist "man $selection"
+  man "$selection"
+
 }
 
 fman "$@"

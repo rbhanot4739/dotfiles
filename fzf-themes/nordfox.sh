@@ -1,42 +1,21 @@
-  # nightfox
-    # "name" : "nordfox",
-    # "background" : "#2e3440",
-    # "foreground" : "#cdcecf",
-    # "cursorColor": "#cdcecf",
-    # "selectionBackground": "#3e4a5b",
-    # "black" : "#3b4252",
-    # "blue" : "#81a1c1",
-    # "cyan" : "#88c0d0",
-    # "green" : "#a3be8c",
-    # "purple" : "#b48ead",
-    # "red" : "#bf616a",
-    # "white" : "#e5e9f0",
-    # "yellow" : "#ebcb8b",
-    # "brightBlack" : "#465780",
-    # "brightBlue" : "#8cafd2",
-    # "brightCyan" : "#93ccdc",
-    # "brightGreen" : "#b1d196",
-    # "brightPurple" : "#c895bf",
-    # "brightRed" : "#d06f79",
-    # "brightWhite" : "#e7ecf4",
-    # "brightYellow" : "#f0d399"
+#!/bin/zsh
 
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=bg+:#8cafd2 \
-    --color=bg:#2e3440\
-    --color=border:#8cafd2 \
-    --color=fg:#cdcecf\
-    --color=fg+:#2e3440\
-    --color=gutter:#8cafd2 \
-    --color=header:#b1d196 \
-    --color=hl+:#ebcb8b \
-    --color=hl:#93ccdc \
-    --color=info:#e7ecf4 \
-    --color=marker:#d06f79 \
-    --color=pointer:#d06f79 \
-    --color=prompt:#c895bf\
-    --color=query:#e7ecf4:regular \
-    --color=scrollbar:#8cafd2 \
-    --color=separator:#ebcb8b \
-    --color=spinner:#d06f79 \
-    "
+theme_opts=(
+    --color=bg:#2e3440              # Main background
+    --color=bg+:#8cafd2             # Selected item background
+    --color=fg:#cdcecf              # Default text
+    --color=hl:#93ccdc              # Search highlights
+    --color=hl+:#ebcb8b             # Highlights on selected
+    --color=border:#8cafd2          # Window borders
+    --color=gutter:#8cafd2          # Left margin
+    --color=header:#b1d196          # Header text
+    --color=info:#e7ecf4            # Status info
+    --color=label:#e7ecf4           # Labels
+    --color=marker:#d06f79          # Multi-select markers
+    --color=pointer:#d06f79         # Selection arrow
+    --color=prompt:#c895bf          # Input prompt
+    --color=query:#e7ecf4:regular   # Search input text
+    --color=scrollbar:#8cafd2       # Scrollbar
+    --color=separator:#ebcb8b       # Separators
+    --color=spinner:#d06f79         # Loading spinner
+)

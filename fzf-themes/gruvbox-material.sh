@@ -1,20 +1,21 @@
-  export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS \
-    --color=fg:${FOREGROUND} \
-    --color=bg:${BACKGROUND} \
-    --color=hl:${BRIGHT_YELLOW} \
-    --color=fg+:bold:${FOREGROUND} \
-    --color=bg+:${COMMENT} \
-    --color=hl+:${BRIGHT_YELLOW} \
-    --color=gutter:${BACKGROUND} \
-    --color=info:${ORANGE} \
-    --color=separator:${BACKGROUND} \
-    --color=border:${MILK} \
-    --color=label:${SOFT_YELLOW} \
-    --color=prompt:${LIGHT_BLUE} \
-    --color=spinner:${BRIGHT_YELLOW} \
-    --color=pointer:bold:${BRIGHT_YELLOW} \
-    --color=marker:${ERROR_RED} \
-    --color=header:${ORANGE} \
-    --color=preview-fg:${FOREGROUND} \
-    --color=preview-bg:${BACKGROUND} \
-    "
+#!/bin/zsh
+
+theme_opts=(
+    --color=bg:${BACKGROUND}              # Main background
+    --color=bg+:${COMMENT}                # Selected item background
+    --color=fg:${FOREGROUND}              # Default text
+    --color=hl:${BRIGHT_YELLOW}           # Search highlights
+    --color=hl+:${BRIGHT_YELLOW}          # Highlights on selected
+    --color=border:${MILK}                # Window borders
+    --color=gutter:${BACKGROUND}          # Left margin
+    --color=header:${ORANGE}              # Header text
+    --color=info:${ORANGE}                # Status info
+    --color=label:${SOFT_YELLOW}          # Labels
+    --color=marker:${ERROR_RED}           # Multi-select markers
+    --color=pointer:bold:${BRIGHT_YELLOW} # Selection arrow
+    --color=prompt:${LIGHT_BLUE}          # Input prompt
+    --color=query:${FOREGROUND}:regular   # Search input text
+    --color=scrollbar:${MILK}             # Scrollbar
+    --color=separator:${BACKGROUND}        # Separators
+    --color=spinner:${BRIGHT_YELLOW}      # Loading spinner
+)

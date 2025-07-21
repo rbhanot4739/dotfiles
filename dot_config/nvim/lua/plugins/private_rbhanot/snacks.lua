@@ -5,18 +5,6 @@ table.insert(lsp_symbols, "Constant")
 local M = {}
 local exclude_patterns = { "__pycache__", "*.typed" }
 
-local function enable_dash()
-  if vim.fn.argc(-1) > 0 then
-    return false
-  end
-  for _, arg in ipairs(vim.v.argv) do
-    if arg:sub(1, 1) == "+" then
-      return false
-    end
-  end
-  return true
-end
-
 ---@class snacks.gitbrowse.PatchedConfig : snacks.gitbrowse.Config
 ---@field commit? string
 ---@param opts? snacks.gitbrowse.PatchedConfig
@@ -459,7 +447,7 @@ return {
       desc = "Toggle floating terminal",
     },
     {
-      "<c-\\>",
+      "<c-//>",
       mode = { "t" },
       function()
         Snacks.terminal.toggle(nil, { win = { style = "split" } })
@@ -595,6 +583,13 @@ return {
           },
         },
         files = {
+          preview = function(ctx)
+            local res = Snacks.picker.preview.file(ctx)
+            if ctx.item.file then
+              ctx.picker.preview:set_title(ctx.item.file)
+            end
+            return res
+          end,
           exclude = exclude_patterns,
           win = {
             input = {
@@ -741,7 +736,7 @@ return {
               keys = {
                 ["<C-k>"] = { "switch_mode", desc = "Switch git_log mode", mode = { "i", "n" } },
                 ["<S-Cr>"] = { "git_checkout", desc = "Checkout commit", mode = { "i", "n" } },
-                ["<c-b>"] = { "open_commit", desc = "Open commit on remote", mode = { "i", "n" } },
+                ["<c-o>"] = { "open_commit", desc = "Open commit on remote", mode = { "i", "n" } },
                 ["<c-y>"] = { "copy_commit", desc = "Open commit on remote", mode = { "i", "n" } },
               },
             },
@@ -750,7 +745,8 @@ return {
       },
       formatters = {
         file = {
-          filename_first = true, -- display filename before the file path
+          -- filename_first = true, -- display filename before the file path
+          truncate = 60,
         },
       },
       icons = {
@@ -827,6 +823,7 @@ return {
       },
     },
     terminal = {
+      enabled = false,
       win = {
         border = "rounded",
       },

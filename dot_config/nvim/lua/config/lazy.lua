@@ -13,13 +13,12 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   end
 end
 vim.opt.rtp:prepend(lazypath)
--- vim.opt.rtp:append(vim.fn.stdpath("config") .. "/code-companion-extensions")
 
 local config_utils = require("config.utils")
 
-function Load_colorscheme(theme)
+local function get_colorscheme()
   local bg_mode = ""
-  local mode_file = "/tmp/.bg_mode"
+  local mode_file = os.getenv("HOME") .. "/.bg_mode"
   if vim.fn.filereadable(mode_file) == 1 then
     local file = io.open(mode_file, "r")
     if file then
@@ -31,8 +30,15 @@ function Load_colorscheme(theme)
     end
   end
 
-  local theme_file = string.format("/tmp/.theme_%s", bg_mode)
-  theme = "tokyonight" -- default theme
+  -- Set background mode early
+  if bg_mode == "light" then
+    vim.o.background = "light"
+  elseif bg_mode == "dark" then
+    vim.o.background = "dark"
+  end
+
+  local theme_file = string.format(os.getenv("HOME") .. "/.theme_%s", bg_mode)
+  local theme = "tokyonight" -- default theme
 
   if vim.fn.filereadable(theme_file) == 1 then
     local file = io.open(theme_file, "r")
@@ -45,7 +51,11 @@ function Load_colorscheme(theme)
     end
   end
 
-  vim.cmd.colorscheme(theme)
+  return theme
+end
+
+function Load_colorscheme()
+  vim.cmd("colorscheme " .. get_colorscheme())
 end
 
 require("lazy").setup({
@@ -56,7 +66,7 @@ require("lazy").setup({
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
       opts = {
-        colorscheme = Load_colorscheme,
+        colorscheme = get_colorscheme(),
         icons = {
           kinds = config_utils.icons.kinds,
         },

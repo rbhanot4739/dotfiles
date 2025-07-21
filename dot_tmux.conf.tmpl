@@ -103,8 +103,8 @@ bind-key j command-prompt -p "join pane from: "  "join-pane -v -s '%%'"
 
 bind-key -n C-S-Up  swap-pane -UZ
 bind-key -n C-S-Down  swap-pane -DZ
-bind-key -nr C-S-right swap-window -d -t +1
-bind-key -nr C-S-left swap-window -d -t -1
+bind-key -nr C-S-right swap-window -t +1 \; select-window -t +1
+bind-key -nr C-S-left swap-window -t -1 \; select-window -t -1
 
 bind-key a setw synchronize-panes; 
 bind-key s set -g status
@@ -207,8 +207,6 @@ set -g @resurrect-strategy-vim 'session'
 set -g @resurrect-strategy-nvim 'session'
 # >>>
  
-set -g @plugin 'joshmedeski/tmux-nerd-font-window-name'
-
 if "test ! -d ~/.tmux/plugins/tpm" \
    "run 'git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins'"
 

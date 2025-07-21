@@ -25,6 +25,7 @@ return {
       "DiffviewFiles",
       "DiffviewFileHistory",
       "DiffviewFilePanel",
+      "codecompanion"
     }
     opts.options = {
       theme = "auto",
@@ -41,12 +42,12 @@ return {
         { "filename", file_status = true, path = 0 },
         { symbols.get },
       },
-      lualine_x = {
+      lualine_a = {
         {
           function()
             return "󱉭  " .. vim.fs.basename(LazyVim.root.cwd())
           end,
-          color = { fg = Snacks.util.color("Special") },
+          -- color = { fg = Snacks.util.color("Special") },
         },
       },
       lualine_z = {

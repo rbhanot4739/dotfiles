@@ -1,15 +1,43 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# # Default dimensions
+# width="${2:-95%}"
+# height="${3:-95%}"
+#
+# if [ -z "$1" ]; then
+#     echo "Error: No command provided"
+#     exit 1
+# fi
+#
+# cmd="$1"
+#
+# tmux display-popup -w "$width" -h "$height" -xC -yC  "$cmd"
+
 
 # Default dimensions
 width="${2:-95%}"
 height="${3:-95%}"
+window_name="my_popup_window"
 
 if [ -z "$1" ]; then
-    echo "Error: No command provided"
-    exit 1
+  echo "Error: No command provided"
+  exit 1
 fi
 
 cmd="$1"
 
-tmux display-popup -w "$width" -h "$height" -xC -yC  "$cmd"
+# Check if the window already exists
+if tmux has-session -t "$window_name" 2>/dev/null; then
+  echo "Reusing existing window: $window_name"
+else
+  # Create a new detached window
+  tmux new-window -d -n "$window_name"
+  echo "Created new window: $window_name"
+fi
+
+# Send the command to the window
+tmux send-keys -t "$window_name" "$cmd" Enter
+
+# Display the window as a popup
+tmux display-popup -w "$width" -h "$height" -xC -yC -b -d "$window_name"
 

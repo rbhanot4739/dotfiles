@@ -3,7 +3,7 @@ quitOnTopLevelReturn: true
 git:
   paging:
       colorArg: always
-      pager: delta --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}" --light
+      pager: delta --light  --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
 
   commit:
     autoWrapCommitMessage: true
@@ -26,6 +26,8 @@ gui:
   # showDivergenceFromBaseBranch: arrowAndNumber
   commandLogSize: 5
   filterMode: fuzzy
+
+promptToReturnFromSubprocess: false
 
 os:
   editPreset: nvim
