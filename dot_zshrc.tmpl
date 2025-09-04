@@ -133,10 +133,10 @@ fi
 # =====================================
 # Tools
 # =====================================
-if [[ $(command -v devbox) ]]; then
-  eval "$(devbox global shellenv)" 2> /dev/null
-  alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
-fi
+#if [[ $(command -v devbox) ]]; then
+#  eval "$(devbox global shellenv)" 2> /dev/null
+#  alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+#fi
 
 # setup directory colors
 {{- if (eq .chezmoi.os "darwin") }}

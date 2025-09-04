@@ -13,7 +13,6 @@
     "direnv@latest",
     "jq@latest",
     "yq@latest",
-    "atuin@latest",
     "sqlite@latest",
     "lua@latest",
     "luajit@latest",
@@ -30,7 +29,10 @@
     "du-dust@latest",
     "glow@latest",
     "fzf@latest",
-    "lynx@latest"
+    "lynx@latest",
+    "tmux@latest",
+    "lazydocker@latest",
+    "atuin@latest"
   ],
   "shell": {
     "init_hook": [

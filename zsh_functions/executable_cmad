@@ -2,15 +2,20 @@
 
 # Array of files and directories to add to chezmoi
 files_to_add=(
-    ~/.config/atuin
+   ~/.config/atuin
     ~/.config/cspell.json
+    ~/.config/fd
+    ~/.config/gh/config.yml
     ~/.config/gh-dash
     ~/.config/ghostty
+    ~/.config/git
     ~/.config/glow
     ~/.config/karabiner
+    ~/.config/lazydocker
     ~/.config/lazygit
     ~/.config/mise
     ~/.config/nvim
+    ~/.config/opencode/opencode.json
     ~/.config/starship.toml
     ~/.config/yazi
     ~/.config/zsh-abbr
@@ -30,8 +35,8 @@ files_to_add=(
     ~/minimal.lua
     ~/project-mise.toml
     ~/scripts/
-    ~/tmux-themes/
-    ~/zsh_functions/
+    ~/tmux-themes
+    ~/zsh_functions
 )
 
 # Add files to chezmoi using the array

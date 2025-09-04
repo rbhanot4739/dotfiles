@@ -267,7 +267,7 @@ bind_widget cd_up_widget '^[[1;3A'
 
 # Tmux session switcher
 zle -N tm_widget
-bind_widget tm_widget '^[,'
+bind_widget tm_widget '^[.'
 
 # Expand alias or insert space
 # expand_alias_or_space() {
@@ -287,7 +287,7 @@ set-theme-widget() {
   zle reset-prompt
 }
 zle -N set-theme-widget
-bind_widget set-theme-widget '^[.'
+bind_widget set-theme-widget '^[>'
 
 # ===================================
 # Final Initialization

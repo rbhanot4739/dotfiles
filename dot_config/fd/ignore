@@ -1,0 +1,145 @@
+# Core directories and patterns
+.*/
+!.*ignore
+!.config/nvim
+!config/app
+!base_pyrightconfig.json
+
+# Git related
+.git/
+.git-blame-ignore-revs
+hooks/
+info/
+logs/
+objects/
+refs/
+rr-cache/
+COMMIT_EDITMSG
+description
+HEAD
+index
+MERGE_RR
+
+# Development
+.vim/
+.idea/
+.vscode/
+.mypy_cache/
+.ideaDataSources/
+dataSources/
+.coverage*
+*.neoconf.json
+*lcov*
+pyrightconfig.json
+cspell.json
+node_modules/
+
+# Python specific
+__pycache__/
+*.py[cod]  # Covers *.pyc, *.pyo, *.pyd
+*.pyi
+*.pdb
+
+# Build and distribution
+build/
+dist/
+target/
+
+# macOS system files
+.DS_Store
+*.swp
+Library/
+Desktop/
+Applications/
+Documents/
+Downloads/
+Music/
+Movies/
+Pictures/  # Fixed typo from 'Picture/'
+Public/
+
+# Application specific
+Postman/
+powerlevel10k/
+~/local-repo/
+/export/apps/
+.zsh/
+.config/
+.ssh/
+*.itermcolors
+mise.toml
+en.utf-8*
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Database files
+*.db
+
+# Binary and compiled files
+*.exe
+*.dll
+*.so
+*.bin
+*.iso
+*.dmg
+*.class
+*.jar
+*.war
+*.ear
+*.o
+*.obj
+*.a
+*.lib
+*.out
+
+# Media and documents
+*.html
+*.pdf
+*.doc*
+*.ppt*
+*.xls*
+*.rtf
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.ico
+*.svg
+*.psd
+*.ai
+*.eps
+*.indd
+
+# Audio
+*.mp3
+*.wav
+*.flac
+*.ogg
+
+# Video
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.wmv
+
+# Archives
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Fonts
+*.ttf
+*.otf
+*.woff
+*.woff2
+

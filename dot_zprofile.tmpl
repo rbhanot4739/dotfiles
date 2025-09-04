@@ -11,6 +11,11 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
 
+if [[ $(command -v devbox) ]]; then
+  eval "$(devbox global shellenv)" 2> /dev/null
+  alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+fi
+
 # =====================================
 # Editor and Pager
 # =====================================
@@ -18,7 +23,7 @@ if command -v nvim >/dev/null; then
   export EDITOR="nvim"
   # export MANPAGER='NVIM_APPNAME=minimal-lazy nvim +Man! -c "set laststatus=0" -u $HOME/minimal.lua'
 else
-  export EDITOR="vi"
+  export EDITOR="vim"
 fi
 
 export VISUAL="$EDITOR"
