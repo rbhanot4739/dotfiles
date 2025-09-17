@@ -5,7 +5,7 @@ return {
       enabled = true,
     } },
     keys = {
-      { "<leader>p", false },
+      -- { "<leader>P", true },
       {
         "p",
         mode = { "o", "x" },

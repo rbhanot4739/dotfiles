@@ -32,20 +32,6 @@ export FZF_ALT_C_OPTS="$FZF_DEFAULT_OPTS --walker-skip .git,node_modules,build $
 
 export FZF_COMPLETION_TRIGGER=","
 
-_fzf_comprun() {
-  local command=$1
-  shift
-
-  case "$command" in
-  cd) eval "fzf $dir_opts \"\$@\"" ;;
-  export | unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
-  # ssh)          fzf --preview 'dig {}'                   "$@" ;;
-  man) fzf --preview 'tldr --color=always {} 2>/dev/null' "$@" ;;
-  bat | cat) eval "fzf $file_opts \"\$@\"" ;;
-  ls | eza) eval "fzf --preview \"[[ ! -d {} ]] && $file_prev_opts \" \"\$@\"" ;;
-  *) fzf "$@" ;;
-  esac
-}
 
 _fzf_compgen_path() {
   [[ "$1" == "." ]] && eval "$find_all_cmd --strip-cwd-prefix=always" || eval "$find_all_cmd $1"
@@ -72,8 +58,6 @@ _fzf_complete_man() {
   _fzf_complete +m -- "$@" < <(__fzf_list_man_pages)
 }
 
-# background_mode=$(cat /tmp/.bg_mode 2>/dev/null | tr -d "[:space:]")
-
 fzf() {
   # Define base options locally.
   local -a default_opts
@@ -84,19 +68,15 @@ fzf() {
     --border rounded --multi --cycle
     --header 'Press ? to toggle preview' --header-first --header-border=bottom
     --bind 'shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
+    # --bind 'shift-tab:deselect+up,tab:select+down,ctrl-space:toggle,ctrl-a:toggle-all'
     --bind 'ctrl-v:become(nvim {})'
     --bind '?:toggle-preview'
   )
 
-  # --- FINAL CORRECTED THEME SOURCING ---
   # local background_mode selected_theme theme_file
   # Do not remove below line, theme_opts is returned by fzf-theme files
   local -a theme_opts
 
-  # background_mode=$(cat $HOME/.bg_mode 2>/dev/null | tr -d "[:space:]")
-  # selected_theme=$(cat $HOME/.theme_${background_mode} 2>/dev/null | tr -d "[:space:]")
-  # theme_file="$HOME/fzf-themes/${selected_theme:-nordfox}.sh"
-  # selected_theme=$(get-theme )
   read -r selected_theme _ < <(get-theme)
   theme_file="$HOME/fzf-themes/${selected_theme}.sh"
 
@@ -107,8 +87,21 @@ fzf() {
     source "$theme_file"
     set +o noglob
   fi
-  # --- END CORRECTION ---
 
   # Execute the real fzf command with all options combined.
   command fzf "${default_opts[@]}" "${theme_opts[@]}" "$@"
+}
+
+_fzf_comprun() {
+  local command=$1
+  shift
+
+case "$command" in
+cd) eval "fzf $dir_opts \"\$@\"" ;;
+export | unset) fzf --preview "eval 'echo \$'{}" "$@" ;;
+man) eval "fzf --preview 'tldr --color=always {} 2>/dev/null' \"\$@\"" ;;
+bat | cat) eval "fzf $file_opts \"\$@\"" ;;
+# ls | eza) eval "fzf --preview \"[[ ! -d {} ]] && $file_prev_opts \" \"\$@\"" ;;
+*) eval "fzf \"\$@\"" ;;
+esac
 }

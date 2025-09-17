@@ -30,9 +30,10 @@
     "glow@latest",
     "fzf@latest",
     "lynx@latest",
-    "tmux@latest",
     "lazydocker@latest",
-    "atuin@latest"
+    "atuin@latest",
+    "tmux@3.5a",
+    "neovim-remote@latest"
   ],
   "shell": {
     "init_hook": [

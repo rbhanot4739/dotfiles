@@ -1,6 +1,6 @@
 return {
   "saghen/blink.cmp",
-  event = { "InsertEnter" },
+  -- event = { "InsertEnter" },
   dependencies = {
     "mikavilpas/blink-ripgrep.nvim",
     -- "rcarriga/cmp-dap",
@@ -13,7 +13,6 @@ return {
       enabled = false,
     },
   },
-  -- event = "VeryLazy",
   opts = {
     keymap = {
       preset = "enter",
@@ -43,13 +42,13 @@ return {
     appearance = {
       kind_icons = require("config.utils").icons.kinds,
     },
-    cmdline = {
-      enabled = true,
-    },
+    -- cmdline = {
+    --   enabled = true,
+    -- },
     completion = {
-      ghost_text = {
-        enabled = true,
-      },
+      -- ghost_text = {
+      --   enabled = false,
+      -- },
       trigger = {
         -- show_on_blocked_trigger_characters = {},
         show_in_snippet = false,

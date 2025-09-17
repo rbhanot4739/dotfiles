@@ -3,6 +3,16 @@
 read -r theme bg_mode < <(get-theme)
 echo "Switching to theme: $theme with background mode: $bg_mode"
 
+GHOSTTY_DIR="$HOME/.config/ghostty"
+GHOSTTY_TEMPLATE="$GHOSTTY_DIR/config.template"
+GHOSTTY_COLORS="$GHOSTTY_DIR/colorschemes/${theme}-${bg_mode}.conf"
+GHOSTTY_CONFIG="$GHOSTTY_DIR/config"
+
+if [[ -f "$GHOSTTY_TEMPLATE" && -f "$GHOSTTY_COLORS" ]]; then
+  cat "$GHOSTTY_TEMPLATE" "$GHOSTTY_COLORS" > "$GHOSTTY_CONFIG"
+  pkill -HUP ghostty 2>/dev/null
+fi
+
 # Update neovim load_colorscheme
 nvr --serverlist | xargs -I {} nvr --servername {} -c "lua Load_colorscheme();" 
 

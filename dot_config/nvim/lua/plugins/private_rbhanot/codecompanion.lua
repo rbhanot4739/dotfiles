@@ -1,12 +1,12 @@
-vim.g.codecompanion_auto_tool_mode = true
+vim.g.codecompanion_yolo_mode = true
 local function get_adapter()
   local home = os.getenv("HOME")
-  local non_work = {
-    home .. "/development/personal",
-    home .. "/scripts",
-    home .. "/tmux-themes",
-    home .. "/fzf-themes",
-  }
+  local non_work_dirs =
+    { "development/personal", "scripts", "tmux-themes", "fzf-themes", "obsidian-vault", ".config/nvim" }
+  local non_work = {}
+  for _, dir in ipairs(non_work_dirs) do
+    table.insert(non_work, home .. "/" .. dir)
+  end
 
   local filepath = vim.api.nvim_buf_get_name(0)
   local parent_dir = vim.fn.fnamemodify(filepath, ":h")
@@ -34,26 +34,17 @@ return {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
     "ravitemer/codecompanion-history.nvim",
+    "lalitmee/codecompanion-spinners.nvim",
     {
       "MeanderingProgrammer/render-markdown.nvim", -- Enhanced markdown rendering
       dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
       ft = { "markdown", "codecompanion" },
-      -- opts = {
-      --   overrides = {
-      --     filetype = {
-      --       codecompanion = {
-      --         -- render_modes = true,
-      --         sign = {
-      --           -- enabled = false, -- Turn off in the status column
-      --         },
-      --       },
-      --     },
-      --   },
-      -- },
     },
   },
+  lazy = false,
   enabled = true,
   config = function(_, opts)
+    local layout = vim.env.CC_LAYOUT_OVERRIDE or "vertical"
     opts = {
       send_code = false,
       prompt_library = {
@@ -189,12 +180,9 @@ Share PR link in the chat after successful creation or update.
         },
       },
       extensions = {
-        ["chat-model-toggle"] = {
+        spinner = {
           opts = {
-            keymaps = {
-              pick_model = "gm", -- Model picker keymap
-              refresh_models = "gM", -- Refresh models cache
-            },
+            style = "snacks",
           },
         },
         history = {
@@ -223,7 +211,7 @@ Share PR link in the chat after successful creation or update.
           start_in_insert_mode = true,
           auto_scroll = true,
           intro_message = "",
-          window = { height = 0.8, width = 0.40 },
+          window = { height = 0.8, width = 0.40, layout = layout },
         },
         diff = {
           opts = {
@@ -235,7 +223,6 @@ Share PR link in the chat after successful creation or update.
             "linematch:120",
             "indent-heuristic",
           },
-          -- provider = "mini_diff", -- default|mini_diff
         },
       },
       adapters = {
@@ -256,6 +243,13 @@ Share PR link in the chat after successful creation or update.
             },
           })
         end,
+      },
+      memory = {
+        opts = {
+          chat = {
+            enabled = false,
+          },
+        },
       },
       strategies = {
         chat = {
