@@ -87,7 +87,7 @@ return {
     end,
   },
   {
-    "williamboman/mason.nvim",
+    "mason-org/mason.nvim",
     -- opts = { ensure_installed = { "flake8", "mypy", "cspell", "markdown-oxide" } },
     opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
   },

@@ -23,7 +23,7 @@ vim.api.nvim_create_autocmd("User", {
 -- })
 return {
   {
-    "echasnovski/mini.diff",
+    "nvim-mini/mini.diff",
     -- config = function()
     --   local diff = require("mini.diff")
     --   diff.setup({
@@ -33,7 +33,7 @@ return {
     -- end,
   },
   {
-    "echasnovski/mini.operators",
+    "nvim-mini/mini.operators",
     opts = {
       -- Exchange text regions
       exchange = {
@@ -62,7 +62,7 @@ return {
     version = false,
   },
   {
-    "echasnovski/mini.files",
+    "nvim-mini/mini.files",
     lazy = false,
     opts = function(_, opts)
       return vim.tbl_deep_extend("force", opts, {
@@ -128,7 +128,7 @@ return {
     -- [ -( hello )-] # consider this string
     -- ;d) -> [- hello -]  -- similarly ;r)< changes to [-< hello >-]
     -- ;d( -> [-hello-])  -- similarly ;r(< changes to [-<hello>-]
-    "echasnovski/mini.surround",
+    "nvim-mini/mini.surround",
     opts = {
       n_lines = 80,
       mappings = {
