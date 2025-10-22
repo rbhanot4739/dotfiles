@@ -119,6 +119,8 @@ alias s='fssh'
 alias man='fman'
 alias vims="nvim_conf_switcher"
 alias tm='tmux_sessions'
+alias ca='cursor-agent'
+alias oc='opencode'
 
 # ===================================
 # Functions

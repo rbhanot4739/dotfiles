@@ -39,53 +39,53 @@ return {
       }
     end,
   },
-  {
-    "NeogitOrg/neogit",
-    dependencies = {
-      "nvim-lua/plenary.nvim", -- required
-      "sindrets/diffview.nvim", -- optional - Diff integration
-    },
-    cond = is_git_root,
-    enabled = false,
-    cmd = "Neogit",
-    opts = {
-      kind = "split",
-      initial_branch_name = "rbhanot/",
-      log_view = {
-        kind = "split",
-      },
-      mappings = {
-        status = {
-          ["up"] = "PeekUp",
-          ["down"] = "PeekDown",
-        },
-      },
-    },
-    keys = {
-      { "<leader>gG", "<cmd>Neogit<cr>", desc = "Neogit" },
-      -- {
-      --   "<leader>gc",
-      --   function()
-      --     require("neogit").action("log", "log_current", { "--author", "rbhanot" })()
-      --   end,
-      --   desc = "My Commits",
-      -- },
-      -- {
-      --   "<leader>gl",
-      --   function()
-      --     require("neogit").action("log", "log_current")()
-      --   end,
-      --   desc = "Neogit log",
-      -- },
-      -- {
-      --   "<leader>gp",
-      --   function()
-      --     require("neogit").action("pull", "from_upstream")()
-      --   end,
-      --   desc = "Pull from upstreame",
-      -- },
-    },
-  },
+  -- {
+  --   "NeogitOrg/neogit",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim", -- required
+  --     "sindrets/diffview.nvim", -- optional - Diff integration
+  --   },
+  --   cond = is_git_root,
+  --   enabled = false,
+  --   cmd = "Neogit",
+  --   opts = {
+  --     kind = "split",
+  --     initial_branch_name = "rbhanot/",
+  --     log_view = {
+  --       kind = "split",
+  --     },
+  --     mappings = {
+  --       status = {
+  --         ["up"] = "PeekUp",
+  --         ["down"] = "PeekDown",
+  --       },
+  --     },
+  --   },
+  --   keys = {
+  --     { "<leader>gG", "<cmd>Neogit<cr>", desc = "Neogit" },
+  --     -- {
+  --     --   "<leader>gc",
+  --     --   function()
+  --     --     require("neogit").action("log", "log_current", { "--author", "rbhanot" })()
+  --     --   end,
+  --     --   desc = "My Commits",
+  --     -- },
+  --     -- {
+  --     --   "<leader>gl",
+  --     --   function()
+  --     --     require("neogit").action("log", "log_current")()
+  --     --   end,
+  --     --   desc = "Neogit log",
+  --     -- },
+  --     -- {
+  --     --   "<leader>gp",
+  --     --   function()
+  --     --     require("neogit").action("pull", "from_upstream")()
+  --     --   end,
+  --     --   desc = "Pull from upstreame",
+  --     -- },
+  --   },
+  -- },
   {
     "sindrets/diffview.nvim",
     command = "DiffviewOpen",

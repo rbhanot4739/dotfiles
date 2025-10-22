@@ -30,13 +30,29 @@ vim.api.nvim_create_autocmd("User", {
   end,
 })
 
-vim.api.nvim_create_autocmd("User", {
-  pattern = "PersistedSavePre",
-  callback = function()
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.tbl_contains({ "codecompanion", "lazy", "snacks_dashboard" }, vim.bo[buf].filetype) then
-        vim.api.nvim_buf_delete(buf, { force = true })
-      end
+local disabled_dirs = {
+  vim.fn.expand("~") .. "/development/personal/self-learning/python-common/DSA",
+}
+
+local function is_disabled_dir(bufnr)
+  local filepath = vim.api.nvim_buf_get_name(bufnr)
+  for _, dir in ipairs(disabled_dirs) do
+    if filepath:find(dir, 1, true) == 1 then
+      return true
+    end
+  end
+  return false
+end
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local bufnr = args.buf
+    if is_disabled_dir(bufnr) then
+      vim.lsp.inline_completion.enable(false)
+      vim.g.sidekick_nes = false
+    else
+      vim.lsp.inline_completion.enable(true)
+      vim.g.sidekick_nes = true
     end
   end,
 })

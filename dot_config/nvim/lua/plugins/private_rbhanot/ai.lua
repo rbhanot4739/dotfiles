@@ -1,7 +1,43 @@
 return {
   {
+    "folke/sidekick.nvim",
+    opts = {
+      cli = {
+        mux = {
+          enabled = false,
+          backend = "tmux", -- or "tmux"
+        },
+      },
+    },
+    keys = {
+      {
+        "<leader>av",
+        function()
+          require("sidekick.cli").send({ msg = "{selection}" })
+        end,
+        mode = { "x" },
+        desc = "Send Visual Selection",
+      },
+      {
+        "<leader>ac",
+        function()
+          require("sidekick.cli").toggle({ name = "cursor", focus = true })
+        end,
+        desc = "Sidekick Cursor Toggle",
+      },
+      {
+        "<leader>ao",
+        function()
+          require("sidekick.cli").toggle({ name = "opencode", focus = true })
+        end,
+        desc = "Sidekick Opencode Toggle",
+      },
+    },
+  },
+
+  {
     "zbirenbaum/copilot.lua",
-    enable = true,
+    enable = false,
     opts = {
       suggestion = {
         enabled = true,
@@ -16,97 +52,6 @@ return {
         hgcommit = false,
         svn = false,
         cvs = false,
-      },
-    },
-  },
-  {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    enabled = false,
-    opts = {
-      model = "claude-opus-4",
-      debug = false,
-      provider = "copilot",
-      mappings = {
-        reset = {
-          normal = "<C-x>",
-          insert = "<C-x>",
-        },
-        accept_diff = {
-          normal = "<A-y>",
-          insert = "<A-yt>",
-        },
-      },
-    },
-  },
-  {
-    "yetone/avante.nvim",
-    event = "VeryLazy",
-    version = false, -- Never set this value to "*"! Never!
-    enabled = false,
-    cmd = { "AvanteToggle" },
-    keys = {
-      {
-        "<leader>AA",
-        function()
-          vim.cmd("AvanteClear")
-          vim.cmd("AvanteChat")
-        end,
-        desc = "Avante Clear and Chat",
-      },
-    },
-    opts = {
-      selector = {
-        provider = "snacks",
-        provider_opts = {},
-      },
-      auto_suggestions_provider = "copilot",
-      providers = {
-        copilot = {
-          -- model = "claude-3.7-sonnet", -- your desired model (or use gpt-4o, etc.)
-          model = "claude-opus-4", -- your desired model (or use gpt-4o, etc.)
-        },
-      },
-      -- },
-      features = {
-        web_search = false,
-        project_context = true,
-        file_search = true,
-      },
-      behaviour = {
-        auto_suggestions = false,
-        enable_cursor_planning_mode = true,
-        jump_result_buffer_on_finish = false,
-        auto_focus_on_diff_view = false,
-        enable_token_counting = false,
-      },
-      mappings = {
-        sidebar = {
-          close_from_input = { normal = "q", insert = "<C-d>" },
-        },
-      },
-    },
-    history = {
-      storage_path = vim.fn.stdpath("state") .. "/avante",
-    },
-    windows = {
-      sidebar_header = {
-        align = "left",
-        rounded = "true",
-      },
-    },
-    dependencies = {
-      {
-        -- "stevearc/dressing.nvim",
-        "nvim-lua/plenary.nvim",
-        "MunifTanjim/nui.nvim",
-        "zbirenbaum/copilot.lua",
-        {
-          "MeanderingProgrammer/render-markdown.nvim",
-          opts = {
-            file_types = { "markdown", "Avante" },
-          },
-          ft = { "markdown", "Avante" },
-        },
       },
     },
   },

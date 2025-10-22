@@ -73,24 +73,13 @@ end, { expr = true, silent = true })
 -- vim.keymap.del("n", "<c-_>")
 
 local Snacks = require("snacks")
-local copilot_exists = pcall(require, "copilot")
-
-if copilot_exists then
-  Snacks.toggle({
-    name = "Copilot Completion",
-    color = {
-      enabled = "azure",
-      disabled = "orange",
-    },
-    get = function()
-      return not require("copilot.client").is_disabled()
-    end,
-    set = function(state)
-      if state then
-        require("copilot.command").enable()
-      else
-        require("copilot.command").disable()
-      end
-    end,
-  }):map("<leader>at")
-end
+Snacks.toggle({
+  name = "NES and inline_completion",
+  get = function()
+    return vim.g.sidekick_nes ~= false
+  end,
+  set = function(state)
+    vim.g.sidekick_nes = state
+    vim.lsp.inline_completion.enable(state)
+  end,
+}):map("<leader>uN")

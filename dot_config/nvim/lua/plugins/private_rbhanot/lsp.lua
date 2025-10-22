@@ -1,105 +1,97 @@
 return {
   {
     "neovim/nvim-lspconfig",
-    dependencies = { "saghen/blink.cmp" },
-    -- event = "InsertEnter",
+    -- dependencies = { "saghen/blink.cmp" },
     opts = function(_, opts)
-      -- https://www.lazyvim.org/plugins/lsp#%EF%B8%8F-customizing-lsp-keymaps
-      local keys = require("lazyvim.plugins.lsp.keymaps").get()
-      keys[#keys + 1] = { "<C-k>", mode = { "i" }, false }
-      keys[#keys + 1] = { "<leader>cc", mode = { "n", "v" }, false }
-      keys[#keys + 1] = { "<leader>cC", mode = { "n", "v" }, false }
-      keys[#keys + 1] = { "<leader>ss", mode = { "n" }, false }
-      keys[#keys + 1] = { "<A-n>", mode = { "n" }, false }
-      keys[#keys + 1] = { "<A-p>", mode = { "n" }, false }
-      keys[#keys + 1] = { "gr", mode = { "n" }, false }
-      keys[#keys + 1] = {
-        "<leader>gr",
-        function()
-          Snacks.picker.lsp_references({ layout = "ivy" })
-        end,
-        nowait = true,
-        desc = "References",
-      }
-      local util = require("lspconfig.util")
-      opts["inlay_hints"] = {
-        enabled = false,
-      }
-      opts["servers"] = {
-        ruff = {
-          init_options = {
-            settings = {
-              lint = { ignore = { "F401", "F841" } },
-              format = {
-                ["quote-style"] = "single",
-              },
-            },
-          },
-        },
-        basedpyright = {
-          root_dir = function(fname)
-            local root_files = {
-              "pyrightconfig.json",
-              "setup.py",
-              "setup.cfg",
-              "pyproject.toml",
-              "requirements.txt",
-              "Pipfile",
-              ".git",
-            }
-            return util.root_pattern(unpack(root_files))(fname)
+      -- https://www.lazyvim.org/plugins/lsp
+      opts.servers["*"].keys = opts.servers["*"].keys or {}
+      vim.list_extend(opts.servers["*"].keys, {
+        { "<leader>cc", false },
+        { "<leader>cC", false },
+        { "<leader>ss", false },
+        { "<A-n>", false },
+        { "<A-p>", false },
+        { "gr", false },
+        {
+          "<leader>gr",
+          function()
+            Snacks.picker.lsp_references({ layout = "ivy" })
           end,
-          capabilities = {
-            textDocument = {
-              publishDiagnostics = {
-                tagSupport = {
-                  valueSet = { 2 },
-                },
+          nowait = true,
+          desc = "References",
+        },
+        {
+          "<leader>gi",
+          function()
+            Snacks.picker.lsp_incoming_calls()
+          end,
+        },
+        {
+          "<leader>go",
+          function()
+            Snacks.picker.lsp_outgoing_calls()
+          end,
+        },
+      })
+      local util = require("lspconfig.util")
+      opts.servers.ruff.init_options.settings =
+        vim.tbl_deep_extend("force", opts.servers.ruff.init_options.settings or {}, {
+          lint = { ignore = { "F401", "F841" } },
+          format = { ["quote-style"] = "single" },
+        })
+      -- opts.servers.basedpyright.root_dir = function(fname)
+      --   local root_files = {
+      --     "pyrightconfig.json",
+      --     "setup.py",
+      --     "setup.cfg",
+      --     "pyproject.toml",
+      --     "requirements.txt",
+      --     "Pipfile",
+      --     ".git",
+      --   }
+      --   return util.root_pattern(unpack(root_files))(fname)
+      -- end
+      opts.servers.basedpyright.capabilities =
+        vim.tbl_deep_extend("force", opts.servers.basedpyright.capabilities or {}, {
+          textDocument = {
+            publishDiagnostics = {
+              tagSupport = {
+                valueSet = { 2 },
               },
             },
           },
-          settings = {
-            basedpyright = {
-              -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
-              disableOrganizeImports = true,
-              disableTaggedHints = false,
-              analysis = {
-                typeCheckingMode = "standard",
-                autoImportCompletions = true,
-                autoSearchPaths = true,
-                logLevel = "Trace",
-                useTypingExtensions = true,
-                autoFormatStrings = true,
-                diagnosticSeverityOverrides = {
-                  -- https://docs.basedpyright.com/latest/configuration/config-files/#type-check-diagnostics-settings
-                  reportMissingTypeStubs = false,
-                  -- reportUnusedVariable = "none",
-                  analyzeUnannotatedFunctions = true,
-                },
-                exclude = {
-                  "**/build",
-                },
-              },
+        })
+      opts.servers.basedpyright.settings = vim.tbl_deep_extend("force", opts.servers.basedpyright.settings or {}, {
+        basedpyright = {
+          -- https://docs.basedpyright.com/latest/configuration/language-server-settings/
+          disableOrganizeImports = true,
+          disableTaggedHints = false,
+          analysis = {
+            typeCheckingMode = "standard",
+            autoImportCompletions = true,
+            autoSearchPaths = true,
+            logLevel = "Trace",
+            useTypingExtensions = true,
+            autoFormatStrings = true,
+            diagnosticSeverityOverrides = {
+              -- https://docs.basedpyright.com/latest/configuration/config-files/#type-check-diagnostics-settings
+              reportMissingTypeStubs = false,
+              -- reportUnusedVariable = "none",
+              analyzeUnannotatedFunctions = true,
+            },
+            exclude = {
+              "**/build",
             },
           },
         },
-      }
+      })
+      opts["inlay_hints"] = { enabled = false }
     end,
   },
   {
     "mason-org/mason.nvim",
-    -- opts = { ensure_installed = { "flake8", "mypy", "cspell", "markdown-oxide" } },
-    opts = { ensure_installed = { "flake8", "mypy", "cspell" } },
+    opts = { ensure_installed = { "flake8", "mypy", "cspell", "copilot-language-server", "protols" } },
   },
-  -- linter/formatter
-  -- {
-  --   "mfussenegger/nvim-lint",
-  --   opts = {
-  --     linters_by_ft = {
-  --       python = { "ruff", "mypy" },
-  --     },
-  --   },
-  -- },
   {
     "stevearc/conform.nvim",
     keys = {

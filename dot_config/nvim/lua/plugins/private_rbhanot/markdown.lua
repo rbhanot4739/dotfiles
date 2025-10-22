@@ -38,7 +38,7 @@ return {
   {
     "obsidian-nvim/obsidian.nvim",
     version = "*", -- recommended, use latest release instead of latest commit
-    lazy = false,
+    lazy = true,
     enabled = not vim.env.SSH_TTY,
     event = {
       "BufReadPre " .. vim.fn.expand("~") .. "/obsidian-vault/",

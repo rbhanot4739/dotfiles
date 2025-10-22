@@ -10,11 +10,12 @@ export LC_ALL="en_US.UTF-8"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
-
 if [[ $(command -v devbox) ]]; then
   eval "$(devbox global shellenv)" 2> /dev/null
   alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
 fi
+
+[[ -d "$HOME/bin"    ]] && export PATH="$HOME/bin:$PATH"
 
 # =====================================
 # Editor and Pager
@@ -57,7 +58,8 @@ fi
 [[ -d "$HOME/.cargo/bin"    ]] && export PATH="$PATH:$HOME/.cargo/bin"
 [[ -d "/Users/Shared/DBngin/mysql/8.0.19/bin" ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
 
-typeset -U PATH  # Deduplicate PATH entries
+# remove and add ~/.volta/bin at the end
+path=(${path:#$HOME/.volta/bin} $path $HOME/.volta/bin); typeset -U path
 
 export GEMINI_API_KEY=$(cat "$HOME/.gem_key")
 # export GEMINI_MODEL="gemini-2.5-flash"

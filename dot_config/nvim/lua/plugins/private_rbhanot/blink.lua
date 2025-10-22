@@ -1,50 +1,38 @@
 return {
   "saghen/blink.cmp",
-  -- event = { "InsertEnter" },
   dependencies = {
     "mikavilpas/blink-ripgrep.nvim",
     -- "rcarriga/cmp-dap",
     "Kaiser-Yang/blink-cmp-git",
     "Kaiser-Yang/blink-cmp-dictionary",
     "fang2hou/blink-copilot",
-    -- "Exafunction/codeium.nvim",
-    {
-      "giuxtaposition/blink-cmp-copilot",
-      enabled = false,
-    },
   },
   opts = {
     keymap = {
       preset = "enter",
       ["<Tab>"] = {
-        -- function(cmp)
-        --   if cmp.snippet_active() then
-        --     return cmp.accept()
-        --   else
-        --     return cmp.select_next()
-        --   end
-        --   if require("copilot.suggestion").is_visible() then
-        --     require("copilot.suggestion").accept()
-        --   else
-        --     return cmp.select_next()
-        --   end
+        -- function() -- sidekick next edit suggestion
+        --   return require("sidekick").nes_jump_or_apply()
+        -- end,
+        -- function() -- if you are using Neovim's native inline completions
+        --   return vim.lsp.inline_completion.get()
         -- end,
         "select_next",
         "snippet_forward",
         "fallback",
       },
+      ["<S-cr>"] = {
+        function()
+          return vim.lsp.inline_completion.get()
+        end,
+      },
       ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
-      -- ["<C-k>"] = { "select_prev", "fallback" },
-      -- ["<C-j>"] = { "select_next", "fallback" },
       ["<S-up>"] = { "scroll_documentation_up", "fallback" },
       ["<S-down>"] = { "scroll_documentation_down", "fallback" },
     },
     appearance = {
       kind_icons = require("config.utils").icons.kinds,
     },
-    -- cmdline = {
-    --   enabled = true,
-    -- },
     completion = {
       -- ghost_text = {
       --   enabled = false,
@@ -53,11 +41,11 @@ return {
         -- show_on_blocked_trigger_characters = {},
         show_in_snippet = false,
       },
-      menu = {
-        auto_show = function(ctx)
-          return vim.bo.filetype ~= "markdown"
-        end,
-      },
+      -- menu = {
+      --   auto_show = function(ctx)
+      --     return vim.bo.filetype ~= "markdown"
+      --   end,
+      -- },
       documentation = { window = { border = "rounded" } },
     },
     signature = { enabled = true, window = { border = "rounded" } },

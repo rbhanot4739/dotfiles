@@ -455,6 +455,22 @@ return {
       ft = "snacks_terminal",
       desc = "Toggle terminal",
     },
+    -- {
+    --   "<leader>uN",
+    --   function()
+    --     Snacks.toggle({
+    --       name = "NES and inline_completion",
+    --       get = function()
+    --         return vim.g.sidekick_nes == true
+    --       end,
+    --       set = function(state)
+    --         vim.g.sidekick_nes = state
+    --         vim.lsp.inline_completion.enable(state)
+    --       end,
+    --     })
+    --   end,
+    --   desc = "Toggle NES and inline completion",
+    -- },
   },
   opts = {
     -- explorer = { enabled = false },
@@ -677,6 +693,8 @@ return {
           -- live = false,
         },
         lsp_symbols = {
+          tree = true,
+          keep_parents = true,
           -- layout = { preset = "sidebar", layout = { position = "right" } },
           filter = { default = lsp_symbols },
           actions = {

@@ -41,7 +41,7 @@ return {
       ft = { "markdown", "codecompanion" },
     },
   },
-  lazy = false,
+  lazy = true,
   enabled = true,
   config = function(_, opts)
     local layout = vim.env.CC_LAYOUT_OVERRIDE or "vertical"

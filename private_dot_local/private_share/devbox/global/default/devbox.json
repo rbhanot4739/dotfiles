@@ -3,7 +3,6 @@
   "packages": [
     "tmuxinator@latest",
     "tealdeer@latest",
-    "neovim@latest",
     "ripgrep@latest",
     "fd@latest",
     "zoxide@latest",
@@ -34,7 +33,13 @@
     "atuin@latest",
     "tmux@3.5a",
     "neovim-remote@latest",
-    "cargo@latest"
+    "cargo@latest",
+    "wget@latest",
+    "pipx@latest",
+    "tectonic@latest",
+    "imagemagick@latest",
+    "gh@latest",
+    "tree@latest"
   ],
   "shell": {
     "init_hook": [

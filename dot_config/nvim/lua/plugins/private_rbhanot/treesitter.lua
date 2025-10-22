@@ -4,6 +4,9 @@ return {
     dependencies = { "nvim-treesitter/nvim-treesitter-textobjects" },
     opts = {
       auto_install = true,
+      ensure_installed = {
+        "puppet",
+      },
       textobjects = {
         move = {
           enable = true,
