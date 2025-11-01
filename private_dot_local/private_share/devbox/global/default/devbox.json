@@ -39,7 +39,8 @@
     "tectonic@latest",
     "imagemagick@latest",
     "gh@latest",
-    "tree@latest"
+    "tree@latest",
+    "fswatch@latest"
   ],
   "shell": {
     "init_hook": [

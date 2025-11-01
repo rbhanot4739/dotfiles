@@ -2,6 +2,15 @@
 
 # ensure its a rdev machine
 {{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+ if [[ ! -d $HOME/.pixi ]]; then
+   curl -fsSL https://pixi.sh/install.sh | bash
+   if [[ $? -ne 0 ]]; then
+     mkdir -p $HOME/.pixi/bin
+     curl -L -o ~/.pixi/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
+     chmod +x ~/.pixi/bin/pixi
+   fi
+ fi
+ packages=(bat direnv eza fd-find fzf jq lua luajit luarocks nodejs nvim ripgrep ripgrep-all sd sqlite tealdeer yq zoxide)
 {{- else }}
 # use devox only on mac or linux but not on rdev
 if [[ ! $(command -v devbox 2>/dev/null) ]]; then
@@ -10,15 +19,6 @@ fi
 eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
 {{- end }}
 
-# if [[ ! -d $HOME/.pixi ]]; then
-#   curl -fsSL https://pixi.sh/install.sh | bash
-#   if [[ $? -ne 0 ]]; then
-#     mkdir -p $HOME/.pixi/bin
-#     curl -L -o ~/.pixi/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
-#     chmod +x ~/.pixi/bin/pixi
-#   fi
-# fi
-# packages=(atuin bat direnv dust eza fd-find fzf git-delta glow-md jq lazygit lua luajit luarocks nodejs nvim p7zip poppler ripgrep ripgrep-all sd sqlite tealdeer yazi yq zoxide)
 # $HOME/.pixi/bin/pixi global install "${packages[@]}"
 
 if [[ ! -d $HOME/.nvim-env ]]; then
