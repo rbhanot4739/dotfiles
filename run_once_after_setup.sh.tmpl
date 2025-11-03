@@ -2,6 +2,7 @@
 
 # ensure its a rdev machine
 {{- if (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+
  if [[ ! -d $HOME/.pixi ]]; then
    curl -fsSL https://pixi.sh/install.sh | bash
    if [[ $? -ne 0 ]]; then
@@ -10,16 +11,20 @@
      chmod +x ~/.pixi/bin/pixi
    fi
  fi
- packages=(bat direnv eza fd-find fzf jq lua luajit luarocks nodejs nvim ripgrep ripgrep-all sd sqlite tealdeer yq zoxide)
+ rdev_packages=(bat direnv eza fd-find fzf jq lua luajit luarocks nodejs nvim ripgrep ripgrep-all sd sqlite tealdeer yq zoxide)
+ $HOME/.pixi/bin/pixi global install "${rdev_packages[@]}"
+
 {{- else }}
+
 # use devox only on mac or linux but not on rdev
 if [[ ! $(command -v devbox 2>/dev/null) ]]; then
   curl -fsSL https://get.jetify.com/devbox | bash
 fi
 eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
+devbox global install
+
 {{- end }}
 
-# $HOME/.pixi/bin/pixi global install "${packages[@]}"
 
 if [[ ! -d $HOME/.nvim-env ]]; then
   if [[ -f /export/apps/python/3.12/bin/python3 ]]; then
