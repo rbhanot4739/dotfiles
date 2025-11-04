@@ -61,5 +61,5 @@ fi
 # remove and add ~/.volta/bin at the end
 path=(${path:#$HOME/.volta/bin} $path $HOME/.volta/bin); typeset -U path
 
-export GEMINI_API_KEY=$(cat "$HOME/.gem_key")
+[[ -f "$HOME/.gem_key" ]] && export GEMINI_API_KEY=$(cat "$HOME/.gem_key")
 # export GEMINI_MODEL="gemini-2.5-flash"

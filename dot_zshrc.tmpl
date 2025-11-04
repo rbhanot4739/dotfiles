@@ -233,9 +233,11 @@ zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|
 
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 
+{{- if eq .chezmoi.os "darwin" }}
 # Start theme-monitor in tmux if not already running
 if [[ -z "$TMUX" ]] && ! tmux has-session -t themewatcher 2>/dev/null; then
   tmux new-session -d -s themewatcher "$HOME/scripts/theme-monitor"
 fi
+{{- end }}
 
 # zprof
