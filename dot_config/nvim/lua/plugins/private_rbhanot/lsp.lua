@@ -20,18 +20,6 @@ return {
           nowait = true,
           desc = "References",
         },
-        {
-          "<leader>gi",
-          function()
-            Snacks.picker.lsp_incoming_calls()
-          end,
-        },
-        {
-          "<leader>go",
-          function()
-            Snacks.picker.lsp_outgoing_calls()
-          end,
-        },
       })
       local util = require("lspconfig.util")
       opts.servers.ruff.init_options.settings =

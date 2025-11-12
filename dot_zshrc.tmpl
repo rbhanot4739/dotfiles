@@ -207,7 +207,7 @@ zinit cdreplay -q &!
 
 # Completion styles
 zstyle ':completion:::::' completer _expand _complete _ignored _approximate
-zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
@@ -232,6 +232,15 @@ zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|
 # =====================================
 
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
+
+# zoxide needs to be loaded last
+if command -v zoxide >/dev/null; then
+  eval "$(zoxide init zsh)"
+  alias zi=__zoxide_zi
+  alias zz='z -'
+  # cd() { _lazy_zoxide; __zoxide_z "$@"; }
+  # z() { _lazy_zoxide; __zoxide_z "$@"; }
+fi
 
 {{- if eq .chezmoi.os "darwin" }}
 # Start theme-monitor in tmux if not already running

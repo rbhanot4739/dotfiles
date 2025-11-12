@@ -41,7 +41,6 @@ alias vi='nvim'
 [[ -f ~/nvim-macos-arm64/bin/nvim ]] && alias nnvim='~/nvim-macos-arm64/bin/nvim'
 [[ $(command -v rg) ]] && alias grep='rg '
 alias G='rg '
-[[ $(command -v zoxide) ]] && alias cd='z'
 # [[ $(command -v bat) ]] && {
 #   alias bat='bat --style=snip --color=always'
 #   alias cat='bat'
@@ -109,7 +108,6 @@ alias dkc='docker-compose'
 # ===================================
 # Misc + Shortcuts
 # ===================================
-alias zz='z -'
 alias cz='chezmoi'
 alias ccd='chezmoi cd'
 alias mvim="NVIM_APPNAME=nvim-minimal nvim"
@@ -249,7 +247,7 @@ gg() {
 }
 # ==== zshrc* edit  ====
 ee() {
-  $EDITOR ~/.zshrc ~/.zprofile ~/custom_config.zsh
+  $EDITOR ~/.zshrc ~/.zprofile ~/custom_config.zsh ~/fzf_config.zsh
 }
 
 # ===================================

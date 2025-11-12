@@ -344,11 +344,11 @@ return {
       desc = "Git branches",
     },
     {
-      "<leader>gc",
+      "<leader>gl",
       function()
         Snacks.picker.git_log({ current_line = true })
       end,
-      desc = "Git log Current file",
+      desc = "Git log (ctrl-k to toggle b/w modes)",
     },
     {
       "<leader>gy",
