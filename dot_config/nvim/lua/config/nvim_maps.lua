@@ -34,7 +34,9 @@ map("n", "<leader>L", "<cmd>LazyExtras<cr>")
 -- Use backspace to go to previous buffer
 map("n", "<BS>", "<C-6>", { remap = true })
 -- Use enter to toggle folds
-map("n", "<cr>", "za", { remap = true })
+-- map("n", "<cr>", "za", { remap = true })
+Snacks.keymap.set("n", "<cr>", "za", { remap = true })
+Snacks.keymap.set("n", "<cr>", "<CR>", { ft = { "qf", "trouble" }, remap = true })
 
 -- map jk to go to normal mode in terminal
 map({ "t" }, "jk", [[<C-\><C-n>]], { desc = "go to normal mode in term" })

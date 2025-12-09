@@ -237,8 +237,7 @@ Share PR link in the chat after successful creation or update.
           return require("codecompanion.adapters").extend("copilot", {
             schema = {
               model = {
-                -- default = "claude-sonnet-4",
-                default = "gpt-4.1",
+                default = "claude-haiku-4.5",
               },
             },
           })
@@ -299,7 +298,7 @@ Share PR link in the chat after successful creation or update.
               modes = { n = "<S-CR>", i = "<S-CR>" },
               description = "Send to reasoning model",
               callback = function(chat)
-                chat:apply_model("claude-sonnet-4")
+                chat:apply_model("claude-sonnet-4.5")
                 chat:submit()
               end,
             },

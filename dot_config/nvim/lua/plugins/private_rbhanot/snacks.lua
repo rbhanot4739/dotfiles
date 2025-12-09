@@ -371,6 +371,10 @@ return {
               vim.fn.setreg("+", url)
             end
           end
+          -- if link_type == "master" then
+          --   opts["what"] = "branch"
+          --   opts["branch"] = "master"
+          -- end
           Snacks.gitbrowse.open(opts)
           return l_url
         end
@@ -380,6 +384,7 @@ return {
           items = {
             { text = "repo", preview = { text = get_url("repo") } },
             { text = "branch", preview = { text = get_url("branch") } },
+            { text = "master", preview = { text = get_url("master") } },
             { text = "file", preview = { text = get_url("file") } },
             { text = "commit", preview = { text = get_url("commit") } },
             { text = "permalink", preview = { text = get_url("permalink") } },
@@ -788,6 +793,7 @@ return {
       enabled = true,
       config = function(opts, defaults)
         table.insert(opts.remote_patterns, { "^(https://).+@(.*):(.*)", "%1%2/%3" })
+        opts.url_patterns["github%.com"]["master"] = "/blob/master/{file}#L{line_start}-L{line_end}"
       end,
     },
     dashboard = {

@@ -1,5 +1,18 @@
 return {
   {
+    "saecki/live-rename.nvim",
+    config = function()
+      require("live-rename").setup({
+        show_other_ocurrences = true,
+        use_patterns = true,
+      })
+      local live_rename = require("live-rename")
+      vim.keymap.set("n", "<leader>cr", function()
+        live_rename.rename({ insert = false, cursorpos = 0 })
+      end)
+    end,
+  },
+  {
     "neovim/nvim-lspconfig",
     -- dependencies = { "saghen/blink.cmp" },
     opts = function(_, opts)
@@ -12,6 +25,7 @@ return {
         { "<A-n>", false },
         { "<A-p>", false },
         { "gr", false },
+        { "<leader>cr", false },
         {
           "<leader>gr",
           function()

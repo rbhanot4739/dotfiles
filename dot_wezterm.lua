@@ -102,7 +102,7 @@ config.initial_rows = 60
 config.enable_kitty_keyboard = true
 config.color_scheme = get_current_scheme()
 config.font = wezterm.font("JetBrainsMonoNL Nerd Font")
-config.font_size = 13
+config.font_size = 14
 
 -- UI settings
 config.enable_tab_bar = true

@@ -34,21 +34,14 @@ return {
       kind_icons = require("config.utils").icons.kinds,
     },
     completion = {
-      -- ghost_text = {
-      --   enabled = false,
-      -- },
       trigger = {
-        -- show_on_blocked_trigger_characters = {},
         show_in_snippet = false,
       },
-      -- menu = {
-      --   auto_show = function(ctx)
-      --     return vim.bo.filetype ~= "markdown"
-      --   end,
-      -- },
-      documentation = { window = { border = "rounded" } },
+      documentation = {
+        auto_show = false,
+        auto_show_delay_ms = 200,
+      },
     },
-    signature = { enabled = true, window = { border = "rounded" } },
     fuzzy = {
       sorts = {
         function(a, b)
@@ -77,17 +70,20 @@ return {
         },
       },
       providers = {
-        copilot = {
-          async = true,
+        -- copilot = {
+        --   async = true,
+        --   score_offset = 100,
+        --   module = "blink-copilot",
+        --   override = {
+        --     get_trigger_characters = function(self)
+        --       local trigger_characters = self:get_trigger_characters()
+        --       vim.list_extend(trigger_characters, { "\n", "\t", " " })
+        --       return trigger_characters
+        --     end,
+        --   },
+        -- },
+        snippets = {
           score_offset = 100,
-          module = "blink-copilot",
-          override = {
-            get_trigger_characters = function(self)
-              local trigger_characters = self:get_trigger_characters()
-              vim.list_extend(trigger_characters, { "\n", "\t", " " })
-              return trigger_characters
-            end,
-          },
         },
         lsp = {
           async = true,

@@ -207,7 +207,10 @@ zinit cdreplay -q &!
 
 # Completion styles
 zstyle ':completion:::::' completer _expand _complete _ignored _approximate
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' matcher-list \
+    'r:|=* m:{a-zA-Z}={A-Za-z}' \
+    'l:|=* r:|=* m:{a-zA-Z}={A-Za-z}' \
+    'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no

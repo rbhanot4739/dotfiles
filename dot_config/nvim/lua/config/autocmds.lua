@@ -56,3 +56,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
   end,
 })
+
+vim.api.nvim_create_autocmd({ "FileType" }, {
+  pattern = { "qf", "trouble" },
+  callback = function()
+    vim.b.sidekick_nes = false
+  end,
+})
