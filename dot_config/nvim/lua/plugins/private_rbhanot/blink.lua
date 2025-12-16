@@ -37,9 +37,11 @@ return {
       trigger = {
         show_in_snippet = false,
       },
-      documentation = {
-        auto_show = false,
-        auto_show_delay_ms = 200,
+      accept = {
+        -- experimental auto-brackets support
+        auto_brackets = {
+          enabled = false,
+        },
       },
     },
     fuzzy = {
