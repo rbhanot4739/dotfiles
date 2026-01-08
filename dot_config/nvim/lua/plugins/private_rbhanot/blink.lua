@@ -29,6 +29,7 @@ return {
       ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
       ["<S-up>"] = { "scroll_documentation_up", "fallback" },
       ["<S-down>"] = { "scroll_documentation_down", "fallback" },
+      -- ["<Esc>"] = { "hide", "fallback" },
     },
     appearance = {
       kind_icons = require("config.utils").icons.kinds,

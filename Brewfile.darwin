@@ -1,0 +1,10 @@
+
+# macOS-only tools and GUI apps
+
+# Example:
+# cask "iterm2"
+# cask "raycast"
+
+# Example tap (add manually, only if needed):
+# tap "hashicorp/tap"
+# brew "terraform"

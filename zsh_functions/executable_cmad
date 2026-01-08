@@ -26,7 +26,6 @@ files_to_add=(
     ~/.p10k.zsh
     ~/.wezterm.lua
     ~/.work-gitconfig
-    ~/Brewfile
     ~/base_pyrightconfig.json
     ~/custom_config.zsh
     ~/delta-themes.gitconfig

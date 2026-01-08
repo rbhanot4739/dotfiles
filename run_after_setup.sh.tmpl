@@ -1,43 +1,103 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-# macOS: install devbox only
+# ======================================================
+# macOS: Install Homebrew + Brew packages
+# ======================================================
 {{- if eq .chezmoi.os "darwin" }}
-if [[ ! $(command -v devbox 2>/dev/null) ]]; then
-  curl -fsSL https://get.jetify.com/devbox | bash
+
+# Install Homebrew if missing
+if ! command -v brew >/dev/null 2>&1; then
+  echo "Installing Homebrew..."
+  NONINTERACTIVE=1 /bin/bash -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
-eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r 2>/dev/null
-devbox global install
+
+# Load Homebrew into this session
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Install core Brew packages
+brew bundle \
+  --file "$HOME/.config/chezmoi/Brewfile" \
+  --no-upgrade
+
+# Install macOS-specific Brew packages (if present)
+if [[ -f "$HOME/.config/chezmoi/Brewfile.darwin" ]]; then
+  brew bundle \
+    --file "$HOME/.config/chezmoi/Brewfile.darwin" \
+    --no-upgrade
+fi
+
+{{- end }}
 
 # Linux: install pixi and packages
-{{- else if eq .chezmoi.os "linux" }}
-
+{{- if eq .chezmoi.os "linux" }}
 install_pixi() {
-  if [[ ! -d $HOME/.pixi ]]; then
+  if [[ ! -d "$HOME/.pixi" ]]; then
     curl -fsSL https://pixi.sh/install.sh | bash
     if [[ $? -ne 0 ]]; then
-      mkdir -p $HOME/.pixi/bin
-      curl -L -o ~/.pixi/bin/pixi https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
-      chmod +x ~/.pixi/bin/pixi
+      mkdir -p "$HOME/.pixi/bin"
+      curl -L -o "$HOME/.pixi/bin/pixi" \
+        https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
+      chmod +x "$HOME/.pixi/bin/pixi"
     fi
   fi
 }
 
 install_pixi
 
-base_packages=(bat direnv eza fd-find fzf jq lua luajit luarocks nodejs nvim ripgrep ripgrep-all sd sqlite tealdeer yq zoxide)
+base_packages=(
+  bat
+  direnv
+  eza
+  fd-find
+  fzf
+  jq
+  lua
+  luajit
+  luarocks
+  nodejs
+  nvim
+  ripgrep
+  ripgrep-all
+  sd
+  sqlite
+  tealdeer
+  yq
+  zoxide
+)
 
-# rdev setup
+# -------------------------
+# RDEV conditional (UNCHANGED)
+# -------------------------
 {{- if (and (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
-  packages=("${base_packages[@]}")
+packages=("${base_packages[@]}")
 {{- else }}
-  non_rdev_packages=(git-delta yazi atuin lazygit p7zip poppler fswatch dust glow-md neovim-remote lynx tree wget tectonic imagemagick tmux gh)
-  packages=("${base_packages[@]}" "${non_rdev_packages[@]}")
+non_rdev_packages=(
+  git-delta
+  yazi
+  atuin
+  lazygit
+  p7zip
+  poppler
+  fswatch
+  dust
+  glow-md
+  neovim-remote
+  lynx
+  tree
+  wget
+  tectonic
+  imagemagick
+  tmux
+  gh
+)
+packages=("${base_packages[@]}" "${non_rdev_packages[@]}")
 {{- end }}
 
-$HOME/.pixi/bin/pixi global install "${packages[@]}"
+"$HOME/.pixi/bin/pixi" global install "${packages[@]}"
 
 {{- end }}
-
 
 if [[ ! -d $HOME/.nvim-env ]]; then
   if [[ -f /export/apps/python/3.12/bin/python3 ]]; then

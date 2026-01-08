@@ -3,7 +3,7 @@ quitOnTopLevelReturn: true
 git:
   paging:
       colorArg: always
-      pager: delta --light  --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+      pager: delta --dark  --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
 
   commit:
     autoWrapCommitMessage: true

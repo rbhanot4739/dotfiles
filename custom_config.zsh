@@ -33,6 +33,17 @@ alias wh='which '
 alias W='wc -l'
 alias ks='ls' # typo-prone fallback
 
+# Update installed packages (manual, explicit)
+alias brew-up='brew update && brew upgrade && brew cleanup'
+
+# Sync core CLI tools into chezmoi
+alias brew-sync='brew bundle dump \
+  --file ~/.config/chezmoi/Brewfile \
+  --force \
+  --describe \
+  --no-cask \
+  --no-vscode && chezmoi apply'
+
 # ===================================
 # Application Aliases
 # ===================================
@@ -119,6 +130,7 @@ alias vims="nvim_conf_switcher"
 alias tm='tmux_sessions'
 alias ca='cursor-agent'
 alias oc='opencode'
+alias py="python3"
 
 # ===================================
 # Functions

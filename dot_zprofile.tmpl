@@ -10,10 +10,10 @@ export LC_ALL="en_US.UTF-8"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
-if [[ $(command -v devbox) ]]; then
-  eval "$(devbox global shellenv)" 2> /dev/null
-  alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
-fi
+# if [[ $(command -v devbox) ]]; then
+#   eval "$(devbox global shellenv)" 2> /dev/null
+#   alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
+# fi
 
 [[ -d "$HOME/bin"    ]] && export PATH="$HOME/bin:$PATH"
 
@@ -44,9 +44,18 @@ fi
 # =====================================
 # Homebrew
 # =====================================
-if [[ -f "/opt/homebrew/bin/brew" ]]; then
+
+{{- if eq .chezmoi.os "darwin" }}
+if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+{{- end }}
+
+{{- if eq .chezmoi.os "linux" }}
+if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+{{- end }}
 
 # =====================================
 # PATH Modifications
