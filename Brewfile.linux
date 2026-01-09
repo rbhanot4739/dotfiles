@@ -1,5 +1,6 @@
 # Linux-only tools
 
 # Example:
-# brew "xclip"
+brew "xclip"
+brew gcc
 

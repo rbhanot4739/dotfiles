@@ -1,3 +1,6 @@
+brew "felixkratz/formulae/sketchybar"
+brew "bitwarden-cli"
+
 cask "betterdisplay"
 cask "bitwarden"
 cask "cursor"

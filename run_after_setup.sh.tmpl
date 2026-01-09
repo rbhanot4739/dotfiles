@@ -20,6 +20,12 @@ if [[ -f "$HOME/Brewfile.darwin" ]]; then
   brew bundle --file "$HOME/Brewfile.darwin" --no-upgrade
 fi
 
+if [[ ! -d "$HOME/nvim-macos-arm64" ]]; then
+  # install nightly nvim
+  curl -L -o ~/nvim-macos-arm64 https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-arm64.tar.gz
+  tar -xf ~/nvim-macos-arm64.tar.gz -C ~/
+fi
+
 {{- end }}
 
 # ======================================================
@@ -32,6 +38,12 @@ fi
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Linuxbrew..."
+  # Ensure Linuxbrew prefix exists and is user-owned
+  if [[ ! -d /home/linuxbrew ]]; then
+    echo "Creating /home/linuxbrew (requires sudo once)..."
+    sudo mkdir -p /home/linuxbrew
+  fi
+
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
@@ -42,6 +54,11 @@ brew bundle --file "$HOME/Brewfile" --no-upgrade
 
 if [[ -f "$HOME/Brewfile.linux" ]]; then
   brew bundle --file "$HOME/Brewfile.linux" --no-upgrade
+fi
+if [[ ! -d "$HOME/nvim-linux-x86_64" ]]; then
+  # install nightly nvim
+  curl -L -o ~/nvim-linux.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz
+  tar -xf ~/nvim-linux.tar.gz -C ~/
 fi
 
 {{- end }}

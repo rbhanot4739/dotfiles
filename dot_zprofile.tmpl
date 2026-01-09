@@ -49,12 +49,14 @@ fi
 if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+[[ -d "$HOME/nvim-macos-arm64/bin" ]] && export PATH="$HOME/nvim-macos-arm64/bin:$PATH"
 {{- end }}
 
 {{- if eq .chezmoi.os "linux" }}
 if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
+[[ -d "$HOME/nvim-linux-x86_64/bin" ]] && export PATH="$HOME/nvim-linux-x86_64/bin:$PATH"
 {{- end }}
 
 # =====================================
@@ -66,7 +68,6 @@ fi
 [[ -d "$HOME/scripts"       ]] && export PATH="$HOME/scripts:$PATH"
 [[ -d "$HOME/.cargo/bin"    ]] && export PATH="$PATH:$HOME/.cargo/bin"
 [[ -d "/Users/Shared/DBngin/mysql/8.0.19/bin" ]] && export PATH="$PATH:/Users/Shared/DBngin/mysql/8.0.19/bin"
-[[ -d "$HOME/nvim-macos-arm64/bin" ]] && export PATH="$HOME/nvim-macos-arm64/bin:$PATH"
 
 
 # remove and add ~/.volta/bin at the end
