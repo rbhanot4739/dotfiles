@@ -1,10 +1,15 @@
-
-# macOS-only tools and GUI apps
-
-# Example:
-# cask "iterm2"
-# cask "raycast"
-
-# Example tap (add manually, only if needed):
-# tap "hashicorp/tap"
-# brew "terraform"
+cask "betterdisplay"
+cask "bitwarden"
+cask "cursor"
+cask "docker-desktop"
+cask "font-jetbrains-mono-nerd-font"
+cask "ghostty"
+cask "karabiner-elements"
+cask "keepassxc@snapshot"
+cask "pallotron-yubiswitch"
+cask "pearcleaner"
+cask "raycast"
+cask "visual-studio-code"
+cask "vivaldi"
+cask "wezterm@nightly"
+cask "zen"

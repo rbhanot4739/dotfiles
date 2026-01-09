@@ -2,45 +2,66 @@
 set -euo pipefail
 
 # ======================================================
-# macOS: Install Homebrew + Brew packages
+# macOS → Homebrew + Brewfiles
 # ======================================================
 {{- if eq .chezmoi.os "darwin" }}
 
-# Install Homebrew if missing
 if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Homebrew..."
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Load Homebrew into this session
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# Install core Brew packages
-brew bundle \
-  --file "$HOME/.config/chezmoi/Brewfile" \
-  --no-upgrade
+brew bundle --file "$HOME/Brewfile" --no-upgrade
 
-# Install macOS-specific Brew packages (if present)
-if [[ -f "$HOME/.config/chezmoi/Brewfile.darwin" ]]; then
-  brew bundle \
-    --file "$HOME/.config/chezmoi/Brewfile.darwin" \
-    --no-upgrade
+if [[ -f "$HOME/Brewfile.darwin" ]]; then
+  brew bundle --file "$HOME/Brewfile.darwin" --no-upgrade
 fi
 
 {{- end }}
 
-# Linux: install pixi and packages
-{{- if eq .chezmoi.os "linux" }}
+# ======================================================
+# Linux NON-RDEV → Homebrew + Brewfiles
+# ======================================================
+{{- if and (eq .chezmoi.os "linux")
+          (not (and (contains "rdev" (env "RDEV_ID"))
+                    (eq "coder" .chezmoi.username)
+                    (eq "/home/coder" .chezmoi.homeDir))) }}
+
+if ! command -v brew >/dev/null 2>&1; then
+  echo "Installing Linuxbrew..."
+  NONINTERACTIVE=1 /bin/bash -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+brew bundle --file "$HOME/Brewfile" --no-upgrade
+
+if [[ -f "$HOME/Brewfile.linux" ]]; then
+  brew bundle --file "$HOME/Brewfile.linux" --no-upgrade
+fi
+
+{{- end }}
+
+# ======================================================
+# Linux RDEV → Pixi ONLY (no Homebrew)
+# ======================================================
+{{- if and (eq .chezmoi.os "linux")
+          (contains "rdev" (env "RDEV_ID"))
+          (eq "coder" .chezmoi.username)
+          (eq "/home/coder" .chezmoi.homeDir) }}
+
 install_pixi() {
   if [[ ! -d "$HOME/.pixi" ]]; then
-    curl -fsSL https://pixi.sh/install.sh | bash
-    if [[ $? -ne 0 ]]; then
+    curl -fsSL https://pixi.sh/install.sh | bash || {
       mkdir -p "$HOME/.pixi/bin"
       curl -L -o "$HOME/.pixi/bin/pixi" \
         https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
       chmod +x "$HOME/.pixi/bin/pixi"
-    fi
+    }
   fi
 }
 
@@ -67,41 +88,17 @@ base_packages=(
   zoxide
 )
 
-# -------------------------
-# RDEV conditional (UNCHANGED)
-# -------------------------
-{{- if (and (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
-packages=("${base_packages[@]}")
-{{- else }}
-non_rdev_packages=(
-  git-delta
-  yazi
-  atuin
-  lazygit
-  p7zip
-  poppler
-  fswatch
-  dust
-  glow-md
-  neovim-remote
-  lynx
-  tree
-  wget
-  tectonic
-  imagemagick
-  tmux
-  gh
-)
-packages=("${base_packages[@]}" "${non_rdev_packages[@]}")
-{{- end }}
-
-"$HOME/.pixi/bin/pixi" global install "${packages[@]}"
+"$HOME/.pixi/bin/pixi" global install "${base_packages[@]}"
 
 {{- end }}
 
-if [[ ! -d $HOME/.nvim-env ]]; then
+# ======================================================
+# Neovim Python provider (unchanged)
+# ======================================================
+if [[ ! -d "$HOME/.nvim-env" ]]; then
   if [[ -f /export/apps/python/3.12/bin/python3 ]]; then
-    /export/apps/python/3.12/bin/python3 -m venv "$HOME"/.nvim-env
-    "$HOME"/.nvim-env/bin/python -m pip install neovim
+    /export/apps/python/3.12/bin/python3 -m venv "$HOME/.nvim-env"
+    "$HOME/.nvim-env/bin/python" -m pip install neovim
   fi
 fi
+

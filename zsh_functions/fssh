@@ -20,18 +20,8 @@ fssh() {
     target_host="$(__fzf_list_hosts | fzf)" || return 0
   fi
 
-  if [[ -z "$target_host" ]]; then
-    return 0
-  fi
+  [[ -z "$target_host" ]] && return 0
 
   echo -e "$target_host" | tmux-create-panes -c "TERM=xterm-color command ssh"
-  # add_to_hist "ssh $target_host"
-  # if [[ -n $TMUX ]]; then
-  #   # If inside a tmux session, use tmux's SSH command
-  #   # tmux split-window "command ssh $target_host"
-  #   return 0
-  # fi
-  # # TERM=xterm-color command ssh "$target_host"
-}
 
-fssh "$@"
+#fssh "$@"

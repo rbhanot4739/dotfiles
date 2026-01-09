@@ -12,4 +12,4 @@ fcd() {
   item=$(eval $cmd)
   [[ ! -z $item ]] && add_to_hist "cd $item" && cd $item
 }
- fcd "$@"
+ # fcd "$@"

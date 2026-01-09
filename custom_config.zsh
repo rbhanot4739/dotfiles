@@ -37,36 +37,34 @@ alias ks='ls' # typo-prone fallback
 alias brew-up='brew update && brew upgrade && brew cleanup'
 
 # Sync core CLI tools into chezmoi
-alias brew-sync='brew bundle dump \
-  --file ~/.config/chezmoi/Brewfile \
-  --force \
-  --describe \
-  --no-cask \
-  --no-vscode && chezmoi apply'
+brew-sync() {
+  brew bundle dump \
+    --file "$HOME/Brewfile" \
+    --force \
+    --formula \
+    --no-vscode || return 1
+
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    brew bundle dump \
+      --cask \
+      --file "$HOME/Brewfile.darwin" \
+      --force || return 1
+  fi
+}
+
 
 # ===================================
 # Application Aliases
 # ===================================
 [[ $(command -v nvim) ]] && alias vim='nvim'
 alias vi='nvim'
-[[ -f ~/nvim-macos-arm64/bin/nvim ]] && alias nnvim='~/nvim-macos-arm64/bin/nvim'
 [[ $(command -v rg) ]] && alias grep='rg '
 alias G='rg '
-# [[ $(command -v bat) ]] && {
-#   alias bat='bat --style=snip --color=always'
-#   alias cat='bat'
-#   alias less='bat -p'
-# }
 [[ $(command -v gh) ]] && {
   alias ghc='gh copilot explain '
   alias ghcs='gh copilot suggest '
 }
 [[ $(command -v tmuxinator) ]] && alias mux="tmuxinator "
-# if command -v fd &>/dev/null; then
-#   fd_bin=$(which fd)
-#   alias fda="$fd_bin --unrestricted --hidden"
-#   alias fd="fd --ignore-file ~/.global_gitignore"
-# fi
 [[ $(command -v dust) ]] && alias du='dust -prb'
 
 # ===================================

@@ -1,17 +1,14 @@
 notARepository: 'quit'
 quitOnTopLevelReturn: true
 git:
-  paging:
-      colorArg: always
-      pager: delta --dark  --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
-
+  pagers:
+    - colorArg: always
+      pager: delta --light  --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
   commit:
     autoWrapCommitMessage: true
     autoWrapWidth: 100
-
   branchPrefix: "rbhanot/"
   branchLogCmd: "git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'"
-
 gui:
   theme:
     selectedLineBgColor:
@@ -26,12 +23,9 @@ gui:
   # showDivergenceFromBaseBranch: arrowAndNumber
   commandLogSize: 5
   filterMode: fuzzy
-
 promptToReturnFromSubprocess: false
-
 os:
   editPreset: nvim
-
 # Keybindings
 keybinding:
   universal:
@@ -86,7 +80,6 @@ keybinding:
     scrollDownMain-alt2: <c-d>
     executeShellCommand: ":"
     createRebaseOptionsMenu: m
-
     pushFiles: P
     pullFiles: p
     refresh: R
@@ -129,7 +122,7 @@ keybinding:
     viewResetOptions: D
     fetch: f
     toggleTreeView: "`"
-    openMergeTool: M
+    openMergeOptions: M
     openStatusFilter: <c-b>
     copyFileInfoToClipboard: "y"
     collapseAll: "-"
