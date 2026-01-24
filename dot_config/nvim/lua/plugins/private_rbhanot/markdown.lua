@@ -17,8 +17,8 @@ return {
       vim.keymap.set("i", "<CR>", "<CR><cmd>AutolistNewBullet<cr>")
       vim.keymap.set("n", "o", "o<cmd>AutolistNewBullet<cr>")
       vim.keymap.set("n", "O", "O<cmd>AutolistNewBulletBefore<cr>")
-      vim.keymap.set("n", "<CR>", "<cmd>AutolistToggleCheckbox<cr><CR>")
-      vim.keymap.set("n", "<C-r>", "<cmd>AutolistRecalculate<cr>")
+      -- vim.keymap.set("n", "<CR>", "<cmd>AutolistToggleCheckbox<cr><CR>")
+      -- vim.keymap.set("n", "<C-r>", "<cmd>AutolistRecalculate<cr>")
 
       -- cycle list types with dot-repeat
       vim.keymap.set("n", "<leader>cn", require("autolist").cycle_next_dr, { expr = true })
@@ -40,27 +40,93 @@ return {
     version = "*", -- recommended, use latest release instead of latest commit
     lazy = true,
     enabled = not vim.env.SSH_TTY,
-    event = {
-      "BufReadPre " .. vim.fn.expand("~") .. "/obsidian-vault/",
-      "BufNewFile " .. vim.fn.expand("~") .. "/obsidian-vault",
-    },
+    ft = { "markdown" },
+    -- event = {
+    --   "BufReadPre " .. vim.fn.expand("~") .. "/obsidian-vault/",
+    --   "BufNewFile " .. vim.fn.expand("~") .. "/obsidian-vault",
+    -- },
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
     keys = {
-      { "<leader>on", "<cmd>ObsidianNew<CR>", noremap = true, silent = true, desc = "Obsidian New Note" , ft = {"markdown"}},
-      { "<leader>of", "<cmd>ObsidianQuickSwitch<CR>", noremap = true, silent = true, desc = "Obsidian Find notes" , ft = {"markdown"}},
-      { "<leader>og", "<cmd>ObsidianSearch<CR>", noremap = true, silent = true, desc = "Obsidian Grep notes" , ft = {"markdown"}},
-      { "<leader>ol", "<cmd>ObsidianLinks<CR>", noremap = true, silent = true, desc = "Obsidian Links" , ft = {"markdown"}},
-      { "<leader>oL", "<cmd>ObsidianBacklinks<CR>", noremap = true, silent = true, desc = "Obsidian Backlinks" , ft = {"markdown"}},
-      { "<leader>ot", "<cmd>ObsidianTags<cr>", noremap = true, silent = true, desc = "Obsidian Tags" , ft = {"markdown"}},
-      { "<leader>oT", "<cmd>ObsidianTOC<cr>", noremap = true, silent = true, desc = "Obsidian TOC" , ft = {"markdown"}},
+      {
+        "<leader>on",
+        "<cmd>Obsidian new<CR>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian New Note",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>oN",
+        "<cmd>Obsidian rename<CR>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian Rename Note",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>of",
+        "<cmd>Obsidian quick_switch<CR>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian Find notes",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>og",
+        "<cmd>Obsidian search<CR>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian Grep notes",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>ol",
+        "<cmd>Obsidian links<CR>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian Links",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>oL",
+        "<cmd>Obsidian backlinks<CR>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian Backlinks",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>ot",
+        "<cmd>Obsidian tags<cr>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian Tags",
+        ft = { "markdown" },
+      },
+      {
+        "<leader>oT",
+        "<cmd>Obsidian toc<cr>",
+        noremap = true,
+        silent = true,
+        desc = "Obsidian TOC",
+        ft = { "markdown" },
+      },
     },
     opts = {
-      completion = {
-        nvim_cmp = false,
-        blink = true,
+      callbacks = {
+        enter_note = function(note)
+          vim.keymap.set("n", "<leader><CR>", require("obsidian.api").smart_action, {
+            buffer = true,
+            desc = "Toggle checkbox",
+          })
+        end,
       },
+      -- completion = {
+      --   nvim_cmp = false,
+      --   blink = true,
+      -- },
       ui = {
         enable = false,
       },
@@ -71,6 +137,7 @@ return {
           path = vim.fn.expand("~") .. "/obsidian-vault",
         },
       },
+      new_notes_location = "current_dir",
       notes_subdir = "notes",
       daily_notes = {
         folder = "dailies",

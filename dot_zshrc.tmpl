@@ -191,8 +191,12 @@ export BAT_THEME="ansi"
 # Completion
 # =====================================
 
-CUSTOM_PATHS=($HOME/zsh_completions $HOME/zsh_functions)
+#CUSTOM_PATHS=($HOME/zsh_completions $HOME/zsh_functions)
+CUSTOM_PATHS=($HOME/zsh_functions)
 typeset -U fpath=($CUSTOM_PATHS $fpath)
+if type brew &>/dev/null; then
+  fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
+fi
 {{- if (contains "linkedin" .chezmoi.fqdnHostname) }}
 # fpath=("/usr/local/linkedin/etc/zsh" "/export/content/linkedin/etc/zsh" $fpath)
 {{- end }}

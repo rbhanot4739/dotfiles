@@ -31,7 +31,7 @@ vim.api.nvim_create_autocmd("User", {
 })
 
 local disabled_dirs = {
-  vim.fn.expand("~") .. "/development/personal/self-learning/python-common/DSA",
+  vim.fn.expand("~") .. "/development/personal/self-learning/python-common/dsa",
 }
 
 local function is_disabled_dir(bufnr)

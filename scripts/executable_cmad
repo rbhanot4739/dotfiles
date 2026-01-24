@@ -5,6 +5,7 @@ files_to_add=(
    ~/.config/atuin
    ~/Brewfile
    ~/Brewfile.*
+    ~/docker_install_linux.sh
     ~/.config/cspell.json
     ~/.config/fd
     ~/.config/gh/config.yml

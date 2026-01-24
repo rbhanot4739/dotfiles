@@ -8,7 +8,7 @@ git:
     autoWrapCommitMessage: true
     autoWrapWidth: 100
   branchPrefix: "rbhanot/"
-  branchLogCmd: "git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'"
+  branchLogCmd: "git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(red)%d %C(auto)%s %C(green)(%ar) %C(bold blue)[%al]'"
 gui:
   theme:
     selectedLineBgColor:

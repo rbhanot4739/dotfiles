@@ -26,6 +26,20 @@ if [[ ! -d "$HOME/nvim-macos-arm64" ]]; then
   tar -xf ~/nvim-macos-arm64.tar.gz -C ~/
 fi
 
+# ======================================================
+# Setup docker
+# ======================================================
+# Create CLI plugin directory
+mkdir -p ~/.docker/cli-plugins
+
+# Symlink Docker plugins (allows 'docker compose' and 'docker buildx' to work)
+# We use 'ln -sfn' to overwrite any existing broken links/files
+if command -v brew >/dev/null 2>&1; then
+  BREW_PREFIX=$(brew --prefix)
+  ln -sfn "$BREW_PREFIX/opt/docker-compose/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
+  ln -sfn "$BREW_PREFIX/opt/docker-buildx/bin/docker-buildx" ~/.docker/cli-plugins/docker-buildx
+fi
+
 {{- end }}
 
 # ======================================================
@@ -55,6 +69,22 @@ brew bundle --file "$HOME/Brewfile" --no-upgrade
 if [[ -f "$HOME/Brewfile.linux" ]]; then
   brew bundle --file "$HOME/Brewfile.linux" --no-upgrade
 fi
+
+# ======================================================
+# Setup docker
+# ======================================================
+if ! command -v docker >/dev/null 2>&1; then
+  if [[ -f "$HOME/docker_install_linux.sh" ]]; then
+    echo "Docker not found. Running installation script..."
+    bash "$HOME/docker_install_linux.sh"
+  else
+    echo "Warning: ~/docker_install_linux.sh not found. Skipping Docker install."
+  fi
+fi
+
+# ======================================================
+# Install Neovim Nightly
+# ======================================================
 if [[ ! -d "$HOME/nvim-linux-x86_64" ]]; then
   # install nightly nvim
   curl -L -o ~/nvim-linux.tar.gz https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.tar.gz
