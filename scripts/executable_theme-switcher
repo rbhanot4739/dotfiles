@@ -14,7 +14,8 @@ if [[ -f "$GHOSTTY_TEMPLATE" && -f "$GHOSTTY_COLORS" ]]; then
 fi
 
 # Update neovim load_colorscheme
-nvr --serverlist | xargs -I {} nvr --servername {} -c "lua Load_colorscheme();" 
+# nvr --serverlist | xargs -I {} nvr --servername {} -c "lua Load_colorscheme();" 
+nvr --serverlist | xargs -I {} nvr --servername {} --remote-send '<Esc>:lua Load_colorscheme()<CR>'
 
 # Update tmux theme
 if [[ -n $TMUX ]]; then

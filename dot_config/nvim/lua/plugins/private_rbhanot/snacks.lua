@@ -56,8 +56,8 @@ local function switch_to_grep(picker, _)
     if picker_type == "buffers" then
       snacks.picker.grep_buffers({ search = pattern })
     else
-      local grep_picker = snacks.git.get_root() and "git_grep" or "grep"
-      snacks.picker(grep_picker, { cwd = cwd, search = pattern })
+      -- local grep_picker = snacks.git.get_root() and "git_grep" or "grep"
+      snacks.picker("grep", { cwd = cwd, search = pattern })
     end
     M.grep_alt_picker = picker_type
   end
@@ -238,13 +238,13 @@ return {
       end,
       desc = "Explorer Snacks (cwd)",
     },
-    {
-      "<leader>fa",
-      function()
-        Snacks.picker.files({ ignored = true, cwd = vim.fn.expand("%:p:h") })
-      end,
-      desc = "Find adjacent files",
-    },
+    -- {
+    --   "<leader>fa",
+    --   function()
+    --     Snacks.picker.files({ ignored = true, cwd = vim.fn.expand("%:p:h") })
+    --   end,
+    --   desc = "Find adjacent files",
+    -- },
     {
       "<leader>fP",
       function()
@@ -256,13 +256,13 @@ return {
       end,
       desc = "Find Plugin files",
     },
-    {
-      "<leader>sa",
-      function()
-        Snacks.picker.grep({ ignored = true, cwd = vim.fn.expand("%:p:h") })
-      end,
-      desc = "Grep adjacent files",
-    },
+    -- {
+    --   "<leader>sa",
+    --   function()
+    --     Snacks.picker.grep({ ignored = true, cwd = vim.fn.expand("%:p:h") })
+    --   end,
+    --   desc = "Grep adjacent files",
+    -- },
     {
       "<leader>sb",
       function()
@@ -339,7 +339,7 @@ return {
     {
       "<leader>gb",
       function()
-        Snacks.picker.git_branches({ layout = "ivy" })
+        Snacks.picker.git_branches()
       end,
       desc = "Git branches",
     },
@@ -371,10 +371,6 @@ return {
               vim.fn.setreg("+", url)
             end
           end
-          -- if link_type == "master" then
-          --   opts["what"] = "branch"
-          --   opts["branch"] = "master"
-          -- end
           Snacks.gitbrowse.open(opts)
           return l_url
         end
@@ -460,22 +456,6 @@ return {
       ft = "snacks_terminal",
       desc = "Toggle terminal",
     },
-    -- {
-    --   "<leader>uN",
-    --   function()
-    --     Snacks.toggle({
-    --       name = "NES and inline_completion",
-    --       get = function()
-    --         return vim.g.sidekick_nes == true
-    --       end,
-    --       set = function(state)
-    --         vim.g.sidekick_nes = state
-    --         vim.lsp.inline_completion.enable(state)
-    --       end,
-    --     })
-    --   end,
-    --   desc = "Toggle NES and inline completion",
-    -- },
   },
   opts = {
     -- explorer = { enabled = false },
@@ -493,6 +473,49 @@ return {
         focus_to_cwd = function(picker, _)
           picker:set_cwd(vim.uv.cwd())
           picker:find()
+        end,
+        focus_to_file_dir = function(picker, _)
+          local bufnr = picker.opts.buf or vim.fn.bufnr("#")
+          local file_path = vim.api.nvim_buf_get_name(bufnr)
+          if file_path == "" then
+            file_path = vim.fn.bufname("#")
+          end
+          local file_dir = vim.fn.fnamemodify(file_path, ":p:h")
+          if file_dir and file_dir ~= "" and file_dir ~= "." then
+            local picker_type = picker.opts.source
+            local search = picker.input.filter.search or picker.input.filter.pattern or ""
+            picker:close()
+            if picker_type == "files" or picker_type == "smart" then
+              require("snacks").picker.files({ cwd = file_dir, pattern = search })
+            elseif picker_type == "grep" or picker_type == "git_grep" or picker_type == "grep_word" then
+              require("snacks").picker.grep({ cwd = file_dir, search = search })
+            end
+          end
+        end,
+        yank_path = function(picker, items)
+          local paths = {}
+          local selected = picker:selected()
+          if #selected > 0 then
+            -- Use selected items
+            for _, item in ipairs(selected) do
+              local path = item.file or item.text or ""
+              if path ~= "" then
+                table.insert(paths, path)
+              end
+            end
+          else
+            -- No selection, use current item
+            local path = items.file or items.text or ""
+            if path ~= "" then
+              table.insert(paths, path)
+            end
+          end
+
+          if #paths > 0 then
+            local path_str = table.concat(paths, "\n")
+            vim.fn.setreg("+", path_str)
+            Snacks.notify("Yanked " .. #paths .. " path(s)", { title = "Picker" })
+          end
         end,
       },
       ---@class snacks.picker.previewers.Config
@@ -571,6 +594,9 @@ return {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
                 ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-down>"] = { "focus_to_file_dir", desc = "Focus to file's dir", mode = { "i", "n" } },
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
@@ -581,6 +607,9 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
@@ -590,6 +619,7 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
@@ -599,6 +629,7 @@ return {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
@@ -617,6 +648,9 @@ return {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to grep", mode = { "i", "n" } },
                 ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-down>"] = { "focus_to_file_dir", desc = "Focus to file's dir", mode = { "i", "n" } },
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
@@ -629,11 +663,16 @@ return {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
                 ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-down>"] = { "focus_to_file_dir", desc = "Focus to file's dir", mode = { "i", "n" } },
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
         },
         grep_word = {
+          args = { "-w" },
+          word_grep = true,
           toggles = {
             word_grep = "w",
           },
@@ -661,17 +700,25 @@ return {
             input = {
               keys = {
                 ["<C-k>"] = { "word_grep", desc = "toggle word boundary search", mode = { "i", "n" } },
+                ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-down>"] = { "focus_to_file_dir", desc = "Focus to file's dir", mode = { "i", "n" } },
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
         },
         git_grep = {
+          args = { "-i" },
           exclude = exclude_patterns,
           win = {
             input = {
               keys = {
                 ["<c-k>"] = { "switch_grep_files", desc = "Switch to files", mode = { "i", "n" } },
                 ["<m-up>"] = { "cd_up", desc = "cd_up", mode = { "i", "n" } },
+                ["<m-down>"] = { "focus_to_file_dir", desc = "Focus to file's dir", mode = { "i", "n" } },
+                ["."] = { "focus_to_cwd", desc = "Focus cwd", mode = { "n" } },
+                ["<c-y>"] = { "yank_path", desc = "Yank path", mode = { "i", "n" } },
               },
             },
           },
@@ -717,10 +764,59 @@ return {
             },
           },
         },
+        gh_diff = {
+          auto_close = false,
+          focus = "preview",
+          layout = {
+            preset = "right",
+            -- hidden = { "preview" },
+          },
+          win = {
+            preview = {
+              keys = {
+                ["<tab>"] = { "list_down" },
+                ["<s-tab>"] = { "list_up" },
+              },
+            },
+          },
+        },
+        gh_pr = {
+          win = {
+            preview = {
+              keys = {
+                ["<tab>"] = { "list_down" },
+                ["<s-tab>"] = { "list_up" },
+              },
+            },
+          },
+        },
+        git_diff = {
+          auto_close = false,
+          focus = "preview",
+          layout = {
+            preset = "right",
+            -- hidden = { "preview" },
+          },
+          win = {
+            preview = {
+              keys = {
+                ["<tab>"] = { "list_down" },
+                ["<s-tab>"] = { "list_up" },
+              },
+            },
+          },
+        },
         git_log = {
+          -- layout = {
+          --   preset = "vertical",
+          --   layout = {
+          --     position = "bottom",
+          --   },
+          -- },
           toggles = {
-            current_file = "cf",
-            current_line = "cl",
+            current_file = "F",
+            current_line = "L",
+            follow = false,
           },
           confirm = function(_, item)
             local commit = item.commit
@@ -741,15 +837,15 @@ return {
             switch_mode = function(picker, _)
               if not picker.opts["current_file"] and not picker.opts["current_line"] then
                 picker.opts["current_line"] = true
-                -- picker.opts["follow"] = false
+                picker.opts["follow"] = true
               elseif picker.opts["current_line"] then
                 picker.opts["current_line"] = false
                 picker.opts["current_file"] = true
-                -- picker.opts["follow"] = false
+                picker.opts["follow"] = true
               else
                 picker.opts["current_line"] = false
                 picker.opts["current_file"] = false
-                -- picker.opts["follow"] = true
+                picker.opts["follow"] = true
               end
               picker:find()
             end,

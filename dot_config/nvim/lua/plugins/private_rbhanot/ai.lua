@@ -4,7 +4,7 @@ return {
     opts = {
       cli = {
         mux = {
-          enabled = false,
+          enabled = true,
           backend = "tmux", -- or "tmux"
         },
       },

@@ -55,8 +55,21 @@ local function get_colorscheme()
 end
 
 function Load_colorscheme()
-  vim.cmd("colorscheme " .. get_colorscheme())
+  -- Don't try to load colorscheme during shutdown
+  if vim.v.exiting ~= vim.NIL then
+    return
+  end
+
+  local theme = get_colorscheme()
+  local ok, err = pcall(vim.cmd, "colorscheme " .. theme)
+  if not ok then
+    vim.notify("Failed to load colorscheme: " .. theme, vim.log.levels.WARN)
+  end
 end
+
+-- function Load_colorscheme()
+--   vim.cmd("colorscheme " .. get_colorscheme())
+-- end
 
 require("lazy").setup({
 
