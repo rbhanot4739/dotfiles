@@ -26,37 +26,18 @@ return {
         desc = "Sidekick Cursor Toggle",
       },
       {
-        "<leader>ao",
+        "<leader>aC",
         function()
-          require("sidekick.cli").toggle({ name = "opencode", focus = true })
+          require("sidekick.cli").toggle({ name = "claude", focus = true })
         end,
-        desc = "Sidekick Opencode Toggle",
+        desc = "Sidekick Claude Code Toggle",
       },
     },
   },
 
   {
-    "zbirenbaum/copilot.lua",
-    enable = false,
-    opts = {
-      suggestion = {
-        enabled = true,
-        keymap = {
-          accept = "<S-cr>",
-        },
-      },
-      filetypes = {
-        yaml = false,
-        markdown = false,
-        help = false,
-        hgcommit = false,
-        svn = false,
-        cvs = false,
-      },
-    },
-  },
-  {
     "NickvanDyke/opencode.nvim",
+    enabled = false,
     dependencies = { "folke/snacks.nvim" },
     ---@type opencode.Config
     opts = {

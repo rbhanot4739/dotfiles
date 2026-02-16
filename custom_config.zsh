@@ -220,9 +220,28 @@ if command -v bat &>/dev/null; then
 
   unalias cat 2>/dev/null
   cat() {
+    # Check if output is to terminal
     if [[ -t 1 ]]; then
-      command bat --style=snip --color=always --paging=never "$@"
+      # Check if any argument is a markdown file
+      local has_markdown=false
+      for arg in "$@"; do
+        # Skip flags/options (starting with -)
+        [[ "$arg" == -* ]] && continue
+        # Check if file exists and has markdown extension
+        if [[ -f "$arg" && "$arg" =~ \.(md|markdown|mdc)$ ]]; then
+          has_markdown=true
+          break
+        fi
+      done
+
+      # Use glow for markdown, bat for everything else
+      if [[ "$has_markdown" == true ]] && command -v glow &>/dev/null; then
+        command glow -p "$@"
+      else
+        command bat --style=snip --color=always --paging=never "$@"
+      fi
     else
+      # Non-interactive: use plain bat
       command bat --style=plain --color=never --paging=never "$@"
     fi
   }

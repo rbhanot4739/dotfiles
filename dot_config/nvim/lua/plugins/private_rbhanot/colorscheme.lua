@@ -15,6 +15,10 @@ return {
     },
   },
   {
+    "rose-pine/neovim",
+    lazy = true,
+  },
+  {
     "EdenEast/nightfox.nvim",
     lazy = true,
     opts = {
@@ -43,6 +47,7 @@ return {
   },
   {
     "sainnhe/gruvbox-material",
+    enabled = false,
     lazy = true,
     config = function()
       vim.g.gruvbox_material_enable_italic = 1

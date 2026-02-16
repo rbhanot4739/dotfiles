@@ -5,9 +5,9 @@ prSections:
 
 - title: For Review (Autobuild)
   filters: >-
-    is:open review-requested:@me
-    repo:linkedin-multiproduct/autobuild
-    repo:linkedin-multiproduct/lipy-autobuild-db
+    is:open review-requested:@me 
+    repo:linkedin-multiproduct/autobuild 
+    repo:linkedin-multiproduct/lipy-autobuild-db 
     repo:linkedin-multiproduct/lipy-autobuild-daemon-base
     repo:linkedin-multiproduct/lipy-autobuild-common
     repo:linkedin-multiproduct/build-orchestrator
@@ -75,100 +75,125 @@ defaults:
   refetchIntervalMinutes: 30
 keybindings:
   universal:
+    # Vim-like navigation
     - key: g
       name: open lazygit
-      command: cd {{.RepoPath}} && lazygit
+      command: >
+        cd {{.RepoPath}} && lazygit
+    - key: "ctrl+d"
+      name: scroll down half page
+      builtin: true
+    - key: "ctrl+u"
+      name: scroll up half page
+      builtin: true
 
   issues: []
 
   prs:
+    # Repository and editor access
     - key: n
       name: open repo in nvim
-      command: cd {{.RepoPath}} && nvim
+      command: >
+        cd {{.RepoPath}} && nvim
 
     - key: C
-      name: checkout & review in nvim
-      command: cd {{.RepoPath}} && gh pr checkout {{.PrNumber}} && tmux new-window -c {{.RepoPath}} 'nvim'
+      name: review pr in nvim
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+        nvim -c ":silent Octo pr edit {{.PrNumber}}"'
 
+    # View PR diffs (side-by-side with delta)
     - key: d
       name: view diff (side-by-side)
-      command: cd {{.RepoPath}} && gh pr diff {{.PrNumber}} | delta --side-by-side --line-numbers --paging=always
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr diff {{.PrNumber}} |
+        delta --side-by-side --line-numbers --paging=always
 
-    - key: D
-      name: view diff (searchable)
-      command: cd {{.RepoPath}} && gh pr diff {{.PrNumber}} | less -R
-
+    # View changed files list
     - key: f
       name: view changed files
-      command: cd {{.RepoPath}} && gh pr diff {{.PrNumber}} --name-only | fzf --preview '/Users/rbhanot/.config/gh-dash/preview-pr-file.sh {{.RepoPath}} {{.PrNumber}} {}' --preview-window=right:70%:wrap
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr diff {{.PrNumber}} --name-only |
+        fzf --preview 'gh pr diff {{.PrNumber}} -- {} | delta --side-by-side'
+        --preview-window=right:70%
 
-    - key: F
-      name: view file diff (interactive)
-      command: cd {{.RepoPath}} && FILE=$(gh pr diff {{.PrNumber}} --name-only | fzf --preview '/Users/rbhanot/.config/gh-dash/preview-pr-file.sh {{.RepoPath}} {{.PrNumber}} {}') && [ -n "$FILE" ] && /Users/rbhanot/.config/gh-dash/preview-pr-file.sh {{.RepoPath}} {{.PrNumber}} "$FILE"
+    # View full diff in less (for searching with /)
+    - key: D
+      name: view full diff (searchable)
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr diff {{.PrNumber}} | less -R
 
+    # Checkout PR branch locally
     - key: c
       name: checkout pr branch
-      command: cd {{.RepoPath}} && gh pr checkout {{.PrNumber}}
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr checkout {{.PrNumber}}
 
+    # View PR in browser
     - key: b
       name: open pr in browser
-      command: gh pr view {{.PrNumber}} --web
+      command: >
+        gh pr view {{.PrNumber}} --web
 
+    # View PR checks/CI status
     - key: s
       name: view pr checks
-      command: cd {{.RepoPath}} && gh pr checks {{.PrNumber}}
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr checks {{.PrNumber}}
 
+    # View PR comments
     - key: m
       name: view pr comments
-      command: cd {{.RepoPath}} && gh pr view {{.PrNumber}} | less
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr view {{.PrNumber}} | less
 
+    # View specific file diff
+    - key: F
+      name: view file diff (interactive)
+      command: >
+        cd {{.RepoPath}} &&
+        FILE=$(gh pr diff {{.PrNumber}} --name-only | fzf) &&
+        gh pr diff {{.PrNumber}} -- "$FILE" |
+        delta --side-by-side --line-numbers --paging=always
+
+    # Approve PR
     - key: A
       name: approve pr
-      command: cd {{.RepoPath}} && gh pr review {{.PrNumber}} --approve
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr review {{.PrNumber}} --approve
 
+    # Request changes
     - key: R
       name: request changes
-      command: cd {{.RepoPath}} && gh pr review {{.PrNumber}} --request-changes
-
-    - key: a
-      name: add general comment
-      command: cd {{.RepoPath}} && gh pr comment {{.PrNumber}}
-
-    - key: l
-      name: add line comment (interactive)
-      command: |
+      command: >
         cd {{.RepoPath}} &&
-        FILE=$(gh pr diff {{.PrNumber}} --name-only | fzf --prompt="Select file: ") &&
-        [ -n "$FILE" ] &&
-        echo "Enter line number:" &&
-        read LINE &&
-        echo "Enter your comment:" &&
-        read COMMENT &&
-        gh pr review {{.PrNumber}} --comment --body "$COMMENT" -F <(echo "$FILE:$LINE")
+        gh pr review {{.PrNumber}} --request-changes
 
-    - key: r
-      name: start review (batch comments)
-      command: cd {{.RepoPath}} && gh pr checkout {{.PrNumber}} && echo "PR checked out. Use 'gh pr review {{.PrNumber}}' to submit review."
-
-    - key: v
-      name: view pr in vim
-      command: cd {{.RepoPath}} && gh pr checkout {{.PrNumber}} && git diff master...HEAD | nvim -R -c "set syntax=diff" -
+    # Add comment to PR
+    - key: a
+      name: add comment
+      command: >
+        cd {{.RepoPath}} &&
+        gh pr comment {{.PrNumber}}
 
   branches: []
-
 repoPaths:
   linkedin-multiproduct/*: "~/development/work/multiproducts/*"
-
 theme:
   ui:
     sectionsShowCount: true
     table:
       showSeparator: true
       compact: false
-
 pager:
   diff: delta --side-by-side --width ${FZF_PREVIEW_COLUMNS:-$COLUMNS}
-
 confirmQuit: false
 showAuthorIcons: true
 smartFilteringAtLaunch: false
