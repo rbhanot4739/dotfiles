@@ -1,18 +1,13 @@
-# Exclude files and directories that start with "test" anywhere in the repo
-test*
+# Safety net for test/backup files manually added to chezmoi source dir
+# (chezmoi add is already blocked by .chezmoiignore)
 **/test*
+**/*.bak
+**/*.tmp
+**/*.orig
+**/*.swp
 
-# Exclude Chezmoi-specific patterns for test files
-executable_test*
-**/executable_test*
-dot_test*
-**/dot_test*
-private_test*
-**/private_test*
-encrypted_test*
-**/encrypted_test*
-symlink_test*
-**/symlink_test*
+# Claude-generated logs directory
+logs/
 
 # Aider
 .aider.*

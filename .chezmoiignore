@@ -1,3 +1,10 @@
+# Ignore backup and temporary files globally
+**/*.bak
+**/*.test
+**/*.tmp
+**/*.orig
+**/*.swp
+
 {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
   .wezterm.lua
 {{- end }}
