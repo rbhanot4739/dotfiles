@@ -60,6 +60,23 @@ debounce_theme_change() {
 	DEBOUNCE_PID=$!
 }
 
+# Monitoring via native macOS DistributedNotificationCenter (fastest — zero latency)
+# theme-notify prints "dark" or "light" the instant the system posts
+# AppleInterfaceThemeChangedNotification, which is the same signal GUI apps use.
+monitor_with_notifications() {
+	local notifier="$HOME/.config/themes/bin/theme-notify"
+	last_theme=$(get_macos_theme)
+	echo "$last_theme" >"$LAST_THEME_FILE"
+	echo "Initial theme: $last_theme (notification mode)"
+
+	"$notifier" | while IFS= read -r current_theme; do
+		[[ -z "$current_theme" ]] && continue
+		[[ "$current_theme" == "$last_theme" ]] && continue
+		handle_theme_change "$last_theme" "$current_theme"
+		last_theme="$current_theme"
+	done
+}
+
 # Monitoring with fswatch (efficient)
 monitor_with_fswatch() {
 	# Get initial theme
@@ -68,7 +85,7 @@ monitor_with_fswatch() {
 	echo "Initial theme: $last_theme"
 
 	# Monitor preferences file
-	fswatch -o ~/Library/Preferences/.GlobalPreferences.plist | while read; do
+	fswatch -l 0.5 -o ~/Library/Preferences/.GlobalPreferences.plist | while read; do
 		current_theme=$(get_macos_theme)
 
 		if [ "$current_theme" != "$last_theme" ]; then
@@ -111,8 +128,10 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-# Check if fswatch is available
-if command -v fswatch &>/dev/null; then
+# Prefer native notifications → fswatch → polling
+if [[ -x "$HOME/.config/themes/bin/theme-notify" ]]; then
+	monitor_with_notifications
+elif command -v fswatch &>/dev/null; then
 	monitor_with_fswatch
 else
 	echo "Note: Install fswatch for more efficient monitoring: brew install fswatch"

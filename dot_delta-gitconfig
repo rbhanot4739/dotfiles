@@ -1,10 +1,10 @@
 ; vim: set filetype=gitconfig:
 
 [include]
-    path = ~/delta-themes.gitconfig
+    path = ~/.config/themes/generated/delta/delta-themes.gitconfig
 
 [delta]
-    features = dawnfox
+    features = rose-pine-dawn
     true-color = always
     ; side-by-side = true
     ; line-numbers-left-format = " |"

@@ -10,7 +10,7 @@ export PROMPT_MODE_FILE="$HOME/.tmux_session_mode"
 # Get all tmux sessions with attachment status
 get_tmux_sessions() {
   sess_cmd="tmux list-sessions -F '#S#{?session_attached, (attached),}' 2> /dev/null"
-  eval "$sess_cmd"
+  eval "$sess_cmd" || true
 }
 export -f get_tmux_sessions
 
@@ -228,7 +228,7 @@ fzf_binds='enter:accept-or-print-query,tab:down,shift-tab:up'
 # Theme configuration
 theme_opts=()
 read -r selected_theme _ < <(get-theme)
-theme_file="$HOME/fzf-themes/${selected_theme}.sh"
+theme_file="$HOME/.config/themes/generated/fzf/${selected_theme}.sh"
 
 if [[ -f "$theme_file" ]]; then
   set -o noglob
@@ -337,6 +337,8 @@ export -f tmux_session_from_dir
 tmux_attach_start() {
   local session="$1"
   local mode="$2"
+  # Strip the " (attached)" annotation appended by get_tmux_sessions display format
+  session="${session% (attached)}"
   local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
   local tmux_sessions=$(get_tmux_sessions)
 

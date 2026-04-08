@@ -5,33 +5,68 @@
 find_all_cmd="fd --ignore-file ~/.global_gitignore --follow ."
 find_files_cmd="$find_all_cmd --type file "
 find_dirs_cmd="$find_all_cmd --type directory "
-
-# default_header_opts="--header-first --header-border=bottom --header 'Press ? to toggle preview'"
-# default_binds='--bind "shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all,ctrl-v:become(nvim {}),?:toggle-preview"'
-# export FZF_DEFAULT_OPTS="--style full --info=inline-right --height 60% --margin 1,2 --layout=reverse $default_header_opts --border rounded --multi --cycle $default_binds"
-
-file_prev_opts="'bat --style=snip --color always {}' --preview-label='File Contents'  --preview-window right:50%"
-file_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))"'
-file_opts="--border-label='Fuzzy Files' --preview $file_prev_opts $file_binds"
-
-dir_prev_opts="'eza $eza_params {}' --preview-label=' Directory Contents '  --preview-window :down:20%:wrap"
-dir_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"'
-dir_opts="--border-label='Fuzzy Directories' --preview $dir_prev_opts $dir_binds"
-
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
 
-export FZF_CTRL_R_OPTS="$FZF_DEFAULT_OPTS --preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview'"
+# toggle_preview_opts="--bind '?:toggle-preview' --header 'Press ? to toggle preview' --header-first --header-border=bottom"
 
 # file search opts
+# file_prev_opts="'bat --style=snip --color always {}' --preview-label='File Contents'  --preview-window right:50%"
+# file_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))"'
+# file_opts="--border-label='Fuzzy Files' --preview $file_prev_opts $file_binds $toggle_preview_opts"
+toggle_preview_opts_arr=(
+--bind '?:toggle-preview'
+--header 'Press ? to toggle preview'
+--header-first
+--header-border=bottom
+)
+file_prev_opts_arr=(
+ --preview 'bat --style=snip --color always {}'
+ --preview-label 'File Contents'
+ --preview-window right:50%
+)
+file_binds_arr=(
+ --bind 'alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -tf -u --hidden && touch /tmp/fzf_hidden) || (fd -tf && rm -f /tmp/fzf_hidden))'
+)
+file_opts_arr=(
+ --border-label 'Fuzzy Files'
+ "${file_prev_opts_arr[@]}"
+"${toggle_preview_opts_arr[@]}"
+ "${file_binds_arr[@]}"
+)
+file_opts_str="${(j: :)${(@q)file_opts_arr}}"
 export FZF_CTRL_T_COMMAND="$find_files_cmd"
-export FZF_CTRL_T_OPTS="$FZF_DEFAULT_OPTS $file_opts"
+export FZF_CTRL_T_OPTS="${FZF_DEFAULT_OPTS} ${file_opts_str}"
+# export FZF_CTRL_T_OPTS="$FZF_DEFAULT_OPTS $file_opts"
 
 # dir search opts
+# dir_prev_opts="'eza $eza_params {}' --preview-label=' Directory Contents '  --preview-window :down:20%:wrap"
+# dir_binds='--bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"'
+# dir_opts="--border-label='Fuzzy Directories' --preview $dir_prev_opts $dir_binds $toggle_preview_opts"
+
+dir_prev_opts_arr=(
+  --preview "eza $eza_params {}"
+  --preview-label " Directory Contents "
+  --preview-window ":down:20%:wrap"
+)
+
+dir_binds_arr=(
+  --bind "alt-i:reload([ ! -f /tmp/fzf_hidden ] && (fd -td -u --hidden && touch /tmp/fzf_hidden) || (fd -td && rm -f /tmp/fzf_hidden))"
+)
+
+dir_opts_arr=(
+  --border-label "Fuzzy Directories"
+  "${dir_prev_opts_arr[@]}"
+  "${dir_binds_arr[@]}"
+  "${toggle_preview_opts_arr[@]}"
+)
+
+dir_opts_str="${(j: :)${(@q)dir_opts_arr}}"
 export FZF_ALT_C_COMMAND="$find_dirs_cmd"
-export FZF_ALT_C_OPTS="$FZF_DEFAULT_OPTS --walker-skip .git,node_modules,build $dir_opts"
+export FZF_ALT_C_OPTS="$FZF_DEFAULT_OPTS --walker-skip .git,node_modules,build $dir_opts_str"
 
+
+export FZF_CTRL_R_OPTS="$FZF_DEFAULT_OPTS --preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview'"
 export FZF_COMPLETION_TRIGGER=","
-
 
 _fzf_compgen_path() {
   [[ "$1" == "." ]] && eval "$find_all_cmd --strip-cwd-prefix=always" || eval "$find_all_cmd $1"
@@ -66,30 +101,56 @@ fzf() {
     --style full --info=inline-right --height 60% --margin 1,2 --layout=reverse
     --cycle
     --border rounded --multi --cycle
-    --header 'Press ? to toggle preview' --header-first --header-border=bottom
     --bind 'shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
-    # --bind 'shift-tab:deselect+up,tab:select+down,ctrl-space:toggle,ctrl-a:toggle-all'
     --bind 'ctrl-v:become(nvim {})'
-    --bind '?:toggle-preview'
   )
 
   # local background_mode selected_theme theme_file
   # Do not remove below line, theme_opts is returned by fzf-theme files
   local -a theme_opts
 
-  read -r selected_theme _ < <(get-theme)
-  theme_file="$HOME/fzf-themes/${selected_theme}.sh"
+  read -r selected_theme _bg_mode _ < <(get-theme)
+  local _gen_fzf="$HOME/.config/themes/generated/fzf"
 
-  if [[ -f "$theme_file" ]]; then
-    # Use 'noglob' to prevent Zsh from interpreting any characters
-    # in the theme file (like '#') as glob patterns.
+  if [[ -f "${_gen_fzf}/${selected_theme}-${_bg_mode}.sh" ]]; then
     set -o noglob
-    source "$theme_file"
+    source "${_gen_fzf}/${selected_theme}-${_bg_mode}.sh"
+    set +o noglob
+  elif [[ -f "${_gen_fzf}/${selected_theme}.sh" ]]; then
+    set -o noglob
+    source "${_gen_fzf}/${selected_theme}.sh"
     set +o noglob
   fi
 
   # Execute the real fzf command with all options combined.
   command fzf "${default_opts[@]}" "${theme_opts[@]}" "$@"
+}
+
+# some git helpers
+gbf() {
+  git branch | grep -v "^\*" | fzf "${toggle_preview_opts_arr[@]}" --preview "git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'" | xargs git switch
+}
+
+gbfa() {
+  git branch --all | grep -v "^\*" | fzf "${toggle_preview_opts_arr[@]}" --preview "git log --graph --all --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'" | xargs git switch
+}
+
+gwt() {
+    local selected selected_path
+    selected=$(
+        git worktree list --porcelain \
+        | awk '
+            /^worktree / { path=$2 }
+            /^branch / {
+              branch=$2; sub("^refs/heads/", "", branch);
+              print path "\t" branch
+            }
+        ' \
+        | fzf --delimiter=$'\t' --with-nth=2 --no-preview
+    ) || return
+
+    selected_path=${selected%%$'\t'*}
+    cd "$selected_path" || return
 }
 
 _fzf_comprun() {

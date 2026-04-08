@@ -4,6 +4,7 @@ theme_opts=(
     --color=bg:#f6f2ee              # Main background
     --color=bg+:#e7d2be             # Selected item background
     --color=fg:#3d2b5a              # Default text
+    --color=fg+:#3d2b5a             # Default text
     --color=hl:#287980              # Search highlights
     --color=hl+:#b86e28             # Highlights on selected
     --color=border:#287980          # Window borders

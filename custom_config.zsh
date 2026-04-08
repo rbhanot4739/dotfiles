@@ -127,8 +127,10 @@ alias man='fman'
 alias vims="nvim_conf_switcher"
 alias tm='tmux_sessions'
 alias ca='cursor-agent'
+alias cc='claude'
 alias oc='opencode'
 alias py="python3"
+alias tssh='tmux-create-panes -s -c ssh'
 
 # ===================================
 # Functions
@@ -139,7 +141,7 @@ alias py="python3"
 if command -v eza &>/dev/null; then
   unalias ls 2>/dev/null
   ls() {
-    command eza -I '*pyc*' "${eza_params[@]}" "$@"
+    command eza -I '*pyc*' ${eza_params:+"${eza_params[@]}"} "${@:-.}"
   }
 
   lsa() {
@@ -236,7 +238,7 @@ if command -v bat &>/dev/null; then
 
       # Use glow for markdown, bat for everything else
       if [[ "$has_markdown" == true ]] && command -v glow &>/dev/null; then
-        command glow -p "$@"
+        glow "$@"
       else
         command bat --style=snip --color=always --paging=never "$@"
       fi
@@ -252,27 +254,14 @@ if command -v bat &>/dev/null; then
   }
 fi
 
+unalias glow 2>/dev/null
+glow() {
+  PAGER="less -R" command glow --style "$(cat ~/.bg_mode 2>/dev/null || echo dark)" "$@"
+}
+
 unalias gg 2>/dev/null
 gg() {
-  read -r theme bg_mode < <(get-theme)
-  base="$HOME/.config/lazygit/config.yml"
-
-  declare -A special_themes
-  special_themes=(
-    ["everforest"]=1
-    ["gruvbox"]=1
-  )
-
-  if [[ -v special_themes["$theme"] ]]; then
-    theme="${theme}-${bg_mode}"
-  fi
-
-  theme_cfg="$HOME/.config/lazygit/${theme}.yml"
-  if [ -f "$theme_cfg" ]; then
-    LG_CONFIG_FILE="$base,$theme_cfg" lazygit
-  else
-    LG_CONFIG_FILE="$base" lazygit
-  fi
+  lazygit
 }
 # ==== zshrc* edit  ====
 ee() {
@@ -312,7 +301,9 @@ zle -N expand_alias_or_space
 
 # Theme switcher
 set-theme-widget() {
-  set-theme
+  zle -I
+  # set-theme </dev/tty
+  theme-list </dev/tty
   zle reset-prompt
 }
 zle -N set-theme-widget

@@ -81,11 +81,6 @@ fi
 # Key Bindings
 # =====================================
 
-bindkey '^A' beginning-of-line
-bindkey '^E' end-of-line
-bindkey "" forward-word
-bindkey "" backward-word
-
 # Plugins (Zinit)
 # =====================================
 
@@ -107,18 +102,33 @@ ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
 
 # zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-zinit ice wait"1" lucid blockf
+zinit ice wait"1" lucid blockf \
+    atload'bindkey -M vicmd "k" history-substring-search-up
+           bindkey -M vicmd "j" history-substring-search-down
+           bindkey -M vicmd "^[[A" history-substring-search-up
+           bindkey -M viins "^[[A" history-substring-search-up
+           bindkey -M emacs "^[[A" history-substring-search-up
+           bindkey -M vicmd "^[[B" history-substring-search-down
+           bindkey -M viins "^[[B" history-substring-search-down
+           bindkey -M emacs "^[[B" history-substring-search-down'
 zinit light zsh-users/zsh-history-substring-search
 
-# Fix: Add missing arrow key bindings for history substring search
-bindkey -M vicmd 'k' history-substring-search-up
-bindkey -M vicmd 'j' history-substring-search-down
-bindkey -M vicmd '^[[A' history-substring-search-up
-bindkey -M viins '^[[A' history-substring-search-up
-bindkey -M vicmd '^[[B' history-substring-search-down
-bindkey -M viins '^[[B' history-substring-search-down
-bindkey '^[[A' history-substring-search-up            # For Emacs mode (non-vi)
-bindkey '^[[B' history-substring-search-down
+function zvm_after_lazy_keybindings() {
+  # Line movement (Ctrl+A / Ctrl+E).
+  bindkey -M emacs '^A' beginning-of-line                    # Ctrl+A
+  bindkey -M emacs '^E' end-of-line                          # Ctrl+E
+  bindkey -M viins '^A' beginning-of-line                    # Ctrl+A
+  bindkey -M viins '^E' end-of-line                          # Ctrl+E
+  bindkey -M vicmd '^A' beginning-of-line                    # Ctrl+A
+  bindkey -M vicmd '^E' end-of-line                          # Ctrl+E
+
+  # Word movement (Ctrl+B / Ctrl+W).
+  bindkey -M emacs '^B' backward-word                        # Ctrl+B
+  bindkey -M emacs '^W' forward-word                         # Ctrl+W
+  bindkey -M viins '^B' backward-word                        # Ctrl+B
+  bindkey -M viins '^W' forward-word                         # Ctrl+W
+
+}
 
 zinit ice wait"1" lucid
 zinit light zdharma-continuum/fast-syntax-highlighting
@@ -140,7 +150,7 @@ fi
 
 # setup directory colors
 {{- if (eq .chezmoi.os "darwin") }}
-{{/* on Mac the command is gdircolors, on Linux it's dircolors */}}
+# on Mac the command is gdircolors, on Linux it's dircolors
 [[ $(command -v gdircolors) ]] && eval $(gdircolors -b)
 {{- else }}
 [[ $(command -v dircolors) ]] && eval $(dircolors -b)
@@ -250,10 +260,12 @@ if command -v zoxide >/dev/null; then
 fi
 
 {{- if eq .chezmoi.os "darwin" }}
+{{/*
 # Start theme-monitor in tmux if not already running
 if [[ -z "$TMUX" ]] && ! tmux has-session -t themewatcher 2>/dev/null; then
   tmux new-session -d -s themewatcher "$HOME/scripts/theme-monitor"
 fi
+*/}}
 {{- end }}
 
 # zprof
