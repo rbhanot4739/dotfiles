@@ -2,9 +2,9 @@
 
 [include]
     path = ~/.config/themes/generated/delta/delta-themes.gitconfig
+    path = ~/.config/themes/generated/delta/delta-active.gitconfig
 
 [delta]
-    features = rose-pine-dawn
     true-color = always
     ; side-by-side = true
     ; line-numbers-left-format = " |"

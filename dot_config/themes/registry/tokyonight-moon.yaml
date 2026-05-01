@@ -1,0 +1,97 @@
+name: tokyonight-moon
+mode: dark
+description: "Tokyo Night Moon - softer dark"
+
+colors:
+  background:    "#222436"
+  foreground:    "#c8d3f5"
+  cursor:        "#ffcc00"
+  selection_bg:  "#2d3f76"
+  selection_fg:  "#c8d3f5"
+  black:         "#3d4266"
+  red:           "#ff757f"
+  green:         "#c3e88d"
+  yellow:        "#ffc777"
+  blue:          "#82aaff"
+  magenta:       "#c099ff"
+  cyan:          "#86e1fc"
+  white:         "#828bb8"
+  bright_black:  "#444a73"
+  bright_red:    "#ff8d94"
+  bright_green:  "#c7fb6d"
+  bright_yellow: "#ffd8ab"
+  bright_blue:   "#9ab8ff"
+  bright_magenta: "#caabff"
+  bright_cyan:   "#b2ebff"
+  bright_white:  "#c8d3f5"
+
+terminal:
+  wezterm_scheme: "tokyonight_moon"
+  ghostty_uses_palette: true
+
+tmux:
+  default_bg:           "#222436"
+  default_fg:           "#828bb8"
+  active_pane_border:   "#82aaff"
+  inactive_pane_border: "#3b4261"
+  left1_bg:             "#82aaff"
+  left1_fg:             "#222436"
+  copy_mode_bg:         "#82aaff"
+  copy_mode_fg:         "#222436"
+  window_curr_bg:       "#82aaff"
+  window_curr_fg:       "#222436"
+  window_bg:            "#353f5e"
+  window_fg:            "#c8d3f5"
+  sync_color:           "#ff757f"
+  prefix_indicator:     "#c099ff"
+  right1_bg:            "#86e1fc"
+  right1_fg:            "#222436"
+  right2_bg:            "#c099ff"
+  right2_fg:            "#222436"
+
+fzf:
+  bg:        "#1e2030"
+  bg_plus:   "#2d3f76"
+  fg:        "#c8d3f5"
+  fg_plus:   "#c8d3f5"
+  hl:        "#65bcff"
+  hl_plus:   "#ff966c"
+  border:    "#589ed7"
+  gutter:    "#1e2030"
+  header:    "#ff966c"
+  info:      "#545c7e"
+  label:     "#545c7e"
+  marker:    "#ff007c"
+  pointer:   "#ff007c"
+  prompt:    "#65bcff"
+  query_fg:  "#c8d3f5"
+  scrollbar: "#589ed7"
+  separator: "#ff966c"
+  spinner:   "#ff007c"
+
+delta:
+  section_name:                  "tokyonight-moon"
+  minus_style:                   'syntax "#3a273a"'
+  minus_non_emph_style:          'syntax "#3a273a"'
+  minus_emph_style:              'syntax "#6b2e43"'
+  minus_empty_line_marker_style: 'syntax "#3a273a"'
+  line_numbers_minus_style:      '"#e26a75"'
+  plus_style:                    'syntax "#273849"'
+  plus_non_emph_style:           'syntax "#273849"'
+  plus_emph_style:               'syntax "#305f6f"'
+  plus_empty_line_marker_style:  'syntax "#273849"'
+  line_numbers_plus_style:       '"#b8db87"'
+  line_numbers_zero_style:       '"#3b4261"'
+
+lazygit:
+  active_border_color:         ["#ff966c", "bold"]
+  inactive_border_color:       ["#589ed7"]
+  searching_active_border:     ["#ff966c", "bold"]
+  options_text_color:          ["#82aaff"]
+  selected_line_bg_color:      ["#2d3f76"]
+  cherry_picked_commit_fg:     ["#82aaff"]
+  cherry_picked_commit_bg:     ["#c099ff"]
+  marked_base_commit_fg:       ["#82aaff"]
+  marked_base_commit_bg:       ["#ffc777"]
+  unstaged_changes_color:      ["#ff757f"]
+  default_fg_color:            ["#c8d3f5"]

@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Remove a theme: deletes registry YAML, cleans generated artifacts, regenerates aggregates
+# Usage: theme-remove <theme-name>
+set -euo pipefail
+
+THEMES_DIR="$HOME/.config/themes"
+REGISTRY="$THEMES_DIR/registry"
+GENERATED="$THEMES_DIR/generated"
+WEZTERM_COLORS_DIR="$HOME/.config/wezterm/colors"
+
+theme_name="${1:-}"
+[[ -z "$theme_name" ]] && { echo "Usage: theme-remove <theme-name>" >&2; exit 1; }
+
+yaml="$REGISTRY/${theme_name}.yaml"
+[[ -f "$yaml" ]] || { echo "Theme not found: $theme_name" >&2; exit 1; }
+
+mode=$(yq '.mode' "$yaml")
+
+# Warn if this is a currently active theme
+for bg in dark light; do
+  current=$(cat "$HOME/.theme_${bg}" 2>/dev/null | tr -d '[:space:]')
+  [[ "$current" == "$theme_name" ]] && echo "  Warning: '$theme_name' is your current $bg theme."
+done
+
+echo
+read -rsn1 -p "  Delete theme '$theme_name'? [y/N] " key
+echo
+if [[ "$key" == $'\e' ]]; then
+  exit 0
+elif [[ "${key,,}" != "y" ]]; then
+  echo "  Aborted."
+  exit 0
+fi
+
+# Delete registry YAML
+rm "$yaml"
+
+# Delete generated per-tool files
+if [[ "$mode" == "adaptive" ]]; then
+  for bg in dark light; do
+    rm -f "$GENERATED/fzf/${theme_name}-${bg}.sh"
+    rm -f "$GENERATED/tmux/${theme_name}-${bg}.conf"
+    rm -f "$GENERATED/ghostty/${theme_name}-${bg}.conf"
+    rm -f "$GENERATED/lazygit/${theme_name}-${bg}.yml"
+    rm -f "$WEZTERM_COLORS_DIR/${theme_name}-${bg}.toml"
+  done
+else
+  rm -f "$GENERATED/fzf/${theme_name}.sh"
+  rm -f "$GENERATED/tmux/${theme_name}.conf"
+  rm -f "$GENERATED/ghostty/${theme_name}-${mode}.conf"
+  rm -f "$GENERATED/lazygit/${theme_name}-${mode}.yml"
+  rm -f "$WEZTERM_COLORS_DIR/${theme_name}.toml"
+fi
+
+# Surgically remove the deleted theme from the two aggregated files.
+# Per-theme generated files were already deleted above; no full regeneration needed.
+DELTA_OUT="$GENERATED/delta/delta-themes.gitconfig"
+WEZTERM_THEMES_LUA="$HOME/.wezterm_themes.lua"
+
+# delta-themes.gitconfig: delete [delta "theme_name"] section and all its indented lines
+if [[ -f "$DELTA_OUT" ]]; then
+  awk -v t="$theme_name" '
+    /^\[delta / { in_s = ($0 == "[delta \"" t "\"]") }
+    !in_s { print }
+  ' "$DELTA_OUT" > "$DELTA_OUT.tmp" && mv "$DELTA_OUT.tmp" "$DELTA_OUT"
+fi
+
+# wezterm_themes.lua: delete the single line for this theme (single or adaptive)
+if [[ -f "$WEZTERM_THEMES_LUA" ]]; then
+  grep -v "^\s*\[\"${theme_name}\"\]" "$WEZTERM_THEMES_LUA" \
+    > "$WEZTERM_THEMES_LUA.tmp" && mv "$WEZTERM_THEMES_LUA.tmp" "$WEZTERM_THEMES_LUA"
+fi
+
+echo "  Removed: $theme_name"

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+themes_dir="$HOME/.config/themes"
+generator="$themes_dir/bin/theme-generate"
+
+if [[ ! -x "$generator" ]]; then
+  echo "[theme-generate] $generator not executable; skipping."
+  exit 0
+fi
+
+if [[ ! -d "$themes_dir/registry" ]]; then
+  echo "[theme-generate] $themes_dir/registry not found; skipping."
+  exit 0
+fi
+
+"$generator"
+echo "[theme-generate] Generated theme artifacts."

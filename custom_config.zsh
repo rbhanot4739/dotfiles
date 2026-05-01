@@ -126,8 +126,8 @@ alias s='fssh'
 alias man='fman'
 alias vims="nvim_conf_switcher"
 alias tm='tmux_sessions'
-alias ca='cursor-agent'
 alias cc='claude'
+alias ca='cursor-agent'
 alias oc='opencode'
 alias py="python3"
 alias tssh='tmux-create-panes -s -c ssh'
@@ -283,9 +283,9 @@ bind_widget() {
 zle -N cd_up_widget
 bind_widget cd_up_widget '^[[1;3A'
 
-# Tmux session switcher
-zle -N tm_widget
-bind_widget tm_widget '^[.'
+# Tmux session/pane switcher — mirrors tmux's M-space (no-prefix) binding
+zle -N tmux_switcher_widget
+bind_widget tmux_switcher_widget '^[ '
 
 # Expand alias or insert space
 # expand_alias_or_space() {

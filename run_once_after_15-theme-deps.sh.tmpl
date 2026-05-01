@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+if ! command -v brew >/dev/null 2>&1; then
+  echo "[theme-deps] Homebrew not found; skipping theme dependency install."
+  exit 0
+fi
+
+missing=()
+for formula in yq sd fswatch; do
+  if ! brew list --formula "$formula" >/dev/null 2>&1; then
+    missing+=("$formula")
+  fi
+done
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo "[theme-deps] Installing: ${missing[*]}"
+  brew install "${missing[@]}"
+fi
+
+if ! command -v nvr >/dev/null 2>&1; then
+  if command -v pip3 >/dev/null 2>&1; then
+    echo "[theme-deps] Installing neovim-remote (nvr) via pip3 --user"
+    pip3 install --user neovim-remote
+  else
+    echo "[theme-deps] pip3 not found; skipped neovim-remote install."
+  fi
+fi
+
+if ! command -v swiftc >/dev/null 2>&1; then
+  echo "[theme-deps] swiftc not found; install Xcode Command Line Tools."
+fi

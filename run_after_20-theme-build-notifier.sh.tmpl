@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+themes_dir="$HOME/.config/themes"
+swift_source="$themes_dir/bin/theme-notify.swift"
+notifier_bin="$themes_dir/bin/theme-notify"
+
+if [[ ! -f "$swift_source" ]]; then
+  echo "[theme-build] $swift_source not found; skipping notifier build."
+  exit 0
+fi
+
+if ! command -v swiftc >/dev/null 2>&1; then
+  echo "[theme-build] swiftc not found; skipping notifier build."
+  exit 0
+fi
+
+tmp_out="$(mktemp "${TMPDIR:-/tmp}/theme-notify.XXXXXX")"
+swiftc -framework Cocoa "$swift_source" -o "$tmp_out"
+install -m 0755 "$tmp_out" "$notifier_bin"
+rm -f "$tmp_out"
+echo "[theme-build] Built $notifier_bin"

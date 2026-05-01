@@ -1,0 +1,98 @@
+name: rose-pine-dawn
+mode: light
+description: "Rosé Pine Dawn — auto-imported from base16"
+
+colors:
+  background:      "#faf4ed"
+  foreground:      "#575279"
+  cursor:          "#1f2328"
+  selection_bg:    "#f2e9de"
+  selection_fg:    "#575279"
+  black:           "#a89e94"
+  red:             "#b4637a"
+  green:           "#286983"
+  yellow:          "#ea9d34"
+  blue:            "#907aa9"
+  magenta:         "#d7827e"
+  cyan:            "#56949f"
+  white:           "#575279"
+  bright_black:    "#9893a5"
+  bright_red:      "#b4637a"
+  bright_green:    "#286983"
+  bright_yellow:   "#ea9d34"
+  bright_blue:     "#907aa9"
+  bright_magenta:  "#d7827e"
+  bright_cyan:     "#56949f"
+  bright_white:    "#575279"
+
+terminal:
+  wezterm_scheme: "rose-pine-dawn"
+
+  ghostty_uses_palette: true
+
+tmux:
+  default_bg:           "#faf4ed"
+  default_fg:           "#797593"
+  active_pane_border:   "#907aa9"
+  inactive_pane_border: "#9893a5"
+  left1_bg:             "#907aa9"
+  left1_fg:             "#faf4ed"
+  copy_mode_bg:         "#907aa9"
+  copy_mode_fg:         "#faf4ed"
+  window_curr_bg:       "#907aa9"
+  window_curr_fg:       "#faf4ed"
+  window_bg:            "#e0d6dc"
+  window_fg:            "#797593"
+  sync_color:           "#b4637a"
+  prefix_indicator:     "#ea9d34"
+  right1_bg:            "#56949f"
+  right1_fg:            "#faf4ed"
+  right2_bg:            "#ea9d34"
+  right2_fg:            "#faf4ed"
+
+fzf:
+  bg:        "#faf4ed"
+  bg_plus:   "#e8ddd0"
+  fg:        "#575279"
+  fg_plus:   "#575279"
+  hl:        "#56949f"
+  hl_plus:   "#b4637a"
+  border:    "#9893a5"
+  gutter:    "#faf4ed"
+  header:    "#d7827e"
+  info:      "#9893a5"
+  label:     "#575279"
+  marker:    "#ea9d34"
+  pointer:   "#ea9d34"
+  prompt:    "#907aa9"
+  query_fg:  "#575279"
+  scrollbar: "#9893a5"
+  separator: "#d7827e"
+  spinner:   "#ea9d34"
+
+delta:
+  section_name:                  "rose-pine-dawn"
+  minus_style:                   'syntax "#efdedb"'
+  minus_non_emph_style:          'syntax "#efdedb"'
+  minus_emph_style:              'syntax "#e5c8ca"'
+  minus_empty_line_marker_style: 'syntax "#efdedb"'
+  line_numbers_minus_style:      '"#b4637a"'
+  plus_style:                    'syntax "#dadfdd"'
+  plus_non_emph_style:           'syntax "#dadfdd"'
+  plus_emph_style:               'syntax "#bbcacd"'
+  plus_empty_line_marker_style:  'syntax "#dadfdd"'
+  line_numbers_plus_style:       '"#286983"'
+  line_numbers_zero_style:       '"#9893a5"'
+
+lazygit:
+  active_border_color:         ["#d7827e", "bold"]
+  inactive_border_color:       ["#907aa9"]
+  searching_active_border:     ["#d7827e", "bold"]
+  options_text_color:          ["#907aa9"]
+  selected_line_bg_color:      ["#f2e9de"]
+  cherry_picked_commit_fg:     ["#907aa9"]
+  cherry_picked_commit_bg:     ["#ea9d34"]
+  marked_base_commit_fg:       ["#907aa9"]
+  marked_base_commit_bg:       ["#d7827e"]
+  unstaged_changes_color:      ["#b4637a"]
+  default_fg_color:            ["#575279"]

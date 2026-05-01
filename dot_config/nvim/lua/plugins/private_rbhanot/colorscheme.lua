@@ -15,6 +15,10 @@ return {
     },
   },
   {
+    "Shatur/neovim-ayu",
+    lazy = true,
+  },
+  {
     "rose-pine/neovim",
     lazy = true,
   },

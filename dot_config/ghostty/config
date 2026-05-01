@@ -1,36 +1,47 @@
 macos-titlebar-style = hidden
+macos-option-as-alt = true
 window-height = 60
 window-width = 180
-shell-integration-features = no-cursor,no-sudo,no-title
+link-url = true
+
+# Font
+font-family = JetBrains Mono
+font-size = 14
+font-feature = calt
+font-feature = liga
+
+# Shell integration
+# Available features: cursor, sudo, title
+#   cursor - changes cursor shape based on shell mode (e.g. block in normal, bar in insert)
+#   sudo   - preserves shell integration when running sudo commands
+#   title  - automatically sets terminal window title to current command/directory
+# All are disabled here intentionally; enable selectively as needed
+shell-integration-features = cursor,no-sudo,no-title
+
+# Mouse & clipboard
+mouse-hide-while-typing = true
+copy-on-select = clipboard
+
+# Scrollback
+scrollback-limit = 100000
+
+# Window behavior
+confirm-close-surface = true
+window-inherit-working-directory = true
+focus-follows-mouse = true
+
+# Clipboard
+clipboard-trim-trailing-spaces = true
 
 keybind = ctrl+one=goto_tab:1
 keybind = ctrl+two=goto_tab:2
 keybind = ctrl+three=goto_tab:3
 keybind = ctrl+four=goto_tab:4
 keybind = ctrl+five=goto_tab:5
-keybind = ctrl+|=new_split:right
+keybind = ctrl+\=new_split:right
 keybind = ctrl+-=new_split:down
 keybind = ctrl+shift+n=new_tab
 keybind = super+shift+comma=reload_config
-palette = 0=#b4b5b9
-palette = 1=#f52a65
-palette = 2=#587539
-palette = 3=#8c6c3e
-palette = 4=#2e7de9
-palette = 5=#9854f1
-palette = 6=#007197
-palette = 7=#6172b0
-palette = 8=#a1a6c5
-palette = 9=#ff4774
-palette = 10=#5c8524
-palette = 11=#a27629
-palette = 12=#358aff
-palette = 13=#a463ff
-palette = 14=#007ea8
-palette = 15=#3760bf
 
-background = #e1e2e7
-foreground = #3760bf
-cursor-color = #3760bf
-selection-background = #b7c1e3
-selection-foreground = #3760bf
+# Active color scheme — updated by theme-switch; do not edit directly
+config-file = ~/.config/ghostty/current-colors.conf

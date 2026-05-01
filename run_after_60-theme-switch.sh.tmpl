@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+switcher="$HOME/.config/themes/bin/theme-switch"
+
+if [[ ! -x "$switcher" ]]; then
+  echo "[theme-switch] $switcher not executable; skipping."
+  exit 0
+fi
+
+"$switcher"
+echo "[theme-switch] Applied current theme state."

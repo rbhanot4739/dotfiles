@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Usage: delta <theme-name> <bg-mode>
+# Emits: [delta "name"] gitconfig section to stdout
+set -euo pipefail
+
+THEME="$1"
+MODE="${2:-dark}"
+REGISTRY="$HOME/.config/themes/registry"
+YAML="$REGISTRY/${THEME}.yaml"
+
+[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+
+THEME_MODE=$(yq '.mode' "$YAML")
+
+yv() {
+  if [[ "$THEME_MODE" == "adaptive" ]]; then
+    yq ".${MODE}.delta.${1}" "$YAML"
+  else
+    yq ".delta.${1}" "$YAML"
+  fi
+}
+
+SECTION=$(yv section_name)
+
+cat <<GITCONFIG
+[delta "${SECTION}"]
+  minus-style                   = $(yv minus_style)
+  minus-non-emph-style          = $(yv minus_non_emph_style)
+  minus-emph-style              = $(yv minus_emph_style)
+  minus-empty-line-marker-style = $(yv minus_empty_line_marker_style)
+  line-numbers-minus-style      = $(yv line_numbers_minus_style)
+  plus-style                    = $(yv plus_style)
+  plus-non-emph-style           = $(yv plus_non_emph_style)
+  plus-emph-style               = $(yv plus_emph_style)
+  plus-empty-line-marker-style  = $(yv plus_empty_line_marker_style)
+  line-numbers-plus-style       = $(yv line_numbers_plus_style)
+  line-numbers-zero-style       = $(yv line_numbers_zero_style)
+GITCONFIG

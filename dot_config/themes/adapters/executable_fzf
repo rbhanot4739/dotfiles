@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Usage: fzf <theme-name> <bg-mode>
+# Emits: theme_opts=(...) zsh array to stdout
+set -euo pipefail
+
+THEME="$1"
+MODE="${2:-dark}"
+REGISTRY="$HOME/.config/themes/registry"
+YAML="$REGISTRY/${THEME}.yaml"
+
+[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+
+THEME_MODE=$(yq '.mode' "$YAML")
+
+yv() {
+  if [[ "$THEME_MODE" == "adaptive" ]]; then
+    yq ".${MODE}.fzf.${1}" "$YAML"
+  else
+    yq ".fzf.${1}" "$YAML"
+  fi
+}
+
+cat <<ZSH
+#!/bin/zsh
+
+# Keep color keys limited to the portable subset.
+# Some bundled/older fzf builds fail hard on newer keys like label/separator.
+theme_opts=(
+    --color=bg:$(yv bg)
+    --color=bg+:$(yv bg_plus)
+    --color=fg:$(yv fg)
+    --color=fg+:$(yv fg_plus)
+    --color=hl:$(yv hl)
+    --color=hl+:$(yv hl_plus)
+    --color=border:$(yv border)
+    --color=header:$(yv header)
+    --color=info:$(yv info)
+    --color=marker:$(yv marker)
+    --color=pointer:$(yv pointer)
+    --color=prompt:$(yv prompt)
+    --color=query:$(yv query_fg)
+    --color=spinner:$(yv spinner)
+)
+ZSH

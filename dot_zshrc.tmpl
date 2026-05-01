@@ -228,6 +228,8 @@ zstyle ':completion:*' matcher-list \
 zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
+# Restrict cat/bat completion candidates to regular files only.
+zstyle ':completion:*:*:(cat|bat):*' file-patterns '*(-.):regular-files'
 
 # Set SSH completion to use only your function's output
 zstyle -e ':completion:*:(ssh|scp|sftp|rsync):*:hosts' hosts 'reply=($(__fzf_list_hosts))'
@@ -237,10 +239,38 @@ zstyle ':completion:*:(ssh|scp|sftp|rsync|man):*' users ""
 
 # FZF-tab
 zstyle ':fzf-tab:*' fzf-command fzf
-zstyle ':fzf-tab:*' use-fzf-default-opts no
-zstyle ':fzf-tab:*' fzf-flags --height 50%
-zstyle ':fzf-tab:complete:(cd|z):*' fzf-preview 'tree -C $realpath'
-zstyle ':fzf-tab:complete:(eza|ls):*' fzf-preview '[[ ! -d $realpath ]] && bat --color=always $realpath || tree -C $realpath'
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
+# Canonical FZF_UNIFIED_* values live in ~/fzf_config.zsh.
+# Source once here only if they were not loaded earlier via custom_config.zsh.
+[[ -z ${FZF_UNIFIED_HEADER-} && -f "$HOME/fzf_config.zsh" ]] && source "$HOME/fzf_config.zsh"
+FZF_UNIFIED_FZF_TAB_DIR_PREVIEW='eza --git --group --group-directories-first --time-style=long-iso --color=always --icons $realpath'
+FZF_UNIFIED_FZF_TAB_FILE_PREVIEW='[[ -d $realpath ]] && tree -C $realpath || bat --style=snip --color=always $realpath'
+FZF_UNIFIED_TAB_COMMON_FLAGS=(
+  --style full
+  --height 50%
+  --margin 1,2
+  --layout=reverse
+  --info=inline-right
+  --border rounded
+  --prompt "$FZF_UNIFIED_PROMPT"
+  --pointer "$FZF_UNIFIED_POINTER"
+  --color "label:$FZF_UNIFIED_LABEL_COLOR"
+  --header "$FZF_UNIFIED_HEADER"
+  --header-first
+)
+FZF_UNIFIED_TAB_DIR_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_DIR_PREVIEW_WINDOW" --border-label 'Fuzzy Find Dirs')
+FZF_UNIFIED_TAB_FILE_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Find Files')
+FZF_UNIFIED_TAB_MIXED_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Files/Dirs')
+zstyle ':fzf-tab:*' fzf-flags "${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}"
+zstyle ':fzf-tab:complete:(cd|z):*' fzf-preview "$FZF_UNIFIED_FZF_TAB_DIR_PREVIEW"
+zstyle ':fzf-tab:complete:(cd|z):*' fzf-flags "${FZF_UNIFIED_TAB_DIR_FLAGS[@]}"
+zstyle ':fzf-tab:complete:(cd|z):*' fzf-bindings "alt-i:reload($FZF_UNIFIED_HIDDEN_TOGGLE_DIR_CMD)"
+zstyle ':fzf-tab:complete:(eza|ls):*' fzf-preview "$FZF_UNIFIED_FZF_TAB_FILE_PREVIEW"
+zstyle ':fzf-tab:complete:(eza|ls):*' fzf-flags "${FZF_UNIFIED_TAB_MIXED_FLAGS[@]}"
+zstyle ':fzf-tab:complete:(eza|ls):*' fzf-bindings "alt-i:reload($FZF_UNIFIED_HIDDEN_TOGGLE_ALL_CMD)"
+zstyle ':fzf-tab:complete:(cat|bat):*' fzf-preview "$FZF_UNIFIED_FZF_TAB_FILE_PREVIEW"
+zstyle ':fzf-tab:complete:(cat|bat):*' fzf-flags "${FZF_UNIFIED_TAB_FILE_FLAGS[@]}"
+zstyle ':fzf-tab:complete:(cat|bat):*' fzf-bindings "alt-i:reload($FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD)"
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' fzf-preview 'echo ${(P)word}'
 
@@ -259,13 +289,5 @@ if command -v zoxide >/dev/null; then
   # z() { _lazy_zoxide; __zoxide_z "$@"; }
 fi
 
-{{- if eq .chezmoi.os "darwin" }}
-{{/*
-# Start theme-monitor in tmux if not already running
-if [[ -z "$TMUX" ]] && ! tmux has-session -t themewatcher 2>/dev/null; then
-  tmux new-session -d -s themewatcher "$HOME/scripts/theme-monitor"
-fi
-*/}}
-{{- end }}
 
 # zprof

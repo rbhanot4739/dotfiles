@@ -1,0 +1,1207 @@
+#!/usr/bin/env bash
+# theme-import — bootstrap a theme from multiple catalogs + GitHub tool ports
+# Usage: theme-import [options] [theme-name]
+#   Without a theme-name: opens an interactive deduped picker (all sources)
+set -euo pipefail
+
+THEMES_BIN="$(cd "$(dirname "$0")" && pwd)"
+THEMES_DIR="$(dirname "$THEMES_BIN")"
+REGISTRY="$THEMES_DIR/registry"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/theme-import"
+mkdir -p "$CACHE_DIR"
+THEME_IMPORTS="$HOME/.config/nvim/lua/plugins/rbhanot/theme-imports.lua"
+
+BASE24_RAW="https://raw.githubusercontent.com/tinted-theming/base24-schemes/main"
+BASE16_RAW="https://raw.githubusercontent.com/tinted-theming/base16-schemes/main"
+
+BASE16_INDEX="$CACHE_DIR/base16_index.txt"
+BASE24_INDEX="$CACHE_DIR/base24_index.txt"
+WEZTERM_JSON="$CACHE_DIR/wezterm_schemes.json"
+WEZTERM_INDEX="$CACHE_DIR/wezterm_index.txt"
+ITERM2_INDEX="$CACHE_DIR/iterm2_ghostty_index.txt"
+GOGH_INDEX="$CACHE_DIR/gogh_index.txt"
+UNIFIED_INDEX="$CACHE_DIR/theme_catalog.tsv"
+SCHEME_FILE="$CACHE_DIR/scheme.yaml"
+
+CACHE_MAX_AGE_DAYS="${THEME_IMPORT_CACHE_DAYS:-1}"
+FORCE_REFRESH=0
+NO_FZF=0
+ASSUME_YES=0
+SOURCE_PREF="auto"
+QUIET_CANCEL="${THEME_IMPORT_QUIET_CANCEL:-0}"
+THEME_QUERY=""
+THEME_CANONICAL=""
+
+# ── utils ─────────────────────────────────────────────────────────────────────
+die()    { printf '\n\033[31m✗\033[0m  %s\n' "$*" >&2; exit 1; }
+ok()     { printf '  \033[32m✓\033[0m  %s\n' "$*"; }
+info()   { printf '  \033[2m%s\033[0m\n' "$*"; }
+# Keep stage banners hidden by default; errors/info still print.
+header() { :; }
+
+usage() {
+  cat <<'EOF'
+Usage:
+  theme-import [options] [theme-name]
+
+Options:
+  --source <auto|tinted|gogh|iterm2|wezterm>  Source preference (default: auto)
+  --no-fzf                                    Non-interactive mode
+  --yes, -y                                   Assume yes for confirmations
+  --refresh                                   Refresh remote theme indexes now
+  -h, --help                                  Show this help
+EOF
+}
+
+normalize_name() {
+  echo "$1" | sed -E 's/[[:space:]]*\([Gg][Oo][Gg][Hh]\)//g' | \
+    tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]'
+}
+
+theme_slug() {
+  echo "$1" | sed -E 's/[[:space:]]*\([Gg][Oo][Gg][Hh]\)//g' | tr '[:upper:]' '[:lower:]' | \
+    sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+}
+
+to_hex_color() {
+  local v="${1#'#'}"
+  v="${v,,}"
+  [[ "$v" =~ ^[0-9a-f]{6}$ ]] || return 1
+  printf '#%s' "$v"
+}
+
+match_name_in_file() {
+  local file="$1" query="$2" q
+  [[ -s "$file" ]] || return 1
+  q="$(normalize_name "$query")"
+  awk -v q="$q" '
+    function slug(s) { s=tolower(s); gsub(/\(gogh\)/, "", s); gsub(/[^a-z0-9]+/, "", s); return s }
+    slug($0) == q { print; exit }
+  ' "$file"
+}
+
+# Parse args before dependency checks so --no-fzf works without fzf installed.
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --source)
+      [[ $# -ge 2 ]] || die "--source requires a value"
+      SOURCE_PREF="$2"
+      shift 2
+      ;;
+    --no-fzf)
+      NO_FZF=1
+      shift
+      ;;
+    --yes|-y)
+      ASSUME_YES=1
+      shift
+      ;;
+    --refresh)
+      FORCE_REFRESH=1
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      die "unknown option: $1"
+      ;;
+    *)
+      [[ -z "$THEME_QUERY" ]] || die "multiple theme names provided: '$THEME_QUERY' and '$1'"
+      THEME_QUERY="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ $# -gt 0 ]]; then
+  [[ -z "$THEME_QUERY" ]] || die "multiple theme names provided: '$THEME_QUERY' and '$1'"
+  [[ $# -eq 1 ]] || die "too many positional arguments"
+  THEME_QUERY="$1"
+fi
+
+case "$SOURCE_PREF" in
+  auto|tinted|gogh|iterm2|wezterm) ;;
+  *) die "invalid --source: '$SOURCE_PREF' (expected: auto|tinted|gogh|iterm2|wezterm)" ;;
+esac
+
+for dep in curl jq yq; do
+  command -v "$dep" &>/dev/null || die "missing dependency: ${dep}"
+done
+if [[ "$NO_FZF" != "1" ]]; then
+  command -v fzf &>/dev/null || die "missing dependency: fzf"
+fi
+
+# ── fzf defaults (mirrors theme-list style + current theme colors) ─────────────
+BG_MODE=$(cat "$HOME/.bg_mode" 2>/dev/null | tr -d '[:space:]')
+BG_MODE="${BG_MODE:-dark}"
+CURRENT_THEME=$(cat "$HOME/.theme_${BG_MODE}" 2>/dev/null | tr -d '[:space:]')
+theme_opts=()
+_gen_fzf="$HOME/.config/themes/generated/fzf"
+if [[ -f "${_gen_fzf}/${CURRENT_THEME}-${BG_MODE}.sh" ]]; then
+  source "${_gen_fzf}/${CURRENT_THEME}-${BG_MODE}.sh"
+elif [[ -f "${_gen_fzf}/${CURRENT_THEME}.sh" ]]; then
+  source "${_gen_fzf}/${CURRENT_THEME}.sh"
+fi
+
+_fzf_def=(
+  --ansi
+  --style full --info=inline-right --height 60% --margin 1,2 --layout=reverse
+  --cycle
+  --border rounded
+  --no-multi
+  --bind 'shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
+)
+
+# GitHub API — tries gh cli first (authenticated, higher rate limits),
+# falls back to plain curl. Avoids gh auth status check which exits non-zero
+# when any configured account is invalid, even if the active one is fine.
+gh_get() {
+  local path="$1" result
+  if command -v gh &>/dev/null; then
+    result=$(gh api "$path" 2>/dev/null) && { echo "$result"; return; } || true
+  fi
+  curl -sf "https://api.github.com/${path}" \
+    -H "Accept: application/vnd.github.v3+json" 2>/dev/null || true
+}
+
+# Fetch a cached file list; refresh if older than $2 days (default 1)
+cached_file_list() {
+  local cache="$1" max_age="${2:-$CACHE_MAX_AGE_DAYS}"
+  [[ "$FORCE_REFRESH" == "1" ]] && return 1
+  if [[ ! -s "$cache" ]] || [[ -n "$(find "$cache" -mtime "+${max_age}" 2>/dev/null)" ]]; then
+    return 1
+  fi
+}
+
+# Blend <fg_hex> into <bg_hex> at <pct>% of fg   e.g. mix "#f00" "#000" 20
+mix() {
+  local _f="${1#'#'}" _b="${2#'#'}" _p="${3:-20}"
+  printf '#%02x%02x%02x' \
+    $(( (16#${_f:0:2} * _p + 16#${_b:0:2} * (100-_p)) / 100 )) \
+    $(( (16#${_f:2:2} * _p + 16#${_b:2:2} * (100-_p)) / 100 )) \
+    $(( (16#${_f:4:2} * _p + 16#${_b:4:2} * (100-_p)) / 100 ))
+}
+
+ensure_base16_index() {
+  if ! cached_file_list "$BASE16_INDEX"; then
+    local tmp
+    tmp=$(mktemp)
+    gh_get "repos/tinted-theming/base16-schemes/git/trees/main?recursive=1" | \
+      jq -r '.tree[]?.path? | select(type == "string" and endswith(".yaml")) | rtrimstr(".yaml")' \
+      > "$tmp" 2>/dev/null || true
+    sort -fu "$tmp" > "$BASE16_INDEX" 2>/dev/null || true
+    rm -f "$tmp"
+  fi
+  [[ -s "$BASE16_INDEX" ]]
+}
+
+ensure_base24_index() {
+  if ! cached_file_list "$BASE24_INDEX"; then
+    local tmp
+    tmp=$(mktemp)
+    gh_get "repos/tinted-theming/base24-schemes/git/trees/main?recursive=1" | \
+      jq -r '.tree[]?.path? | select(type == "string" and endswith(".yaml")) | rtrimstr(".yaml")' \
+      > "$tmp" 2>/dev/null || true
+    if [[ ! -s "$tmp" ]]; then
+      gh_get "repos/tinted-theming/base24/git/trees/HEAD?recursive=1" | \
+        jq -r '.tree[]?.path? | select(type == "string" and endswith(".yaml")) | rtrimstr(".yaml")' \
+        > "$tmp" 2>/dev/null || true
+    fi
+    sort -fu "$tmp" > "$BASE24_INDEX" 2>/dev/null || true
+    rm -f "$tmp"
+  fi
+  [[ -s "$BASE24_INDEX" ]]
+}
+
+ensure_wezterm_catalog() {
+  if ! cached_file_list "$WEZTERM_JSON"; then
+    local tmp
+    tmp=$(mktemp)
+    curl -sf "https://raw.githubusercontent.com/wezterm/wezterm/main/docs/colorschemes/data.json" \
+      > "$tmp" 2>/dev/null || true
+    if jq -e 'type == "array"' "$tmp" >/dev/null 2>&1; then
+      mv "$tmp" "$WEZTERM_JSON"
+    else
+      rm -f "$tmp"
+    fi
+  fi
+  [[ -s "$WEZTERM_JSON" ]]
+}
+
+ensure_wezterm_index() {
+  ensure_wezterm_catalog || return 1
+  if ! cached_file_list "$WEZTERM_INDEX"; then
+    local tmp
+    tmp=$(mktemp)
+    jq -r '.[] | (.metadata.name // .name // empty)' "$WEZTERM_JSON" \
+      > "$tmp" 2>/dev/null || true
+    sort -fu "$tmp" > "$WEZTERM_INDEX" 2>/dev/null || true
+    rm -f "$tmp"
+  fi
+  [[ -s "$WEZTERM_INDEX" ]]
+}
+
+ensure_iterm2_index() {
+  if ! cached_file_list "$ITERM2_INDEX"; then
+    local tmp tree_sha
+    tmp=$(mktemp)
+    tree_sha=$(gh_get "repos/mbadolato/iTerm2-Color-Schemes/git/trees/HEAD" | \
+      jq -r '.tree[]? | select(.path == "ghostty") | .sha' 2>/dev/null || true)
+    if [[ -n "$tree_sha" ]]; then
+      gh_get "repos/mbadolato/iTerm2-Color-Schemes/git/trees/${tree_sha}" | \
+        jq -r '.tree[]?.path? | select(type == "string")' > "$tmp" 2>/dev/null || true
+    fi
+    sort -fu "$tmp" > "$ITERM2_INDEX" 2>/dev/null || true
+    rm -f "$tmp"
+  fi
+  [[ -s "$ITERM2_INDEX" ]]
+}
+
+ensure_gogh_index() {
+  if ! cached_file_list "$GOGH_INDEX"; then
+    local tmp
+    tmp=$(mktemp)
+    gh_get "repos/Gogh-Co/Gogh/git/trees/master:themes" | \
+      jq -r '.tree[]?.path? | select(type == "string" and endswith(".yml")) | rtrimstr(".yml")' \
+      > "$tmp" 2>/dev/null || true
+    if [[ ! -s "$tmp" ]]; then
+      gh_get "repos/Gogh-Co/Gogh/git/trees/HEAD:themes" | \
+        jq -r '.tree[]?.path? | select(type == "string" and endswith(".yml")) | rtrimstr(".yml")' \
+        > "$tmp" 2>/dev/null || true
+    fi
+    sort -fu "$tmp" > "$GOGH_INDEX" 2>/dev/null || true
+    rm -f "$tmp"
+  fi
+  [[ -s "$GOGH_INDEX" ]]
+}
+
+unified_index_has_mode_column() {
+  [[ -s "$UNIFIED_INDEX" ]] || return 1
+  awk -F'\t' '
+    NR == 1 {
+      if (NF >= 4) exit 0
+      exit 1
+    }
+    END {
+      if (NR == 0) exit 1
+    }
+  ' "$UNIFIED_INDEX"
+}
+
+build_unified_index() {
+  if ! cached_file_list "$UNIFIED_INDEX" || ! unified_index_has_mode_column; then
+    local tmp merged
+    tmp=$(mktemp)
+    merged=$(mktemp)
+
+    : > "$tmp"
+    ensure_base16_index && awk '{print $0 "\ttinted-base16"}' "$BASE16_INDEX" >> "$tmp"
+    ensure_base24_index && awk '{print $0 "\ttinted-base24"}' "$BASE24_INDEX" >> "$tmp"
+    ensure_wezterm_index && awk '{print $0 "\twezterm"}' "$WEZTERM_INDEX" >> "$tmp"
+    ensure_iterm2_index && awk '{print $0 "\titerm2"}' "$ITERM2_INDEX" >> "$tmp"
+    ensure_gogh_index && awk '{print $0 "\tgogh"}' "$GOGH_INDEX" >> "$tmp"
+
+    awk -F'\t' '
+      function slug(s) { s=tolower(s); gsub(/\(gogh\)/, "", s); gsub(/[^a-z0-9]+/, "", s); return s }
+      function infer_mode(s, x) {
+        x=tolower(s)
+        if (x ~ /(light|day|dawn|latte|solarized[[:space:]-]?light|github[[:space:]_-]?light|papercolor[[:space:]-]?light|ayu[[:space:]-]?light)/) return "light"
+        if (x ~ /(dark|night|moon|storm|black|dracula|gruvbox|nord|tokyonight|rose[[:space:]-]?pine[[:space:]-]?moon|everforest|monokai|onedark|material)/) return "dark"
+        return "mixed"
+      }
+      NF >= 2 {
+        name=$1
+        src=$2
+        key=slug(name)
+        if (key == "") next
+        if (!(key in display)) display[key]=name
+        else if (tolower(display[key]) ~ /\(gogh\)/ && tolower(name) !~ /\(gogh\)/) display[key]=name
+        m=infer_mode(name)
+        if (!(key in mode)) mode[key]=m
+        else if (mode[key] == "mixed" && m != "mixed") mode[key]=m
+        else if (mode[key] != m && m != "mixed") mode[key]="mixed"
+        if (!(key SUBSEP src in seen)) {
+          seen[key SUBSEP src]=1
+          source_list[key]=(source_list[key] ? source_list[key] "," src : src)
+        }
+      }
+      END {
+        for (k in display) print display[k] "\t" source_list[k] "\t" k "\t" mode[k]
+      }
+    ' "$tmp" | sort -f > "$merged"
+
+    mv "$merged" "$UNIFIED_INDEX"
+    rm -f "$tmp"
+  fi
+  [[ -s "$UNIFIED_INDEX" ]]
+}
+
+pick_theme_from_unified_catalog() {
+  build_unified_index || return 2
+  [[ -s "$UNIFIED_INDEX" ]] || return 2
+  local selected rc display
+  local -a picker_layout_opts picker_style_opts
+  display=$(mktemp)
+  awk -F'\t' '
+    function clip(s, n) {
+      if (length(s) <= n) return s
+      return substr(s, 1, n - 3) "..."
+    }
+    BEGIN {
+      printf "%s\t%-42s    %-8s    %s\n", "__header__", "Theme Name", "Mode", "Source"
+    }
+    NF >= 4 {
+      printf "%s\t%-42s    %-8s    %s\n", $1, clip($1, 42), $4, clip($2, 28)
+    }
+  ' "$UNIFIED_INDEX" > "$display"
+  [[ -s "$display" ]] || { rm -f "$display"; return 2; }
+
+  picker_style_opts=(
+    --padding 1,2
+    --header-first
+    --no-separator
+    --no-scrollbar
+  )
+  if [[ -n "${TMUX:-}" ]]; then
+    picker_layout_opts=(--tmux center,50%,40%)
+  else
+    picker_layout_opts=(--height 40% --margin 5%,25%)
+  fi
+  selected=$(cat "$display" | fzf \
+    "${_fzf_def[@]}" "${theme_opts[@]}" \
+    "${picker_style_opts[@]}" "${picker_layout_opts[@]}" \
+    --prompt="  select theme › " \
+    --header="  Select a theme to import into your local registry (Esc to cancel)" \
+    --delimiter=$'\t' \
+    --with-nth=2 \
+    --header-lines=1 \
+    --border-label=$'  \033[1;90mTheme Import\033[0m  ' \
+  ) || {
+    rc=$?
+    rm -f "$display"
+    return "$rc"
+  }
+  rm -f "$display"
+  awk -F'\t' '{print $1}' <<< "$selected"
+}
+
+pick_theme_from_tinted_catalog() {
+  local tmp selected rc display
+  local -a picker_layout_opts picker_style_opts
+  tmp=$(mktemp)
+  : > "$tmp"
+  ensure_base24_index && awk '{print "base24\t" $0}' "$BASE24_INDEX" >> "$tmp"
+  ensure_base16_index && awk '{print "base16\t" $0}' "$BASE16_INDEX" >> "$tmp"
+  [[ -s "$tmp" ]] || { rm -f "$tmp"; return 2; }
+
+  display=$(mktemp)
+  awk -F'\t' '
+    function clip(s, n) {
+      if (length(s) <= n) return s
+      return substr(s, 1, n - 3) "..."
+    }
+    BEGIN {
+      printf "%s\t%-42s    %-8s    %s\n", "__header__", "Theme Name", "Mode", "Source"
+    }
+    function infer_mode(s, x) {
+      x=tolower(s)
+      if (x ~ /(light|day|dawn|latte|solarized[[:space:]-]?light|github[[:space:]_-]?light|papercolor[[:space:]-]?light|ayu[[:space:]-]?light)/) return "light"
+      if (x ~ /(dark|night|moon|storm|black|dracula|gruvbox|nord|tokyonight|rose[[:space:]-]?pine[[:space:]-]?moon|everforest|monokai|onedark|material)/) return "dark"
+      return "mixed"
+    }
+    NF >= 2 {
+      printf "%s\t%-42s    %-8s    %s\n", $2, clip($2, 42), infer_mode($2), $1
+    }
+  ' "$tmp" > "$display"
+  rm -f "$tmp"
+  [[ -s "$display" ]] || { rm -f "$display"; return 2; }
+
+  picker_style_opts=(
+    --padding 1,2
+    --header-first
+    --no-separator
+    --no-scrollbar
+  )
+  if [[ -n "${TMUX:-}" ]]; then
+    picker_layout_opts=(--tmux center,50%,40%)
+  else
+    picker_layout_opts=(--height 40% --margin 5%,25%)
+  fi
+
+  selected=$(cat "$display" | fzf \
+    "${_fzf_def[@]}" "${theme_opts[@]}" \
+    "${picker_style_opts[@]}" "${picker_layout_opts[@]}" \
+    --prompt="  select theme › " \
+    --header="  Select a theme to import into your local registry (Esc to cancel)" \
+    --delimiter=$'\t' \
+    --with-nth=2 \
+    --header-lines=1 \
+    --border-label=$'  \033[1;90mTheme Import (Tinted Fallback)\033[0m  ' \
+  ) || {
+    rc=$?
+    rm -f "$display"
+    return "$rc"
+  }
+
+  rm -f "$display"
+  awk -F'\t' '{print $1}' <<< "$selected"
+}
+
+write_scheme_from_palette() {
+  local name="$1" source="$2" bg="$3" fg="$4" cursor="$5"
+  shift 5
+  local -a p=("$@")
+  local i idx
+
+  local bg_hex fg_hex cu_hex
+  bg_hex=$(to_hex_color "$bg" || true)
+  fg_hex=$(to_hex_color "$fg" || true)
+  cu_hex=$(to_hex_color "$cursor" || true)
+  [[ -n "$bg_hex" && -n "$fg_hex" ]] || return 1
+  [[ -n "$cu_hex" ]] || cu_hex="$fg_hex"
+
+  for i in {0..15}; do
+    p[$i]=$(to_hex_color "${p[$i]:-}" || true)
+  done
+  for i in {0..7}; do
+    [[ -n "${p[$i]:-}" ]] || p[$i]="$bg_hex"
+  done
+  for i in {8..15}; do
+    idx=$((i - 8))
+    [[ -n "${p[$i]:-}" ]] || p[$i]="${p[$idx]}"
+  done
+
+  cat > "$SCHEME_FILE" <<YAML
+scheme: "${name}"
+name: "${name}"
+base00: "${bg_hex#\#}"
+base01: "${p[0]#\#}"
+base02: "${p[8]#\#}"
+base03: "${p[8]#\#}"
+base04: "${p[7]#\#}"
+base05: "${fg_hex#\#}"
+base06: "${p[15]#\#}"
+base07: "${p[15]#\#}"
+base08: "${p[1]#\#}"
+base09: "${p[3]#\#}"
+base0A: "${p[11]#\#}"
+base0B: "${p[2]#\#}"
+base0C: "${p[6]#\#}"
+base0D: "${p[4]#\#}"
+base0E: "${p[5]#\#}"
+base0F: "${p[9]#\#}"
+terminal:
+  background: "${bg_hex}"
+  foreground: "${fg_hex}"
+  cursor: "${cu_hex}"
+YAML
+  THEME_CANONICAL="$name"
+  SCHEME_SOURCE="$source"
+}
+
+try_fetch_tinted() {
+  local requested="$1" candidate mapped
+  local -a candidates=()
+  ensure_base16_index || true
+  ensure_base24_index || true
+  candidates+=("$requested")
+  mapped=$(match_name_in_file "$BASE16_INDEX" "$requested" || true)
+  [[ -n "$mapped" ]] && candidates+=("$mapped")
+  mapped=$(match_name_in_file "$BASE24_INDEX" "$requested" || true)
+  [[ -n "$mapped" ]] && candidates+=("$mapped")
+
+  for candidate in "${candidates[@]}"; do
+    [[ -n "$candidate" ]] || continue
+    if curl -sf "${BASE24_RAW}/${candidate}.yaml" -o "$SCHEME_FILE" 2>/dev/null; then
+      SCHEME_SOURCE="tinted-base24"
+      THEME_CANONICAL="$candidate"
+      return 0
+    fi
+    if curl -sf "${BASE16_RAW}/${candidate}.yaml" -o "$SCHEME_FILE" 2>/dev/null; then
+      SCHEME_SOURCE="tinted-base16"
+      THEME_CANONICAL="$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+try_fetch_wezterm() {
+  ensure_wezterm_catalog || return 1
+  ensure_wezterm_index || return 1
+
+  local requested="$1" mapped slug row name bg fg cursor
+  local p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15
+  mapped=$(match_name_in_file "$WEZTERM_INDEX" "$requested" || true)
+  [[ -n "$mapped" ]] || mapped="$requested"
+  slug=$(normalize_name "$mapped")
+
+  row=$(jq -r --arg q "$slug" '
+    first(.[] | select((((.metadata.name // .name // "") | ascii_downcase | gsub("\\(gogh\\)"; "") | gsub("[^a-z0-9]"; "")) == $q))) // empty |
+    [
+      (.metadata.name // .name // ""),
+      (.colors.background // ""),
+      (.colors.foreground // ""),
+      (.colors.cursor_bg // .colors.foreground // ""),
+      (.colors.ansi[0] // ""), (.colors.ansi[1] // ""), (.colors.ansi[2] // ""), (.colors.ansi[3] // ""),
+      (.colors.ansi[4] // ""), (.colors.ansi[5] // ""), (.colors.ansi[6] // ""), (.colors.ansi[7] // ""),
+      (.colors.brights[0] // .colors.ansi[0] // ""), (.colors.brights[1] // .colors.ansi[1] // ""),
+      (.colors.brights[2] // .colors.ansi[2] // ""), (.colors.brights[3] // .colors.ansi[3] // ""),
+      (.colors.brights[4] // .colors.ansi[4] // ""), (.colors.brights[5] // .colors.ansi[5] // ""),
+      (.colors.brights[6] // .colors.ansi[6] // ""), (.colors.brights[7] // .colors.ansi[7] // "")
+    ] | @tsv
+  ' "$WEZTERM_JSON" 2>/dev/null || true)
+  [[ -n "$row" ]] || return 1
+
+  IFS=$'\t' read -r name bg fg cursor p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 <<< "$row"
+  write_scheme_from_palette "$name" "wezterm" "$bg" "$fg" "$cursor" \
+    "$p0" "$p1" "$p2" "$p3" "$p4" "$p5" "$p6" "$p7" "$p8" "$p9" "$p10" "$p11" "$p12" "$p13" "$p14" "$p15" || return 1
+  WEZTERM_SCHEME="$name"
+  return 0
+}
+
+try_fetch_iterm2() {
+  ensure_iterm2_index || return 1
+
+  local requested="$1" mapped encoded raw tmp line idx
+  local bg="" fg="" cursor=""
+  local -a palette=()
+  mapped=$(match_name_in_file "$ITERM2_INDEX" "$requested" || true)
+  [[ -n "$mapped" ]] || mapped="$requested"
+  encoded="${mapped// /%20}"
+  raw="https://raw.githubusercontent.com/mbadolato/iTerm2-Color-Schemes/master/ghostty/${encoded}"
+  tmp=$(mktemp)
+  if ! curl -sf "$raw" -o "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    return 1
+  fi
+
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^palette[[:space:]]*=[[:space:]]*([0-9]+)=#?([0-9A-Fa-f]{6}) ]]; then
+      idx="${BASH_REMATCH[1]}"
+      palette[$idx]="#${BASH_REMATCH[2],,}"
+      continue
+    fi
+    if [[ "$line" =~ ^background[[:space:]]*=[[:space:]]*#?([0-9A-Fa-f]{6}) ]]; then
+      bg="#${BASH_REMATCH[1],,}"
+      continue
+    fi
+    if [[ "$line" =~ ^foreground[[:space:]]*=[[:space:]]*#?([0-9A-Fa-f]{6}) ]]; then
+      fg="#${BASH_REMATCH[1],,}"
+      continue
+    fi
+    if [[ "$line" =~ ^cursor-color[[:space:]]*=[[:space:]]*#?([0-9A-Fa-f]{6}) ]]; then
+      cursor="#${BASH_REMATCH[1],,}"
+      continue
+    fi
+  done < "$tmp"
+
+  if ! write_scheme_from_palette "$mapped" "iterm2" "$bg" "$fg" "$cursor" \
+    "${palette[0]:-}" "${palette[1]:-}" "${palette[2]:-}" "${palette[3]:-}" \
+    "${palette[4]:-}" "${palette[5]:-}" "${palette[6]:-}" "${palette[7]:-}" \
+    "${palette[8]:-}" "${palette[9]:-}" "${palette[10]:-}" "${palette[11]:-}" \
+    "${palette[12]:-}" "${palette[13]:-}" "${palette[14]:-}" "${palette[15]:-}"; then
+    rm -f "$tmp"
+    return 1
+  fi
+
+  mkdir -p "$HOME/.config/ghostty/themes"
+  cp "$tmp" "$HOME/.config/ghostty/themes/${mapped}" 2>/dev/null || true
+  GHOSTTY_THEME="$mapped"
+  rm -f "$tmp"
+  return 0
+}
+
+try_fetch_gogh() {
+  ensure_gogh_index || return 1
+
+  local requested="$1" mapped encoded raw tmp theme_name bg fg cursor c
+  local -a palette=()
+  mapped=$(match_name_in_file "$GOGH_INDEX" "$requested" || true)
+  [[ -n "$mapped" ]] || mapped="$requested"
+  encoded="${mapped// /%20}"
+  raw="https://raw.githubusercontent.com/Gogh-Co/Gogh/master/themes/${encoded}.yml"
+  tmp=$(mktemp)
+  if ! curl -sf "$raw" -o "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    return 1
+  fi
+
+  theme_name=$(yq '.name // ""' "$tmp" 2>/dev/null | tr -d '"')
+  [[ -n "$theme_name" ]] || theme_name="$mapped"
+  bg=$(yq '.background // ""' "$tmp" 2>/dev/null | tr -d '"')
+  fg=$(yq '.foreground // ""' "$tmp" 2>/dev/null | tr -d '"')
+  cursor=$(yq '.cursor // .foreground // ""' "$tmp" 2>/dev/null | tr -d '"')
+  for i in $(seq 1 16); do
+    c=$(yq ".color_$(printf '%02d' "$i") // \"\"" "$tmp" 2>/dev/null | tr -d '"')
+    palette[$((i - 1))]="$c"
+  done
+
+  if ! write_scheme_from_palette "$theme_name" "gogh" "$bg" "$fg" "$cursor" \
+    "${palette[0]:-}" "${palette[1]:-}" "${palette[2]:-}" "${palette[3]:-}" \
+    "${palette[4]:-}" "${palette[5]:-}" "${palette[6]:-}" "${palette[7]:-}" \
+    "${palette[8]:-}" "${palette[9]:-}" "${palette[10]:-}" "${palette[11]:-}" \
+    "${palette[12]:-}" "${palette[13]:-}" "${palette[14]:-}" "${palette[15]:-}"; then
+    rm -f "$tmp"
+    return 1
+  fi
+
+  rm -f "$tmp"
+  return 0
+}
+
+resolve_theme_source() {
+  local q="$1"
+  case "$SOURCE_PREF" in
+    auto)
+      try_fetch_tinted "$q" && return 0
+      try_fetch_gogh "$q" && return 0
+      try_fetch_iterm2 "$q" && return 0
+      try_fetch_wezterm "$q" && return 0
+      ;;
+    tinted)
+      try_fetch_tinted "$q" && return 0
+      ;;
+    gogh)
+      try_fetch_gogh "$q" && return 0
+      ;;
+    iterm2)
+      try_fetch_iterm2 "$q" && return 0
+      ;;
+    wezterm)
+      try_fetch_wezterm "$q" && return 0
+      ;;
+  esac
+  return 1
+}
+
+# ── 1 / 6  Resolve scheme ─────────────────────────────────────────────────────
+header "1 / 6  Resolving theme from catalogs"
+
+SCHEME_SOURCE=""
+WEZTERM_SCHEME="${WEZTERM_SCHEME:-}"
+GHOSTTY_THEME="${GHOSTTY_THEME:-}"
+
+if [[ -z "$THEME_QUERY" ]]; then
+  local_pick_rc=0
+  if [[ "$NO_FZF" == "1" ]]; then
+    die "theme name is required in --no-fzf mode"
+  fi
+  if ! THEME_QUERY=$(pick_theme_from_unified_catalog); then
+    local_pick_rc=$?
+  fi
+  if [[ "$local_pick_rc" -eq 2 ]]; then
+    info "Unified catalog unavailable — falling back to tinted picker"
+    if ! THEME_QUERY=$(pick_theme_from_tinted_catalog); then
+      local_pick_rc=$?
+    else
+      local_pick_rc=0
+    fi
+  fi
+  if [[ "$local_pick_rc" -ne 0 ]]; then
+    [[ "$QUIET_CANCEL" == "1" ]] || info "Cancelled."
+    exit 0
+  fi
+  if [[ -z "$THEME_QUERY" ]]; then
+    [[ "$QUIET_CANCEL" == "1" ]] || info "Cancelled."
+    exit 0
+  fi
+  ok "Selected: ${THEME_QUERY}"
+fi
+
+if ! resolve_theme_source "$THEME_QUERY"; then
+  die "Failed to resolve '${THEME_QUERY}' from source='${SOURCE_PREF}'"
+fi
+
+[[ -n "$THEME_CANONICAL" ]] || THEME_CANONICAL="$THEME_QUERY"
+THEME_ARG="$(theme_slug "$THEME_CANONICAL")"
+[[ -n "$THEME_ARG" ]] || THEME_ARG="$(theme_slug "$THEME_QUERY")"
+ok "Resolved: ${THEME_CANONICAL}  →  ${THEME_ARG}  (${SCHEME_SOURCE})"
+
+# ── 2 / 6  Extract base palette ───────────────────────────────────────────────
+header "2 / 6  Extracting palette"
+
+# Some schemes use top-level keys, others nest under .palette
+get_base() {
+  yq ".[\"$1\"] // .palette[\"$1\"] // \"\"" "$SCHEME_FILE" 2>/dev/null | \
+    tr -d '"' | tr '[:upper:]' '[:lower:]' | grep -oE '^[0-9a-f]{6}$' || true
+}
+
+SCHEME_NAME=$(yq '.scheme // .name // ""' "$SCHEME_FILE" 2>/dev/null | tr -d '"')
+
+b00=$(get_base base00); b01=$(get_base base01); b02=$(get_base base02); b03=$(get_base base03)
+b04=$(get_base base04); b05=$(get_base base05); b06=$(get_base base06); b07=$(get_base base07)
+b08=$(get_base base08); b09=$(get_base base09); b0A=$(get_base base0A); b0B=$(get_base base0B)
+b0C=$(get_base base0C); b0D=$(get_base base0D); b0E=$(get_base base0E); b0F=$(get_base base0F)
+
+[[ -z "$b00" || -z "$b05" ]] && die "Could not parse palette — unsupported scheme format"
+
+# Detect dark / light from background luminance (ITU-R BT.601 coefficients)
+BG_LUM=$(( (16#${b00:0:2} * 299 + 16#${b00:2:2} * 587 + 16#${b00:4:2} * 114) / 1000 ))
+[[ $BG_LUM -lt 128 ]] && MODE=dark || MODE=light
+ok "Palette extracted  •  mode=${MODE}  •  #${b00}  (lum=${BG_LUM}/255)"
+
+# Named shortcuts (all lowercase hex without #, or with # where noted)
+c_bg="#${b00}"; c_fg="#${b05}"; c_sel_bg="#${b02}"; c_comment="#${b03}"
+c_red="#${b08}"; c_ylw="#${b0A}"; c_grn="#${b0B}"
+c_cyn="#${b0C}"; c_blu="#${b0D}"; c_mag="#${b0E}"
+
+GHOSTTY_THEME="${GHOSTTY_THEME:-}"
+NVIM_PLUGIN=""
+NVIM_COLORSCHEME=""
+
+# ── Initialize all tool colors from derived base palette ──────────────────────
+
+# fzf
+F_BG="$c_bg"     ; F_BGP="$c_sel_bg"; F_FG="$c_fg"    ; F_FGP="$c_fg"
+F_HL="$c_cyn"    ; F_HLP="$c_cyn"   ; F_BRD="$c_comment"; F_GUT="$c_bg"
+F_HDR="$c_ylw"   ; F_INF="$c_comment"; F_LBL="$c_fg"  ; F_MRK="$c_mag"
+F_PTR="$c_mag"   ; F_PRM="$c_blu"   ; F_QRY="$c_fg"   ; F_SCR="$c_comment"
+F_SEP="$c_ylw"   ; F_SPN="$c_mag"
+
+# tmux
+T_BG="$c_bg"; T_FG="#${b04}"
+T_ABD="$c_blu"; T_IBD="$c_comment"
+T_L1B="$c_blu";  T_L1F="$c_bg"
+T_WCB="$c_blu";  T_WCF="$c_bg"; T_WB="$c_bg"; T_WF="#${b04}"
+T_SYN="$c_red";  T_PFX="$c_mag"
+T_R1B="$c_cyn";  T_R1F="$c_bg"; T_R2B="$c_mag"; T_R2F="$c_bg"
+
+# delta
+D_SEC="$THEME_ARG"
+D_MBG=$(mix "$c_red" "$c_bg" 15); D_MEB=$(mix "$c_red" "$c_bg" 30)
+D_PBG=$(mix "$c_grn" "$c_bg" 15); D_PEB=$(mix "$c_grn" "$c_bg" 30)
+D_LNM="$c_red"; D_LNP="$c_grn"; D_LNZ="$c_comment"
+
+# lazygit
+L_ABD="$c_ylw"; L_IBD="$c_blu"; L_SBD="$c_ylw"; L_OPT="$c_blu"
+L_SEL="$c_sel_bg"; L_CFG="$c_blu"; L_CBG="$c_mag"
+L_MFG="$c_blu";    L_MBG="$c_ylw"; L_UST="$c_red"; L_DFG="$c_fg"
+
+# ── 3 / 6  WezTerm built-in ───────────────────────────────────────────────────
+header "3 / 6  Checking WezTerm built-in schemes"
+
+WT_CACHE="$WEZTERM_INDEX"
+ensure_wezterm_index || true
+
+if [[ -s "$WT_CACHE" ]]; then
+  WT_SEARCH="${THEME_ARG//-/ }"
+  WT_MATCHES=$(grep -iF "$WT_SEARCH" "$WT_CACHE" 2>/dev/null || \
+               grep -iF "${THEME_ARG//-/}" "$WT_CACHE" 2>/dev/null || true)
+
+  if [[ -n "$WT_MATCHES" ]]; then
+    if [[ -n "$WEZTERM_SCHEME" ]]; then
+      SELECTED="$WEZTERM_SCHEME"
+    elif [[ "$NO_FZF" == "1" ]]; then
+      SELECTED=$(awk 'NR == 1 { print; exit }' <<< "$WT_MATCHES")
+    else
+      SELECTED=$(printf '%s\n' "$WT_MATCHES" | fzf \
+        "${_fzf_def[@]}" "${theme_opts[@]}" \
+        --prompt="  WezTerm built-in › " \
+        --header="  Select a built-in WezTerm scheme  •  Esc = use derived palette colors" \
+        || true)
+    fi
+    [[ -n "$SELECTED" ]] && WEZTERM_SCHEME="$SELECTED" && ok "WezTerm: built-in '${SELECTED}'"
+  else
+    info "No matching built-in — will use derived palette"
+  fi
+else
+  info "Could not load WezTerm scheme list — will use derived palette"
+fi
+[[ -z "$WEZTERM_SCHEME" ]] && ok "WezTerm: derived from base palette"
+
+# ── 4 / 6  Ghostty built-in ───────────────────────────────────────────────────
+header "4 / 6  Checking Ghostty built-in themes"
+
+GT_CACHE="$ITERM2_INDEX"
+ensure_iterm2_index || true
+
+if [[ -s "$GT_CACHE" ]]; then
+  GT_SEARCH="${THEME_ARG//-/ }"
+  GT_MATCHES=$(grep -iF "$GT_SEARCH" "$GT_CACHE" 2>/dev/null || \
+               grep -iF "${THEME_ARG//-/}" "$GT_CACHE" 2>/dev/null || true)
+
+  if [[ -n "$GT_MATCHES" ]]; then
+    if [[ -n "$GHOSTTY_THEME" ]]; then
+      SELECTED="$GHOSTTY_THEME"
+    elif [[ "$NO_FZF" == "1" ]]; then
+      SELECTED=$(awk 'NR == 1 { print; exit }' <<< "$GT_MATCHES")
+    else
+      SELECTED=$(printf '%s\n' "$GT_MATCHES" | fzf \
+        "${_fzf_def[@]}" "${theme_opts[@]}" \
+        --prompt="  Ghostty theme › " \
+        --header="  Select a community Ghostty theme (iTerm2-Color-Schemes)  •  Esc = use palette colors" \
+        || true)
+    fi
+    if [[ -n "$SELECTED" ]]; then
+      _gt_url="https://raw.githubusercontent.com/mbadolato/iTerm2-Color-Schemes/master/ghostty/${SELECTED// /%20}"
+      _gt_dir="$HOME/.config/ghostty/themes"
+      mkdir -p "$_gt_dir"
+      if curl -sf "$_gt_url" -o "${_gt_dir}/${SELECTED}" 2>/dev/null; then
+        GHOSTTY_THEME="$SELECTED"
+        ok "Ghostty: installed '${SELECTED}' → ${_gt_dir}/${SELECTED}"
+      else
+        info "Ghostty: could not download theme file — using derived palette"
+      fi
+    fi
+  else
+    info "No matching built-in — using palette colors"
+  fi
+else
+  info "Could not load Ghostty theme list — using palette colors"
+fi
+[[ -z "$GHOSTTY_THEME" ]] && ok "Ghostty: derived from base palette"
+
+# ── 5 / 6  GitHub search for tool-specific ports ──────────────────────────────
+header "5 / 6  Searching GitHub for tool ports"
+
+# Show fzf picker of GitHub search results; returns repo "owner/name" or ""
+pick_github_repo() {
+  local tool="$1"
+  if [[ "$NO_FZF" == "1" ]]; then
+    info "${tool}: skipped in --no-fzf mode" >&2
+    return
+  fi
+  local query="${THEME_ARG}+${tool}"
+  printf '  \033[1m%-10s\033[0m  searching...\r' "$tool" >&2
+
+  local raw
+  raw=$(gh_get "search/repositories?q=${query}&sort=stars&order=desc&per_page=8" 2>/dev/null || true)
+
+  printf '  %-10s               \r' "" >&2  # clear line
+  [[ -z "$raw" ]] && { info "${tool}: no results — using derived colors" >&2; return; }
+
+  local items
+  items=$(echo "$raw" | jq -r '.items[]? | [.full_name, (.stargazers_count|tostring), (.description // "—")] | @tsv' 2>/dev/null || true)
+  [[ -z "$items" ]] && { info "${tool}: no results — using derived colors" >&2; return; }
+
+  local formatted
+  formatted=$(echo "$items" | awk -F'\t' '{printf "%-42s  %5s★  %s\n", $1, $2, $3}')
+
+  local selected
+  selected=$(printf '%s\n' "$formatted" | fzf \
+    "${_fzf_def[@]}" "${theme_opts[@]}" \
+    --prompt="  ${tool} port › " \
+    --header="  Repos for '${THEME_ARG} ${tool}'  •  Esc = use derived colors" \
+    || true)
+
+  [[ -z "$selected" ]] && { info "${tool}: skipped — using derived colors" >&2; return; }
+  awk '{print $1}' <<< "$selected"
+}
+
+# Fetch file paths from a repo (GitHub trees API), filtered by extension regex
+repo_files() {
+  local repo="$1" pattern="${2:-}"
+  gh_get "repos/${repo}/git/trees/HEAD?recursive=1" | \
+    jq -r '.tree[].path' 2>/dev/null | \
+    { [[ -n "$pattern" ]] && grep -E "$pattern" || cat; } | head -10 || true
+}
+
+# Fetch raw file content from a GitHub repo
+raw_file() {
+  local repo="$1" file="$2"
+  curl -sf "https://raw.githubusercontent.com/${repo}/HEAD/${file}" 2>/dev/null || true
+}
+
+# ── fzf parser: extract --color=key:#hex pairs ────────────────────────────────
+parse_fzf() {
+  local repo="$1"
+  local files; files=$(repo_files "$repo" '\.(sh|zsh)$')
+  [[ -z "$files" ]] && return 1
+  local file; file=$(echo "$files" | grep -iE 'color|fzf|theme' | head -1 || echo "$files" | head -1)
+  local raw; raw=$(raw_file "$repo" "$file")
+  [[ -z "$raw" ]] && return 1
+
+  declare -A kv
+  while IFS= read -r pair; do
+    local k="${pair%%:*}" v="#${pair##*:}"
+    kv["${k,,}"]="${v,,}"
+  done < <(echo "$raw" | grep -oE -- '--color[= ][a-zA-Z+]+:#?[0-9a-fA-F]{6}' | \
+           sed 's/--color[= ]//; s/:#\?/:/')
+
+  [[ ${#kv[@]} -lt 4 ]] && return 1
+
+  F_BG="${kv[bg]:-$F_BG}";  F_BGP="${kv[bg+]:-$F_BGP}"; F_FG="${kv[fg]:-$F_FG}"
+  F_FGP="${kv[fg+]:-$F_FGP}"; F_HL="${kv[hl]:-$F_HL}"; F_HLP="${kv[hl+]:-$F_HLP}"
+  F_BRD="${kv[border]:-$F_BRD}"; F_GUT="${kv[gutter]:-$F_GUT}"
+  F_HDR="${kv[header]:-$F_HDR}"; F_INF="${kv[info]:-$F_INF}"
+  F_LBL="${kv[label]:-$F_LBL}"; F_MRK="${kv[marker]:-$F_MRK}"
+  F_PTR="${kv[pointer]:-$F_PTR}"; F_PRM="${kv[prompt]:-$F_PRM}"
+  F_QRY="${kv[query]:-$F_QRY}"; F_SCR="${kv[scrollbar]:-$F_SCR}"
+  F_SEP="${kv[separator]:-$F_SEP}"; F_SPN="${kv[spinner]:-$F_SPN}"
+  ok "fzf: parsed ${#kv[@]} colors from ${repo}/${file}"
+}
+
+# ── lazygit parser: gui.theme.* YAML keys ─────────────────────────────────────
+parse_lazygit() {
+  local repo="$1"
+  local files; files=$(repo_files "$repo" '\.(ya?ml)$')
+  [[ -z "$files" ]] && return 1
+  local file; file=$(echo "$files" | grep -iE 'theme|color|lazygit' | head -1 || echo "$files" | head -1)
+  local raw; raw=$(raw_file "$repo" "$file")
+  [[ -z "$raw" ]] && return 1
+
+  # Handles both gui.theme.* (catppuccin style) and flat .* keys
+  _lc() {
+    echo "$raw" | yq ".gui.theme.${1}[0] // .${1}[0] // \"\"" 2>/dev/null | \
+      tr -d '"' | grep -E '^#[0-9a-fA-F]{6}$' || true
+  }
+  local v
+  v=$(_lc activeBorderColor);           [[ -n "$v" ]] && L_ABD="$v"
+  v=$(_lc inactiveBorderColor);         [[ -n "$v" ]] && L_IBD="$v"
+  v=$(_lc searchingActiveBorderColor);  [[ -n "$v" ]] && L_SBD="$v"
+  v=$(_lc optionsTextColor);            [[ -n "$v" ]] && L_OPT="$v"
+  v=$(_lc selectedLineBgColor);         [[ -n "$v" ]] && L_SEL="$v"
+  v=$(_lc unstagedChangesColor);        [[ -n "$v" ]] && L_UST="$v"
+  v=$(_lc defaultFgColor);             [[ -n "$v" ]] && L_DFG="$v"
+  ok "lazygit: parsed colors from ${repo}/${file}"
+}
+
+# ── tmux parser: @VAR "#hex" style declarations ───────────────────────────────
+parse_tmux() {
+  local repo="$1"
+  local files; files=$(repo_files "$repo" '\.(conf|tmux)$')
+  [[ -z "$files" ]] && return 1
+  local file; file=$(echo "$files" | grep -iE 'theme|color' | head -1 || echo "$files" | head -1)
+  local raw; raw=$(raw_file "$repo" "$file")
+  [[ -z "$raw" ]] && return 1
+
+  _tv() { echo "$raw" | grep -iE "@${1}" | grep -oE '#[0-9a-fA-F]{6}' | head -1 || true; }
+
+  local v
+  v=$(_tv 'DEFAULT_BG\|BG[^_]');     [[ -n "$v" ]] && T_BG="$v"
+  v=$(_tv 'DEFAULT_FG\|[^_]FG[^_]'); [[ -n "$v" ]] && T_FG="$v"
+  v=$(_tv 'ACTIVE.*BORDER');          [[ -n "$v" ]] && T_ABD="$v"
+  v=$(_tv 'INACTIVE.*BORDER');        [[ -n "$v" ]] && T_IBD="$v"
+  v=$(_tv 'WINDOW_CURR_BG\|CURR_BG'); [[ -n "$v" ]] && T_WCB="$v"
+  v=$(_tv 'WINDOW_CURR_FG\|CURR_FG'); [[ -n "$v" ]] && T_WCF="$v"
+  v=$(_tv 'RIGHT_1_BG\|R1_BG');       [[ -n "$v" ]] && T_R1B="$v"
+  v=$(_tv 'RIGHT_2_BG\|R2_BG');       [[ -n "$v" ]] && T_R2B="$v"
+  ok "tmux: parsed colors from ${repo}/${file} (best-effort)"
+}
+
+# ── delta parser: minus/plus style hex values ─────────────────────────────────
+parse_delta() {
+  local repo="$1"
+  local files; files=$(repo_files "$repo" '(\.gitconfig|gitconfig|delta.*\.conf)$')
+  [[ -z "$files" ]] && return 1
+  local file; file=$(echo "$files" | head -1)
+  local raw; raw=$(raw_file "$repo" "$file")
+  [[ -z "$raw" ]] && return 1
+
+  # Delta styles can be  syntax "#hex"  or  "#hex"  — extract the hex
+  _dv() { echo "$raw" | grep -iE "${1}" | grep -oE '#[0-9a-fA-F]{6}' | head -1 || true; }
+
+  local v
+  v=$(_dv 'minus-style[^-]');        [[ -n "$v" ]] && D_MBG="$v"
+  v=$(_dv 'minus-emph-style');       [[ -n "$v" ]] && D_MEB="$v"
+  v=$(_dv 'plus-style[^-]');         [[ -n "$v" ]] && D_PBG="$v"
+  v=$(_dv 'plus-emph-style');        [[ -n "$v" ]] && D_PEB="$v"
+  v=$(_dv 'line-numbers-minus');     [[ -n "$v" ]] && D_LNM="$v"
+  v=$(_dv 'line-numbers-plus');      [[ -n "$v" ]] && D_LNP="$v"
+  v=$(_dv 'line-numbers-zero');      [[ -n "$v" ]] && D_LNZ="$v"
+  ok "delta: parsed colors from ${repo}/${file} (best-effort)"
+}
+
+# Run search + parse for each tool
+if [[ "$NO_FZF" == "1" ]]; then
+  info "Skipping tool-port search in --no-fzf mode"
+else
+  for TOOL in fzf tmux lazygit delta neovim; do
+    REPO=$(pick_github_repo "$TOOL")
+    if [[ -n "$REPO" ]]; then
+      case "$TOOL" in
+        fzf)     parse_fzf     "$REPO" || info "fzf: parse failed — using derived colors" ;;
+        tmux)    parse_tmux    "$REPO" || info "tmux: parse failed — using derived colors" ;;
+        lazygit) parse_lazygit "$REPO" || info "lazygit: parse failed — using derived colors" ;;
+        delta)   parse_delta   "$REPO" || info "delta: parse failed — using derived colors" ;;
+        neovim)
+          NVIM_PLUGIN="$REPO"
+          ok "neovim: will install plugin '${REPO}'"
+          # Fetch colorscheme names from the plugin's colors/ directory
+          _cs_names=$(gh_get "repos/${REPO}/git/trees/HEAD?recursive=1" | \
+            jq -r '.tree[].path | select(startswith("colors/"))' 2>/dev/null | \
+            sed 's|^colors/||; s|\.lua$||; s|\.vim$||' || true)
+          if [[ -n "$_cs_names" ]]; then
+            NVIM_COLORSCHEME=$(printf '%s\n' "$_cs_names" | fzf \
+              "${_fzf_def[@]}" "${theme_opts[@]}" \
+              --prompt="  neovim colorscheme › " \
+              --header="  Select colorscheme name for '${REPO}'  •  Esc = use theme name" \
+              || true)
+            [[ -n "$NVIM_COLORSCHEME" ]] && ok "neovim: colorscheme = '${NVIM_COLORSCHEME}'"
+          fi
+          ;;
+      esac
+    fi
+  done
+fi
+
+# ── 6 / 6  Write YAML + generate ──────────────────────────────────────────────
+header "6 / 6  Writing registry YAML"
+
+OUTPUT="$REGISTRY/${THEME_ARG}.yaml"
+if [[ -f "$OUTPUT" ]]; then
+  if [[ "$ASSUME_YES" == "1" ]]; then
+    info "'${THEME_ARG}.yaml' exists — overwriting (--yes)"
+  else
+    read -rp "  '${THEME_ARG}.yaml' already exists — overwrite? [y/N] " _ow
+    [[ "${_ow:-n}" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
+  fi
+fi
+
+GT_LINE=""
+NV_LINE=""
+NV_CS_LINE=""
+# Always write wezterm_scheme: use selected built-in, or fall back to theme name
+# (theme-generate will generate a matching ~/.config/wezterm/colors/<name>.toml)
+[[ -z "$WEZTERM_SCHEME" ]] && WEZTERM_SCHEME="$THEME_ARG"
+WT_LINE="  wezterm_scheme: \"${WEZTERM_SCHEME}\""
+[[ -n "$GHOSTTY_THEME"    ]] && GT_LINE="  ghostty_theme: \"${GHOSTTY_THEME}\""
+[[ -n "$NVIM_PLUGIN"      ]] && NV_LINE="neovim_plugin: \"${NVIM_PLUGIN}\""
+[[ -n "$NVIM_COLORSCHEME" ]] && NV_CS_LINE="neovim_colorscheme: \"${NVIM_COLORSCHEME}\""
+
+cat > "$OUTPUT" << YAML
+name: ${THEME_ARG}
+mode: ${MODE}
+description: "${SCHEME_NAME} — auto-imported from ${SCHEME_SOURCE}"
+
+colors:
+  background:      "#${b00}"
+  foreground:      "#${b05}"
+  cursor:          "#${b05}"
+  selection_bg:    "#${b02}"
+  selection_fg:    "#${b05}"
+  black:           "#${b00}"
+  red:             "#${b08}"
+  green:           "#${b0B}"
+  yellow:          "#${b0A}"
+  blue:            "#${b0D}"
+  magenta:         "#${b0E}"
+  cyan:            "#${b0C}"
+  white:           "#${b05}"
+  bright_black:    "#${b03}"
+  bright_red:      "#${b08}"
+  bright_green:    "#${b0B}"
+  bright_yellow:   "#${b0A}"
+  bright_blue:     "#${b0D}"
+  bright_magenta:  "#${b0E}"
+  bright_cyan:     "#${b0C}"
+  bright_white:    "#${b07}"
+
+terminal:
+${WT_LINE}
+${GT_LINE}
+  ghostty_uses_palette: true
+
+tmux:
+  default_bg:           "${T_BG}"
+  default_fg:           "${T_FG}"
+  active_pane_border:   "${T_ABD}"
+  inactive_pane_border: "${T_IBD}"
+  left1_bg:             "${T_L1B}"
+  left1_fg:             "${T_L1F}"
+  window_curr_bg:       "${T_WCB}"
+  window_curr_fg:       "${T_WCF}"
+  window_bg:            "${T_WB}"
+  window_fg:            "${T_WF}"
+  sync_color:           "${T_SYN}"
+  prefix_indicator:     "${T_PFX}"
+  right1_bg:            "${T_R1B}"
+  right1_fg:            "${T_R1F}"
+  right2_bg:            "${T_R2B}"
+  right2_fg:            "${T_R2F}"
+
+fzf:
+  bg:        "${F_BG}"
+  bg_plus:   "${F_BGP}"
+  fg:        "${F_FG}"
+  fg_plus:   "${F_FGP}"
+  hl:        "${F_HL}"
+  hl_plus:   "${F_HLP}"
+  border:    "${F_BRD}"
+  gutter:    "${F_GUT}"
+  header:    "${F_HDR}"
+  info:      "${F_INF}"
+  label:     "${F_LBL}"
+  marker:    "${F_MRK}"
+  pointer:   "${F_PTR}"
+  prompt:    "${F_PRM}"
+  query_fg:  "${F_QRY}"
+  scrollbar: "${F_SCR}"
+  separator: "${F_SEP}"
+  spinner:   "${F_SPN}"
+
+delta:
+  section_name:                  "${D_SEC}"
+  minus_style:                   'syntax "${D_MBG}"'
+  minus_non_emph_style:          'syntax "${D_MBG}"'
+  minus_emph_style:              'syntax "${D_MEB}"'
+  minus_empty_line_marker_style: 'syntax "${D_MBG}"'
+  line_numbers_minus_style:      '"${D_LNM}"'
+  plus_style:                    'syntax "${D_PBG}"'
+  plus_non_emph_style:           'syntax "${D_PBG}"'
+  plus_emph_style:               'syntax "${D_PEB}"'
+  plus_empty_line_marker_style:  'syntax "${D_PBG}"'
+  line_numbers_plus_style:       '"${D_LNP}"'
+  line_numbers_zero_style:       '"${D_LNZ}"'
+
+lazygit:
+  active_border_color:         ["${L_ABD}", "bold"]
+  inactive_border_color:       ["${L_IBD}"]
+  searching_active_border:     ["${L_SBD}", "bold"]
+  options_text_color:          ["${L_OPT}"]
+  selected_line_bg_color:      ["${L_SEL}"]
+  cherry_picked_commit_fg:     ["${L_CFG}"]
+  cherry_picked_commit_bg:     ["${L_CBG}"]
+  marked_base_commit_fg:       ["${L_MFG}"]
+  marked_base_commit_bg:       ["${L_MBG}"]
+  unstaged_changes_color:      ["${L_UST}"]
+  default_fg_color:            ["${L_DFG}"]
+${NV_LINE}
+${NV_CS_LINE}
+YAML
+
+ok "Written: ${OUTPUT}"
+
+# ── Update theme-imports.lua if a neovim plugin was selected ──────────────────
+if [[ -n "$NVIM_PLUGIN" ]]; then
+  if [[ ! -f "$THEME_IMPORTS" ]]; then
+    cat > "$THEME_IMPORTS" << 'LUA'
+-- Auto-managed by theme-import — do not edit manually
+return {
+}
+LUA
+  fi
+  if ! grep -qF "\"$NVIM_PLUGIN\"" "$THEME_IMPORTS"; then
+    tmp=$(mktemp)
+    sed '$d' "$THEME_IMPORTS" > "$tmp"
+    echo "  { \"$NVIM_PLUGIN\", lazy = false, priority = 1000 }," >> "$tmp"
+    echo "}" >> "$tmp"
+    mv "$tmp" "$THEME_IMPORTS"
+    ok "neovim: added '${NVIM_PLUGIN}' to theme-imports.lua — run :Lazy sync in nvim"
+  else
+    info "neovim: '${NVIM_PLUGIN}' already in theme-imports.lua"
+  fi
+fi
+
+printf '\n  Running theme-generate...\n'
+"$THEMES_BIN/theme-generate"
+ok "All tool configs generated"
+
+printf '\n'
+if [[ "$ASSUME_YES" == "1" ]]; then
+  _apply="y"
+else
+  read -rp "  Apply '${THEME_ARG}' now? [Y/n] " _apply
+fi
+if [[ "${_apply:-y}" =~ ^[Yy]$ ]]; then
+  echo "$THEME_ARG" > "$HOME/.theme_${MODE}"
+  "$THEMES_BIN/theme-switch"
+  ok "Theme applied!"
+fi

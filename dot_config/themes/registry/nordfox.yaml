@@ -1,0 +1,97 @@
+name: nordfox
+mode: dark
+description: "Nordfox - nord-inspired dark"
+
+colors:
+  background:    "#2e3440"
+  foreground:    "#c4cad4"
+  cursor:        "#ffcc00"
+  selection_bg:  "#3e4a5b"
+  selection_fg:  "#c4cad4"
+  black:         "#4c566a"
+  red:           "#bf616a"
+  green:         "#a3be8c"
+  yellow:        "#ebcb8b"
+  blue:          "#81a1c1"
+  magenta:       "#b48ead"
+  cyan:          "#88c0d0"
+  white:         "#d8dee7"
+  bright_black:  "#465780"
+  bright_red:    "#d06f79"
+  bright_green:  "#b1d196"
+  bright_yellow: "#f0d399"
+  bright_blue:   "#8cafd2"
+  bright_magenta: "#c895bf"
+  bright_cyan:   "#93ccdc"
+  bright_white:  "#dde4ee"
+
+terminal:
+  wezterm_scheme: null
+  ghostty_uses_palette: true
+
+tmux:
+  default_bg:           "#2e3440"
+  default_fg:           "#c4cad4"
+  active_pane_border:   "#81a1c1"
+  inactive_pane_border: "#465780"
+  left1_bg:             "#81a1c1"
+  left1_fg:             "#2e3440"
+  copy_mode_bg:         "#81a1c1"
+  copy_mode_fg:         "#2e3440"
+  window_curr_bg:       "#ebcb8b"
+  window_curr_fg:       "#2e3440"
+  window_bg:            "#54524f"
+  window_fg:            "#ebcb8b"
+  sync_color:           "#d06f79"
+  prefix_indicator:     "#a3be8c"
+  right1_bg:            "#81a1c1"
+  right1_fg:            "#2e3440"
+  right2_bg:            "#465780"
+  right2_fg:            "#81a1c1"
+
+fzf:
+  bg:        "#2e3440"
+  bg_plus:   "#3e4a5b"
+  fg:        "#c4cad4"
+  fg_plus:   "#c4cad4"
+  hl:        "#93ccdc"
+  hl_plus:   "#ebcb8b"
+  border:    "#7d9fc0"
+  gutter:    "#2e3440"
+  header:    "#b1d196"
+  info:      "#c1c9d4"
+  label:     "#c1c9d4"
+  marker:    "#d06f79"
+  pointer:   "#d06f79"
+  prompt:    "#c895bf"
+  query_fg:  "#c9d0dc"
+  scrollbar: "#7d9fc0"
+  separator: "#ebcb8b"
+  spinner:   "#d06f79"
+
+delta:
+  section_name:                  "nordfox"
+  minus_style:                   'syntax "#3c2c2e"'
+  minus_non_emph_style:          'syntax "#3c2c2e"'
+  minus_emph_style:              'syntax "#6b3f42"'
+  minus_empty_line_marker_style: 'syntax "#3c2c2e"'
+  line_numbers_minus_style:      '"#bf616a"'
+  plus_style:                    'syntax "#2d3b42"'
+  plus_non_emph_style:           'syntax "#2d3b42"'
+  plus_emph_style:               'syntax "#2c5a66"'
+  plus_empty_line_marker_style:  'syntax "#2d3b42"'
+  line_numbers_plus_style:       '"#a3be8c"'
+  line_numbers_zero_style:       '"#465780"'
+
+lazygit:
+  active_border_color:         ["#ebcb8b", "bold"]
+  inactive_border_color:       ["#81a1c1"]
+  searching_active_border:     ["#ebcb8b", "bold"]
+  options_text_color:          ["#81a1c1"]
+  selected_line_bg_color:      ["#3e4a5b"]
+  cherry_picked_commit_fg:     ["#81a1c1"]
+  cherry_picked_commit_bg:     ["#b48ead"]
+  marked_base_commit_fg:       ["#a3be8c"]
+  marked_base_commit_bg:       ["#ebcb8b"]
+  unstaged_changes_color:      ["#bf616a"]
+  default_fg_color:            ["#c4cad4"]

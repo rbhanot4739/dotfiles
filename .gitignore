@@ -2,13 +2,18 @@
 # (chezmoi add is already blocked by .chezmoiignore)
 **/test*
 **/*.bak
+**/*.backup
 **/*.tmp
 **/*.orig
 **/*.swp
+**/.DS_Store
+**/dot_DS_Store
 
 # Claude-generated logs directory
 logs/
 
-# Aider
-.aider.*
+# AI tool configs (project-local, not for home directory)
+.claude
+.claude/**
+.aider*
 

@@ -42,7 +42,7 @@ return {
     },
   },
   lazy = true,
-  enabled = true,
+  enabled = false,
   config = function(_, opts)
     local layout = vim.env.CC_LAYOUT_OVERRIDE or "vertical"
     opts = {

@@ -1,0 +1,249 @@
+#!/usr/bin/env bash
+# New theme orchestrator — reads same state files as existing system
+# Compatible with theme-monitor (passed as $1 from launchd)
+set -euo pipefail
+trap 'echo "[theme-switch] Error at line $LINENO (command: $BASH_COMMAND)" >&2' ERR
+
+THEMES_DIR="$HOME/.config/themes"
+GENERATED="$THEMES_DIR/generated"
+REGISTRY="$THEMES_DIR/registry"
+GHOSTTY_DIR="$HOME/.config/ghostty"
+THEME_SWITCH_VERBOSE="${THEME_SWITCH_VERBOSE:-0}"
+THEME_SWITCH_APPLY_CURRENT_OSC="${THEME_SWITCH_APPLY_CURRENT_OSC:-0}"
+THEME_SWITCH_APPLY_CALLER_TTY="${THEME_SWITCH_APPLY_CALLER_TTY:-0}"
+
+log() {
+  if [[ "$THEME_SWITCH_VERBOSE" == "1" ]]; then
+    echo "$*"
+  fi
+  return 0
+}
+
+# Read current state via shared snippet (single source of truth)
+. "$HOME/.config/themes/lib/resolve-theme.sh"
+
+log "Switching to theme: $THEME ($BG_MODE)"
+
+YAML="$REGISTRY/${THEME}.yaml"
+if [[ ! -f "$YAML" ]]; then
+  echo "Error: theme registry not found: $YAML" >&2
+  exit 1
+fi
+
+THEME_MODE=$(yq '.mode' "$YAML")
+
+# --- GHOSTTY ---
+# Ghostty macOS has NO file-watch auto-reload (no FSEvents/kqueue watcher) and
+# no usable programmatic IPC: SIGHUP is ignored or triggers a disruptive full
+# window close/reopen, and osascript requires Accessibility permission that a
+# terminal shell does not have.
+#
+# Two-pronged approach:
+#   1. Write ~/.config/ghostty/config  → new Ghostty windows load the new theme
+#   2. OSC 4/10/11/12 escape sequences → live-update existing terminal sessions:
+#      a. Written directly to each Ghostty PTY (process tree walk from ghostty PID)
+#         This works regardless of whether theme-switch runs inside Ghostty or not.
+#      b. DCS passthrough (\033Ptmux;...) to update the outer terminal hosting tmux.
+if [[ "$THEME_MODE" == "adaptive" ]]; then
+  GHOSTTY_COLORS="$GENERATED/ghostty/${THEME}-${BG_MODE}.conf"
+elif [[ -f "$GENERATED/ghostty/${THEME}-${BG_MODE}.conf" ]]; then
+  GHOSTTY_COLORS="$GENERATED/ghostty/${THEME}-${BG_MODE}.conf"
+else
+  GHOSTTY_COLORS="$GENERATED/ghostty/${THEME}.conf"
+fi
+
+if [[ -f "$GHOSTTY_COLORS" ]]; then
+  cp "$GHOSTTY_COLORS" "$GHOSTTY_DIR/current-colors.conf"
+  # Touch the main config so Ghostty detects a change and re-reads
+  # current-colors.conf when the next new window/tab is created.
+  touch "$GHOSTTY_DIR/config" 2>/dev/null || true
+fi
+
+# Live-update terminal colors via OSC escape sequences.
+#
+# Performance design: two invariants are hoisted out of the per-color loop:
+#   1. Process table + PTY lists — computed once, not once per color.
+#   2. Color values — read in a single yq call, not 19 separate ones.
+# This reduces ~38 pgrep calls + ~19 yq startups to 2 + 1 respectively.
+
+# Emit OSC to the current terminal; DCS passthrough when inside tmux.
+_osc_current() {
+  if [[ -n "${TMUX:-}" ]]; then
+    printf '\033Ptmux;\033\033]%s\007\033\\' "$1"
+  else
+    printf '\033]%s\007' "$1"
+  fi
+}
+
+# Generic BFS: walk a named app's process tree and print all PTY device paths.
+# Terminal emulators are GUI apps with no TTY themselves; each tab/pane spawns
+# a shell child that holds the PTY slave (/dev/ttysN). Writing an OSC sequence
+# to a PTY slave delivers it to that terminal emulator's PTY master read loop.
+# Uses $_PROCTABLE (captured once below) so multiple calls share one ps snapshot.
+_terminal_ttys() {
+  local app_name="$1"
+  local app_pid
+  app_pid=$(pgrep -ix "$app_name" 2>/dev/null | head -1 || true)
+  [[ -z "$app_pid" ]] && return 0
+
+  local -a queue=("$app_pid") visited=("$app_pid") result=()
+
+  while [[ ${#queue[@]} -gt 0 ]]; do
+    local cur="${queue[0]}"
+    queue=("${queue[@]:1}")
+
+    while IFS= read -r line; do
+      local pid ppid tty
+      read -r pid ppid tty <<< "$line"
+      # ps pads the tty column to a fixed width; strip spaces so /dev/ttysN is clean.
+      tty="${tty//[[:space:]]/}"
+      [[ "$ppid" == "$cur" ]] || continue
+      [[ " ${visited[*]} " == *" $pid "* ]] && continue
+      visited+=("$pid")
+      queue+=("$pid")
+      [[ -n "$tty" && "$tty" != "??" ]] && result+=("/dev/$tty")
+    done <<< "$_PROCTABLE"
+  done
+
+  [[ ${#result[@]} -gt 0 ]] && printf '%s\n' "${result[@]}" | sort -u
+}
+
+# Write an OSC sequence to every readable PTY in a newline-separated list.
+_osc_to_ttys() {
+  local seq="$1" tty_dev
+  while IFS= read -r tty_dev; do
+    [[ -n "$tty_dev" && -w "$tty_dev" ]] || continue
+    if [[ "$THEME_SWITCH_APPLY_CALLER_TTY" != "1" && -n "${_CURRENT_TTY:-}" && "$tty_dev" == "$_CURRENT_TTY" ]]; then
+      continue
+    fi
+    printf '\033]%s\007' "$seq" > "$tty_dev" 2>/dev/null || true
+  done
+}
+
+# Snapshot process table once; reused by all _terminal_ttys calls below.
+_PROCTABLE=$(ps -ax -o pid=,ppid=,tty= 2>/dev/null)
+_CURRENT_TTY=$(tty 2>/dev/null || true)
+[[ "$_CURRENT_TTY" == not\ a\ tty* ]] && _CURRENT_TTY=""
+
+# Pre-compute PTY device lists once (one pgrep + BFS per app, not one per color).
+_ghostty_ttys=$(_terminal_ttys "ghostty")
+_wezterm_ttys=$(_terminal_ttys "wezterm-gui")
+
+# Send an OSC sequence to all live terminals + the current session.
+_broadcast_osc() {
+  local seq="$1"
+  [[ -n "$_ghostty_ttys" ]] && _osc_to_ttys "$seq" <<< "$_ghostty_ttys"
+  [[ -n "$_wezterm_ttys" ]] && _osc_to_ttys "$seq" <<< "$_wezterm_ttys"
+  if [[ "$THEME_SWITCH_APPLY_CURRENT_OSC" == "1" ]]; then
+    _osc_current "$seq"
+  fi
+}
+
+if [[ -f "$YAML" ]]; then
+  _prefix=""
+  [[ "$THEME_MODE" == "adaptive" ]] && _prefix=".${BG_MODE}"
+
+  # Read all 19 color values in one yq invocation (avoids 19 separate process startups).
+  # Order: palette 0-15, then foreground(16) background(17) cursor(18).
+  _yq_fields=".black, .red, .green, .yellow, .blue, .magenta, .cyan, .white,
+               .bright_black, .bright_red, .bright_green, .bright_yellow,
+               .bright_blue, .bright_magenta, .bright_cyan, .bright_white,
+               .foreground, .background, .cursor"
+  mapfile -t _cvals < <(yq "${_prefix}.colors | [${_yq_fields}] | .[]" "$YAML" 2>/dev/null)
+
+  # Palette colors 0-15 (ANSI) via OSC 4
+  for _i in {0..15}; do
+    _val="${_cvals[$_i]:-}"
+    [[ -z "$_val" || "$_val" == "null" ]] && continue
+    _broadcast_osc "4;${_i};${_val}"
+  done
+
+  # Foreground (OSC 10), background (OSC 11), cursor (OSC 12)
+  _fg="${_cvals[16]:-}"; _bg="${_cvals[17]:-}"; _cu="${_cvals[18]:-}"
+  [[ -n "$_fg" && "$_fg" != "null" ]] && _broadcast_osc "10;${_fg}"
+  [[ -n "$_bg" && "$_bg" != "null" ]] && _broadcast_osc "11;${_bg}"
+  [[ -n "$_cu" && "$_cu" != "null" ]] && _broadcast_osc "12;${_cu}"
+fi
+
+# --- NEOVIM ---
+# Update all Neovim instances via nvr. Uses --remote-expr so the call is
+# mode-independent (works in insert/visual/terminal mode). `silent!` suppresses
+# errors for nvim instances whose config doesn't define Load_colorscheme().
+# --embed instances (Cursor, VSCode) are included: they load the user's full
+# init.lua with colorscheme plugins and respond correctly.
+if command -v nvr &>/dev/null; then
+  # Run entire nvr section in a background subshell: nvr --serverlist itself
+  # takes ~100ms; backgrounding the outer block keeps it off the critical path.
+  # Each per-socket nvr call is also backgrounded so they run concurrently.
+  (
+    while IFS= read -r socket; do
+      [[ -z "$socket" ]] && continue
+      nvr --servername "$socket" \
+          --remote-expr "execute('silent! lua Load_colorscheme()')" \
+          >/dev/null 2>&1 &
+    done < <(nvr --serverlist 2>/dev/null)
+  ) &
+fi
+
+# --- TMUX ---
+# Use `tmux list-sessions` instead of $TMUX so this works whether called
+# from inside tmux or from an external terminal.
+# `tmux refresh-client -S` forces an immediate status bar redraw; without it
+# the new colours appear only after the next status-interval tick (~15 s).
+if tmux list-sessions &>/dev/null 2>&1; then
+  if [[ "$THEME_MODE" == "adaptive" ]]; then
+    TMUX_CONF="$GENERATED/tmux/${THEME}-${BG_MODE}.conf"
+  elif [[ -f "$GENERATED/tmux/${THEME}-${BG_MODE}.conf" ]]; then
+    TMUX_CONF="$GENERATED/tmux/${THEME}-${BG_MODE}.conf"
+  else
+    TMUX_CONF="$GENERATED/tmux/${THEME}.conf"
+  fi
+
+  if [[ -f "$TMUX_CONF" ]]; then
+    tmux source-file "$TMUX_CONF" 2>/dev/null || true
+    tmux refresh-client -S 2>/dev/null || true
+  fi
+fi
+
+# --- DELTA ---
+if [[ "$THEME_MODE" == "adaptive" ]]; then
+  DELTA_SECTION=$(yq ".${BG_MODE}.delta.section_name" "$YAML")
+else
+  DELTA_SECTION=$(yq ".delta.section_name" "$YAML")
+fi
+
+# Write active theme to a standalone include file so ~/.delta-gitconfig stays
+# chezmoi-managed and immutable.  The main config includes this via [include].
+cat > "$GENERATED/delta/delta-active.gitconfig" <<DELTA
+; Auto-generated by theme-switch — do not edit manually
+[delta]
+    features = ${DELTA_SECTION}
+DELTA
+
+# --- LAZYGIT ---
+# The pager line no longer needs runtime patching: lazygit calls delta-pager,
+# a wrapper that reads ~/.bg_mode at invocation time.
+
+if [[ "$THEME_MODE" == "adaptive" ]]; then
+  LAZYGIT_YML="$GENERATED/lazygit/${THEME}-${BG_MODE}.yml"
+elif [[ -f "$GENERATED/lazygit/${THEME}-${BG_MODE}.yml" ]]; then
+  LAZYGIT_YML="$GENERATED/lazygit/${THEME}-${BG_MODE}.yml"
+else
+  LAZYGIT_YML="$GENERATED/lazygit/${THEME}.yml"
+fi
+
+# Write active theme to a standalone overlay file loaded via LG_CONFIG_FILE,
+# so ~/.config/lazygit/config.yml stays chezmoi-managed and immutable.
+if [[ -f "$LAZYGIT_YML" ]]; then
+  cp "$LAZYGIT_YML" "$GENERATED/lazygit/lazygit-active-theme.yml"
+fi
+
+# --- WEZTERM ---
+# WezTerm has its own Lua config that watches ~/.theme_dark and ~/.theme_light
+# via wezterm.add_to_config_reload_watch_list(). Touching the current mode's
+# theme file triggers a config reload, which fires window-config-reloaded and
+# re-applies the correct color scheme via set_config_overrides().
+# This is the canonical path for WezTerm; OSC injection is supplementary.
+touch "$HOME/.theme_${BG_MODE}" 2>/dev/null || true
+
+log "Done."

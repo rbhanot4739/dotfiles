@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Usage: ghostty <theme-name> <bg-mode>
+# Emits: ghostty palette block to stdout
+set -euo pipefail
+
+THEME="$1"
+MODE="${2:-dark}"
+REGISTRY="$HOME/.config/themes/registry"
+YAML="$REGISTRY/${THEME}.yaml"
+
+[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+
+THEME_MODE=$(yq '.mode' "$YAML")
+
+yv() {
+  if [[ "$THEME_MODE" == "adaptive" ]]; then
+    yq ".${MODE}.colors.${1}" "$YAML"
+  else
+    yq ".colors.${1}" "$YAML"
+  fi
+}
+
+# If a built-in Ghostty theme is referenced, delegate to it directly
+if [[ "$THEME_MODE" == "adaptive" ]]; then
+  _gt_theme=$(yq ".${MODE}.terminal.ghostty_theme // \"\"" "$YAML" 2>/dev/null | tr -d '"')
+else
+  _gt_theme=$(yq ".terminal.ghostty_theme // \"\"" "$YAML" 2>/dev/null | tr -d '"')
+fi
+if [[ -n "$_gt_theme" && "$_gt_theme" != "null" ]]; then
+  echo "theme = ${_gt_theme}"
+  exit 0
+fi
+
+bg=$(yv background)
+fg=$(yv foreground)
+cursor=$(yv cursor)
+sel_bg=$(yv selection_bg)
+sel_fg=$(yv selection_fg)
+
+cat <<CONF
+background = ${bg}
+foreground = ${fg}
+cursor-color = ${cursor}
+selection-background = ${sel_bg}
+selection-foreground = ${sel_fg}
+
+palette = 0=$(yv black)
+palette = 1=$(yv red)
+palette = 2=$(yv green)
+palette = 3=$(yv yellow)
+palette = 4=$(yv blue)
+palette = 5=$(yv magenta)
+palette = 6=$(yv cyan)
+palette = 7=$(yv white)
+palette = 8=$(yv bright_black)
+palette = 9=$(yv bright_red)
+palette = 10=$(yv bright_green)
+palette = 11=$(yv bright_yellow)
+palette = 12=$(yv bright_blue)
+palette = 13=$(yv bright_magenta)
+palette = 14=$(yv bright_cyan)
+palette = 15=$(yv bright_white)
+CONF

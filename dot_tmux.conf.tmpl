@@ -34,10 +34,14 @@ bind-key -T root         C-M-S-Enter send-keys Escape "[13;8u"
 
 # Smart pane switching with awareness of Neovim splits.
 # pane-is-vim is set by the smart-split nvim plugin
-bind-key -n C-h if -F "#{@pane-is-vim}" 'send-keys C-h'  'select-pane -L'
-bind-key -n C-j if -F "#{@pane-is-vim}" 'send-keys C-j'  'select-pane -D'
-bind-key -n C-k if -F "#{@pane-is-vim}" 'send-keys C-k'  'select-pane -U'
-bind-key -n C-l if -F "#{@pane-is-vim}" 'send-keys C-l'  'select-pane -R'
+bind-key -n C-h if -F "#{@pane-is-vim}" 'send-keys C-h' \
+  'if -F "#{window_zoomed_flag}" "select-pane -L \; resize-pane -Z" "select-pane -L"'
+bind-key -n C-j if -F "#{@pane-is-vim}" 'send-keys C-j' \
+  'if -F "#{window_zoomed_flag}" "select-pane -D \; resize-pane -Z" "select-pane -D"'
+bind-key -n C-k if -F "#{@pane-is-vim}" 'send-keys C-k' \
+  'if -F "#{window_zoomed_flag}" "select-pane -U \; resize-pane -Z" "select-pane -U"'
+bind-key -n C-l if -F "#{@pane-is-vim}" 'send-keys C-l' \
+  'if -F "#{window_zoomed_flag}" "select-pane -R \; resize-pane -Z" "select-pane -R"'
 
 bind-key -n C-Left if -F "#{@pane-is-vim}" 'send-keys C-Left' 'resize-pane -L 3'
 bind-key -n C-Down if -F "#{@pane-is-vim}" 'send-keys C-Down' 'resize-pane -D 3'
@@ -68,7 +72,7 @@ bind-key r source-file ~/.tmux.conf \; display-message "Conf reloaded..."
 bind-key N new-session
 bind-key c new-window -c "#{pane_current_path}"
 bind-key M-o run-shell 'tmux_sessions'
-bind-key M-w run-shell 'tmux_panes'
+bind-key -n M-space run-shell 'tmux_switcher'
 
 bind M command-prompt -p "Show man page for:" "popup -w95% -h95% -xC -yC -E 'man %%'"
 bind G new-window -c "#{pane_current_path}" "lazygit"
@@ -127,12 +131,12 @@ bind M-c copy-mode
 bind-key -T copy-mode-vi v send-keys -X begin-selection
 bind-key -T copy-mode-vi V send-keys -X select-line
 bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
-# copy selection with y and Enter
-bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel "pbcopy"
-bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "pbcopy"
+# copy selection with y and Enter (stay in copy mode; exit explicitly with q)
+bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-no-clear "pbcopy"
+bind-key -T copy-mode-vi y send-keys -X copy-pipe-no-clear "pbcopy"
 # copy entire line with Space
-bind-key -T copy-mode-vi Space send-keys -X copy-pipe-line-and-cancel "pbcopy"
-bind-key -T copy-mode-vi Y send-keys -X copy-pipe-end-of-line-and-cancel "pbcopy"
+bind-key -T copy-mode-vi Space send-keys -X copy-pipe-line "pbcopy"
+bind-key -T copy-mode-vi Y send-keys -X copy-pipe-end-of-line-no-clear "pbcopy"
 
 unbind p
 bind p paste-buffer
@@ -149,10 +153,10 @@ bind-key m set-option -g mouse \; display-message 'Mouse #{?mouse,on,off}'
 
 # Selection with mouse should copy to clipboard right away, in addition to the default action.
 unbind -n -Tcopy-mode-vi MouseDragEnd1Pane
-bind -Tcopy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel “reattach-to-user-namespace pbcopy”
+bind -Tcopy-mode-vi MouseDragEnd1Pane send -X copy-pipe-no-clear "reattach-to-user-namespace pbcopy"
 
 # unbind -T DoubleClick1Pane
-bind -Tcopy-mode-vi DoubleClick1Pane  send -X select-word \; send -X copy-pipe-and-cancel “reattach-to-user-namespace pbcopy”
+bind -Tcopy-mode-vi DoubleClick1Pane  send -X select-word \; send -X copy-pipe-no-clear "reattach-to-user-namespace pbcopy"
 
 # Middle click to paste from the clipboard
 unbind-key MouseDown2Pane
@@ -179,9 +183,7 @@ set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
 
 # <<<  theme config
-set -ogq @truncated_path "#(bash $HOME/scripts/truncate_path.sh #{pane_current_path} 2 1)"
-
-source $HOME/tmux-themes/theme.conf
+source $HOME/.config/themes/tmux-layout.conf
 # >>>
 
 # <<< tmux fzf-url

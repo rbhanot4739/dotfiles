@@ -1,7 +1,7 @@
 return {
   "mrjones2014/smart-splits.nvim",
   lazy = false,
-  opts = { default_amount = 1 },
+  opts = { default_amount = 1, disable_multiplexer_nav_when_zoomed = false },
   keys = {
     {
       "<C-Left>",

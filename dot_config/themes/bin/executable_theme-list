@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# Interactive theme picker using fzf
+set -euo pipefail
+
+THEMES_BIN="$(cd "$(dirname "$0")" && pwd)"
+export PATH="$THEMES_BIN:$PATH"
+
+REGISTRY="$HOME/.config/themes/registry"
+BG_MODE=$(cat "$HOME/.bg_mode" 2>/dev/null | tr -d '[:space:]')
+BG_MODE="${BG_MODE:-dark}"
+CURRENT_THEME=$(cat "$HOME/.theme_${BG_MODE}" 2>/dev/null | tr -d '[:space:]')
+
+infer_current_theme_from_ghostty() {
+  local current_conf generated_dir f inferred
+  current_conf="$HOME/.config/ghostty/current-colors.conf"
+  generated_dir="$HOME/.config/themes/generated/ghostty"
+  [[ -f "$current_conf" && -d "$generated_dir" ]] || return 1
+
+  for f in "$generated_dir"/*-"$BG_MODE".conf; do
+    [[ -f "$f" ]] || continue
+    if cmp -s "$f" "$current_conf"; then
+      inferred=$(basename "$f" .conf)
+      inferred="${inferred%-$BG_MODE}"
+      printf '%s\n' "$inferred"
+      return 0
+    fi
+  done
+
+  for f in "$generated_dir"/*.conf; do
+    [[ -f "$f" ]] || continue
+    [[ "$f" == *-"$BG_MODE".conf ]] && continue
+    if cmp -s "$f" "$current_conf"; then
+      inferred=$(basename "$f" .conf)
+      printf '%s\n' "$inferred"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ── build candidate list ───────────────────────────────────────────────────────
+candidates=()
+while IFS=$'\t' read -r _name _mode _desc; do
+  [[ -z "$_name" ]] && continue
+  [[ "$_mode" == "adaptive" || "$_mode" == "$BG_MODE" ]] || continue
+  [[ "$_desc" == "null" ]] && _desc=""
+  candidates+=("${_name}"$'\t'"${_mode}"$'\t'"${_desc}")
+done < <(yq eval '.name + "\t" + .mode + "\t" + (.description // "")' \
+  "$REGISTRY"/*.yaml 2>/dev/null)
+
+[[ ${#candidates[@]} -eq 0 ]] && { echo "No themes in $REGISTRY" >&2; exit 1; }
+
+# ── --candidates mode: print list and exit (used by fzf reload after deletion) ─
+if [[ "${1:-}" == "--candidates" ]]; then
+  printf '%s\n' "${candidates[@]}"
+  exit 0
+fi
+
+# Repair corrupted/invalid theme state (e.g. accidental capture of picker output).
+if [[ -z "$CURRENT_THEME" || ! -f "$REGISTRY/${CURRENT_THEME}.yaml" ]]; then
+  repaired_theme=""
+  if repaired_theme=$(infer_current_theme_from_ghostty); then
+    if [[ -f "$REGISTRY/${repaired_theme}.yaml" ]]; then
+      CURRENT_THEME="$repaired_theme"
+      printf '%s\n' "$CURRENT_THEME" > "$HOME/.theme_${BG_MODE}"
+    else
+      CURRENT_THEME="none"
+    fi
+  else
+    CURRENT_THEME="none"
+  fi
+fi
+
+# ── fzf picker ─────────────────────────────────────────────────────────────────
+# Mirror ~/fzf_config.zsh fzf() wrapper — same defaults, same theme colors
+theme_opts=()
+_gen_fzf="$HOME/.config/themes/generated/fzf"
+if [[ -f "${_gen_fzf}/${CURRENT_THEME}-${BG_MODE}.sh" ]]; then
+  source "${_gen_fzf}/${CURRENT_THEME}-${BG_MODE}.sh"
+elif [[ -f "${_gen_fzf}/${CURRENT_THEME}.sh" ]]; then
+  source "${_gen_fzf}/${CURRENT_THEME}.sh"
+fi
+
+default_opts=(
+  --ansi
+  --style full
+  --info inline-right
+  --layout reverse
+  --cycle
+  --border rounded
+  --padding 1,2
+  --header-first
+  --no-separator
+  --no-scrollbar
+  --bind 'shift-tab:up,tab:down,ctrl-space:toggle,ctrl-a:toggle-all'
+  --bind 'ctrl-v:become(nvim {})'
+  --bind "ctrl-d:execute(theme-remove {1})+reload(theme-list --candidates)"
+  --bind "ctrl-n:become(THEME_IMPORT_QUIET_CANCEL=1 \"$THEMES_BIN/theme-import\"; exec \"$THEMES_BIN/theme-list\")"
+)
+
+# In tmux: fzf creates its own popup (single border).
+# Outside tmux: regular fzf with --height fallback.
+if [[ -n "${TMUX:-}" ]]; then
+  default_opts+=(--tmux center,50%,40%)
+else
+  # Inset to roughly mirror the in-tmux popup proportions (no native popup outside tmux).
+  default_opts+=(--height 40% --margin 5%,25%)
+fi
+
+pick_output=$(printf '%s\n' "${candidates[@]}" | command fzf \
+  "${default_opts[@]}" \
+  "${theme_opts[@]}" \
+  --no-multi \
+  --delimiter $'\t' \
+  --with-nth=1 \
+  --border-label $'  \033[1;90mTheme Switcher\033[0m  ' \
+  --preview 'IFS=$'"'"'\t'"'"' read -r _label _mode _desc <<< {}; echo "  $_label"; echo; echo "  mode  : $_mode"; [[ -n "$_desc" ]] && echo "  desc  : $_desc"' \
+  --preview-window=bottom:30%:wrap:hidden \
+  --bind '?:toggle-preview' \
+  --prompt=" ${BG_MODE}:${CURRENT_THEME:-none}  " \
+  --header="  Ctrl-N import   |   Enter switch   |   Ctrl-D delete   |   ? preview" \
+) || exit 0
+
+selected="${pick_output%%$'\n'*}"
+
+theme_name=$(cut -f1 <<< "$selected")
+[[ -z "$theme_name" ]] && exit 0
+[[ -f "$REGISTRY/${theme_name}.yaml" ]] || exit 0
+
+echo "$theme_name" > "$HOME/.theme_${BG_MODE}"
+theme-switch

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Usage: lazygit <theme-name> <bg-mode>
+# Emits: lazygit gui.theme YAML block to stdout
+set -euo pipefail
+
+THEME="$1"
+MODE="${2:-dark}"
+REGISTRY="$HOME/.config/themes/registry"
+YAML="$REGISTRY/${THEME}.yaml"
+
+[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+
+THEME_MODE=$(yq '.mode' "$YAML")
+
+if [[ "$THEME_MODE" == "adaptive" ]]; then
+  BASE_PATH=".${MODE}.lazygit"
+else
+  BASE_PATH=".lazygit"
+fi
+
+# Use yq to restructure the lazygit block into proper gui.theme YAML
+yq "
+{
+  \"gui\": {
+    \"nerdFontsVersion\": \"3\",
+    \"theme\": {
+      \"activeBorderColor\": ${BASE_PATH}.active_border_color,
+      \"inactiveBorderColor\": ${BASE_PATH}.inactive_border_color,
+      \"searchingActiveBorderColor\": ${BASE_PATH}.searching_active_border,
+      \"optionsTextColor\": ${BASE_PATH}.options_text_color,
+      \"selectedLineBgColor\": ${BASE_PATH}.selected_line_bg_color,
+      \"cherryPickedCommitFgColor\": ${BASE_PATH}.cherry_picked_commit_fg,
+      \"cherryPickedCommitBgColor\": ${BASE_PATH}.cherry_picked_commit_bg,
+      \"markedBaseCommitFgColor\": ${BASE_PATH}.marked_base_commit_fg,
+      \"markedBaseCommitBgColor\": ${BASE_PATH}.marked_base_commit_bg,
+      \"unstagedChangesColor\": ${BASE_PATH}.unstaged_changes_color,
+      \"defaultFgColor\": ${BASE_PATH}.default_fg_color
+    }
+  }
+}
+" "$YAML"

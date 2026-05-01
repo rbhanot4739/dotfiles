@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Usage: wezterm <theme-name> <bg-mode>
+# Emits: WezTerm .toml color scheme to stdout (derived from colors block)
+set -euo pipefail
+
+THEME="$1"
+MODE="${2:-dark}"
+REGISTRY="$HOME/.config/themes/registry"
+YAML="$REGISTRY/${THEME}.yaml"
+
+[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+
+THEME_MODE=$(yq '.mode' "$YAML")
+
+yv() {
+  if [[ "$THEME_MODE" == "adaptive" ]]; then
+    yq ".${MODE}.colors.${1}" "$YAML"
+  else
+    yq ".colors.${1}" "$YAML"
+  fi
+}
+
+q() { echo "\"$(yv "$1")\""; }
+
+cat <<TOML
+[metadata]
+name = "${THEME}"
+
+[colors]
+foreground    = $(q foreground)
+background    = $(q background)
+cursor_bg     = $(q cursor)
+cursor_border = $(q cursor)
+cursor_fg     = $(q background)
+selection_bg  = $(q selection_bg)
+selection_fg  = $(q selection_fg)
+
+ansi    = [$(q black), $(q red), $(q green), $(q yellow), $(q blue), $(q magenta), $(q cyan), $(q white)]
+brights = [$(q bright_black), $(q bright_red), $(q bright_green), $(q bright_yellow), $(q bright_blue), $(q bright_magenta), $(q bright_cyan), $(q bright_white)]
+TOML

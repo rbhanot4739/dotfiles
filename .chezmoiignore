@@ -1,10 +1,47 @@
 # Ignore backup and temporary files globally
 **/*.bak
+**/*.backup
 **/*.test
 **/*.tmp
 **/*.orig
 **/*.swp
+**/.DS_Store
+**/dot_DS_Store
+logs/
+
+# Karabiner auto-generated backups
+.config/karabiner/automatic_backups/**
+
+# AI tool configs (project-local, not for home directory)
+.claude
+.claude/**
+.aider*
 
 {{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
   .wezterm.lua
 {{- end }}
+
+# Legacy theme system — superseded by ~/.config/themes/.
+# Source files kept in repo as backup; not deployed and hidden from status/diff.
+tmux-themes
+tmux-themes/**
+fzf-themes
+fzf-themes/**
+scripts/theme-monitor
+scripts/theme-switcher
+scripts/tmux-theme-switcher
+scripts/get-theme
+delta-themes
+delta-themes/**
+delta-themes.gitconfig
+zsh_functions/set-theme
+zsh_functions/tm_widget
+scripts/tmux_panes
+scripts/tmux_pop
+
+# Theme system generated/runtime artifacts
+.config/themes/generated/**
+.config/themes/bin/theme-notify
+.config/ghostty/current-colors.conf
+.config/wezterm/colors/**
+.wezterm_themes.lua

@@ -51,6 +51,16 @@ local function get_colorscheme()
     end
   end
 
+  -- Check registry YAML for neovim_colorscheme override (e.g. "github_light")
+  local registry = os.getenv("HOME") .. "/.config/themes/registry/" .. theme .. ".yaml"
+  local rf = io.open(registry, "r")
+  if rf then
+    local content = rf:read("*a")
+    rf:close()
+    local nvim_cs = content:match('neovim_colorscheme:%s*"([^"]+)"')
+    if nvim_cs then theme = nvim_cs end
+  end
+
   return theme
 end
 

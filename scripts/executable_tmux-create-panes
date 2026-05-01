@@ -1,132 +1,487 @@
 #!/usr/bin/env bash
 
-# tmux-create-panes: Create a new tmux window with multiple panes from command-line parameters or stdin.
-# Usage: tmux-create-panes [-n WINDOW_NAME] -c COMMAND [-p PARAM1 PARAM2 ...]
-# If -p is not used, parameters are read from stdin, one per line.
+# tmux-create-panes: Create tmux panes running the same command with different parameters.
+# Supports inline args, host files, FZF selection, stdin piping, and auto-distribution
+# across multiple windows.
 #
-# Examples:
-#   # Create 3 panes in the current window running ls on different dirs
-#   tmux-create-panes -c ls -p /home /etc /var
-#
-#   # Create a new window named "SSH Connections" with two panes
-#   echo -e "host1\nhost2" | tmux-create-panes -n "SSH Connections" -c ssh
-#
-#   # Create a new window with a default name
-#   tmux-create-panes -n -c ls -p /home /etc
+# Usage: tmux-create-panes [-n [NAME]] [--here] -c COMMAND [-s] [-l LAYOUT] [-w MAX]
+#                          [-p PARAM1 PARAM2 ... | -f FILE | -F FILE]
 
-# Parse options
-CREATE_NEW_WINDOW=0
+# Commands that require at least one parameter (abort if run bare)
+REQUIRES_ARGS=(ssh scp rsync sftp)
+
+# Default max panes per window
+MAX_PER_WIN=9
+
+usage() {
+  cat <<'EOF'
+Usage: tmux-create-panes [-n [NAME]] [--here] -c COMMAND [-s] [-l LAYOUT] [-w MAX]
+                         [-p PARAM1 PARAM2 ... | -f FILE | -F FILE]
+
+Create tmux panes running the same command with different parameters.
+
+Options:
+  -n [NAME]    Window name (default: multi-pane-COMMAND)
+  --here       Create panes in current window (default: new window)
+  -c COMMAND   Command to run in each pane (required)
+  -p PARAMS    Parameters (one per pane, must be last flag)
+  -f FILE      Read all params from file (one per line)
+  -F FILE      FZF multi-select params from file
+  -s           Enable synchronize-panes on created window(s)
+  -l LAYOUT    Layout: tiled, even-horizontal, even-vertical,
+               main-horizontal, main-vertical (default: auto)
+  -w MAX       Max panes per window (default: 9, min: 2)
+  -h, --help   Show this help
+
+Examples:
+  # SSH to 16 hosts from a file, synced, tiled layout
+  tmux-create-panes -s -c ssh -f ~/.ssh/groups/infra-lor1
+
+  # Pick hosts interactively, 4 per window
+  tmux-create-panes -s -w 4 -c ssh -F ~/.ssh/groups/all-hosts
+
+  # Quick 3-host SSH from command line
+  tmux-create-panes -s -c ssh -p host1 host2 host3
+
+  # Add panes to current window if room
+  tmux-create-panes --here -c ssh -p host1 host2
+
+  # Run htop in a new window (no params needed)
+  tmux-create-panes -c htop
+
+  # Pipe hosts from another command
+  grep "infra" /etc/hosts | awk '{print $2}' | tmux-create-panes -s -c ssh
+
+  # Suggested alias for daily use
+  alias tssh='tmux-create-panes -s -c ssh'
+  tssh -p host1 host2 host3
+  tssh -f ~/.ssh/groups/infra-lor1
+EOF
+}
+
+# --- Helper functions ---
+
+# Safely build a shell command string for a tmux pane
+build_cmd() {
+  local cmd="$1" param="$2"
+  if [[ -n "$param" ]]; then
+    printf '%s %s; exec %s' "$cmd" "$(printf '%q' "$param")" "$SHELL"
+  else
+    printf '%s; exec %s' "$cmd" "$SHELL"
+  fi
+}
+
+# Auto-select layout based on pane count
+auto_layout() {
+  local count=$1
+  if [[ -n "$LAYOUT" ]]; then
+    echo "$LAYOUT"
+  elif [[ $count -le 3 ]]; then
+    echo "even-horizontal"
+  else
+    echo "tiled"
+  fi
+}
+
+# Set the title of the current pane
+set_pane_title() {
+  tmux select-pane -T "$1"
+}
+
+# Read hosts from a file, skipping comments and blank lines
+read_host_file() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then
+    echo "Error: File not found: $file" >&2
+    exit 1
+  fi
+  while IFS= read -r line; do
+    # Skip empty lines and comments
+    line="${line%%#*}"        # strip inline comments
+    line="${line#"${line%%[![:space:]]*}"}"  # trim leading whitespace
+    line="${line%"${line##*[![:space:]]}"}"  # trim trailing whitespace
+    [[ -n "$line" ]] && PARAMS+=("$line")
+  done <"$file"
+}
+
+# FZF select hosts from a file
+fzf_select_hosts() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then
+    echo "Error: File not found: $file" >&2
+    exit 1
+  fi
+
+  # Build cleaned host list (no comments/blanks)
+  local hosts=()
+  while IFS= read -r line; do
+    line="${line%%#*}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -n "$line" ]] && hosts+=("$line")
+  done <"$file"
+
+  if [[ ${#hosts[@]} -eq 0 ]]; then
+    echo "Error: No hosts found in $file" >&2
+    exit 1
+  fi
+
+  # FZF layout: tmux popup if inside tmux, fallback otherwise
+  local fzf_layout
+  if [[ -n "$TMUX" ]]; then
+    fzf_layout="--tmux center,90%,80% --padding 2,1,0,1 --margin 0 --reverse"
+  else
+    fzf_layout="--height 70% --layout=reverse --margin 15%,15%"
+  fi
+
+  local selected
+  selected=$(printf '%s\n' "${hosts[@]}" | fzf --multi \
+    --style full \
+    --border --padding 1,1 --border-label=' Select Hosts ' \
+    --prompt 'Hosts > ' \
+    --header 'Tab: select/deselect  Enter: confirm  Esc: cancel' \
+    --header-first \
+    --info=hidden \
+    $fzf_layout)
+
+  if [[ -z "$selected" ]]; then
+    echo "No hosts selected. Aborting." >&2
+    exit 0
+  fi
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && PARAMS+=("$line")
+  done <<<"$selected"
+}
+
+# Check if a command requires arguments
+command_requires_args() {
+  local cmd="$1"
+  # Extract base command name (strip path)
+  local base="${cmd##*/}"
+  for blocked in "${REQUIRES_ARGS[@]}"; do
+    [[ "$base" == "$blocked" ]] && return 0
+  done
+  return 1
+}
+
+# --- Parse arguments ---
+
 WINDOW_NAME=""
 CMD=""
+LAYOUT=""
+SYNC_PANES=0
+USE_CURRENT_WIN=0
+HOST_FILE=""
+FZF_FILE=""
 PARAMS=()
+PARAM_SOURCE=""   # tracks which source provided params: "p", "f", "F", "stdin"
 
-# Parse arguments
-while [ "$#" -gt 0 ]; do
+while [[ "$#" -gt 0 ]]; do
   case "$1" in
+  -h | --help)
+    usage
+    exit 0
+    ;;
   -n)
-    CREATE_NEW_WINDOW=1
     shift
-    # Check if the next argument is not a flag
-    if [ "$#" -gt 0 ] && [[ ! "$1" == -* ]]; then
+    # Check if the next argument is not a flag (optional window name)
+    if [[ "$#" -gt 0 ]] && [[ ! "$1" == -* ]]; then
       WINDOW_NAME="$1"
       shift
     fi
     ;;
+  --here)
+    USE_CURRENT_WIN=1
+    if [[ "$SYNC_PANES" -eq 1 ]]; then
+      echo "Error: --here and -s cannot be combined. Sync would affect existing panes." >&2
+      exit 1
+    fi
+    shift
+    ;;
   -c)
     shift
-    if [ "$#" -lt 1 ]; then
+    if [[ "$#" -lt 1 ]]; then
       echo "Error: Command argument missing after -c" >&2
       exit 1
     fi
     CMD="$1"
     shift
     ;;
+  -s)
+    if [[ "$USE_CURRENT_WIN" -eq 1 ]]; then
+      echo "Error: -s and --here cannot be combined. Sync would affect existing panes." >&2
+      exit 1
+    fi
+    SYNC_PANES=1
+    shift
+    ;;
+  -l)
+    shift
+    if [[ "$#" -lt 1 ]]; then
+      echo "Error: Layout argument missing after -l" >&2
+      exit 1
+    fi
+    LAYOUT="$1"
+    shift
+    ;;
+  -w)
+    shift
+    if [[ "$#" -lt 1 ]]; then
+      echo "Error: Max panes argument missing after -w" >&2
+      exit 1
+    fi
+    MAX_PER_WIN="$1"
+    shift
+    ;;
+  -f)
+    shift
+    if [[ "$#" -lt 1 ]]; then
+      echo "Error: File argument missing after -f" >&2
+      exit 1
+    fi
+    if [[ -n "$PARAM_SOURCE" ]]; then
+      echo "Error: Cannot combine -f with -$PARAM_SOURCE. Use only one param source." >&2
+      exit 1
+    fi
+    HOST_FILE="$1"
+    PARAM_SOURCE="f"
+    shift
+    ;;
+  -F)
+    shift
+    if [[ "$#" -lt 1 ]]; then
+      echo "Error: File argument missing after -F" >&2
+      exit 1
+    fi
+    if [[ -n "$PARAM_SOURCE" ]]; then
+      echo "Error: Cannot combine -F with -$PARAM_SOURCE. Use only one param source." >&2
+      exit 1
+    fi
+    FZF_FILE="$1"
+    PARAM_SOURCE="F"
+    shift
+    ;;
   -p)
     shift
-    if [ "$#" -lt 1 ]; then
+    if [[ "$#" -lt 1 ]]; then
       echo "Error: At least one parameter required after -p" >&2
       exit 1
     fi
-    # All remaining arguments are parameters
+    if [[ -n "$PARAM_SOURCE" ]]; then
+      echo "Error: Cannot combine -p with -$PARAM_SOURCE. Use only one param source." >&2
+      exit 1
+    fi
+    PARAM_SOURCE="p"
     PARAMS=("$@")
     break
     ;;
   *)
-    echo "Error: Parameters must be passed with -p flag." >&2
+    echo "Error: Unknown option '$1'. Use -h for help." >&2
     exit 1
     ;;
   esac
 done
 
-# If parameters were not passed with -p, try to read from stdin
-if [ ${#PARAMS[@]} -eq 0 ] && [ ! -t 0 ]; then
-  mapfile -t PARAMS
-  # remove any empty lines
-  for i in "${!PARAMS[@]}"; do
-    [ -z "${PARAMS[$i]}" ] && unset "PARAMS[$i]"
+# --- Resolve parameters ---
+
+# From host file
+if [[ -n "$HOST_FILE" ]]; then
+  read_host_file "$HOST_FILE"
+fi
+
+# From FZF selection
+if [[ -n "$FZF_FILE" ]]; then
+  fzf_select_hosts "$FZF_FILE"
+fi
+
+# From stdin (if no other source and stdin is not a terminal)
+if [[ ${#PARAMS[@]} -eq 0 ]] && [[ -z "$PARAM_SOURCE" ]] && [[ ! -t 0 ]]; then
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && PARAMS+=("$line")
   done
-  # re-index
-  PARAMS=("${PARAMS[@]}")
+  PARAM_SOURCE="stdin"
 fi
 
-# Check if command is provided
-if [ -z "$CMD" ]; then
+# --- Validation ---
+
+if [[ -z "$CMD" ]]; then
   echo "Error: Command is required via -c" >&2
-  echo "Usage: $0 [-n WINDOW_NAME] -c COMMAND [-p PARAM1 PARAM2 ...]"
+  echo "Run '$(basename "$0") -h' for usage." >&2
   exit 1
 fi
 
-# Make sure we have at least one parameter
-if [ ${#PARAMS[@]} -eq 0 ]; then
-  echo "Error: No parameters provided. Use -p or pipe parameters via stdin." >&2
-  echo "Usage: $0 [-n WINDOW_NAME] -c COMMAND [-p PARAM1 PARAM2 ...]"
+# Validate layout if specified
+if [[ -n "$LAYOUT" ]]; then
+  case "$LAYOUT" in
+  tiled | even-horizontal | even-vertical | main-horizontal | main-vertical) ;;
+  *)
+    echo "Error: Invalid layout '$LAYOUT'." >&2
+    echo "Valid layouts: tiled, even-horizontal, even-vertical, main-horizontal, main-vertical" >&2
+    exit 1
+    ;;
+  esac
+fi
+
+# Validate max panes per window
+if ! [[ "$MAX_PER_WIN" =~ ^[0-9]+$ ]] || [[ "$MAX_PER_WIN" -lt 2 ]]; then
+  echo "Error: -w must be an integer >= 2 (got '$MAX_PER_WIN')" >&2
   exit 1
 fi
 
-# If window name not specified but create flag is on, use default name
-if [ "$CREATE_NEW_WINDOW" -eq 1 ] && [ -z "$WINDOW_NAME" ]; then
-  WINDOW_NAME="multi-pane-${CMD}"
+# Handle no-params case
+if [[ ${#PARAMS[@]} -eq 0 ]]; then
+  if command_requires_args "$CMD"; then
+    echo "Error: '${CMD##*/}' requires at least one parameter." >&2
+    echo "Provide params via -p, -f, -F, or stdin. Run '$(basename "$0") -h' for usage." >&2
+    exit 1
+  fi
+  # Bare command mode — single pane
+  BARE_MODE=1
+else
+  BARE_MODE=0
 fi
+
+# --- Window name ---
+
+if [[ -z "$WINDOW_NAME" ]]; then
+  WINDOW_NAME="multi-pane-${CMD##*/}"
+fi
+
+# --- Session handling ---
 
 SESSION_CREATED=0
-# Check if we're already in a tmux session
-if [ -z "$TMUX" ]; then
+if [[ -z "$TMUX" ]]; then
   echo "Not in a tmux session. Starting a new one."
-  # Create a detached session. We will attach at the end.
   tmux new-session -d -s "tmux-create-panes-$$"
-  # In this case, we must create a new window.
-  CREATE_NEW_WINDOW=1
-  if [ -z "$WINDOW_NAME" ]; then
-    WINDOW_NAME="multi-pane-${CMD}"
-  fi
+  USE_CURRENT_WIN=0
   SESSION_CREATED=1
 fi
 
-# Create panes and execute commands
-# The first parameter is handled differently depending on whether a new window is created.
-FIRST_CMD="$CMD \"${PARAMS[0]}\"; exec $SHELL"
-if [ "$CREATE_NEW_WINDOW" -eq 1 ]; then
-  # Create a new window and run the first command in it.
-  tmux new-window -n "$WINDOW_NAME" "$FIRST_CMD"
+# Cleanup trap for session created by this script
+cleanup() {
+  if [[ "$SESSION_CREATED" -eq 1 ]]; then
+    tmux kill-session -t "tmux-create-panes-$$" 2>/dev/null
+  fi
+}
+trap cleanup EXIT
+
+# --- Bare command mode (single pane, no params) ---
+
+if [[ "$BARE_MODE" -eq 1 ]]; then
+  safe_cmd=$(build_cmd "$CMD" "")
+  if [[ "$USE_CURRENT_WIN" -eq 1 ]]; then
+    tmux split-window -h "$safe_cmd"
+  else
+    tmux new-window -n "$WINDOW_NAME" "$safe_cmd"
+  fi
+  set_pane_title "$CMD"
+  if [[ "$SYNC_PANES" -eq 1 ]]; then
+    tmux setw synchronize-panes on
+  fi
+  echo "Created 1 pane running '$CMD'"
+  trap - EXIT
+  if [[ "$SESSION_CREATED" -eq 1 ]]; then
+    tmux attach-session -t "tmux-create-panes-$$"
+  fi
+  exit 0
+fi
+
+# --- Multi-pane creation ---
+
+total=${#PARAMS[@]}
+
+# --here: check if panes fit in current window
+if [[ "$USE_CURRENT_WIN" -eq 1 ]]; then
+  existing_panes=$(tmux list-panes | wc -l | tr -d ' ')
+  slots_available=$((MAX_PER_WIN - existing_panes))
+
+  if [[ "$total" -gt "$slots_available" ]]; then
+    echo "Current window has $existing_panes panes, not enough room for $total more (max $MAX_PER_WIN). Creating in new window(s)." >&2
+    USE_CURRENT_WIN=0
+  fi
+fi
+
+# Calculate window distribution
+if [[ "$USE_CURRENT_WIN" -eq 1 ]]; then
+  # All panes go in current window
+  num_windows=1
 else
-  # Split the current pane and run the command in the new pane, leaving the original untouched.
-  tmux split-window -h "$FIRST_CMD"
+  # Distribute across new windows
+  num_windows=$(( (total + MAX_PER_WIN - 1) / MAX_PER_WIN ))
 fi
 
-# The new pane is now active. We can split it for the remaining commands.
-if ((${#PARAMS[@]} > 1)); then
-  for ((i = 1; i < ${#PARAMS[@]}; i++)); do
-    # Quote parameter to handle spaces
-    NEXT_CMD="$CMD \"${PARAMS[$i]}\"; exec $SHELL"
-    tmux split-window -h "$NEXT_CMD"
+pane_idx=0
+windows_created=0
+
+for ((win = 0; win < num_windows; win++)); do
+  # Calculate pane range for this window
+  start=$((win * MAX_PER_WIN))
+  end=$((start + MAX_PER_WIN))
+  if [[ $end -gt $total ]]; then
+    end=$total
+  fi
+  count_in_window=$((end - start))
+
+  # Determine window name
+  if [[ $num_windows -eq 1 ]]; then
+    win_name="$WINDOW_NAME"
+  else
+    base="${WINDOW_NAME}"
+    win_name="${base}-$((win + 1))/${num_windows}"
+  fi
+
+  # Determine layout for this window
+  win_layout=$(auto_layout "$count_in_window")
+
+  # Create first pane
+  safe_cmd=$(build_cmd "$CMD" "${PARAMS[$start]}")
+
+  if [[ "$USE_CURRENT_WIN" -eq 1 ]] && [[ $win -eq 0 ]]; then
+    # First window goes in current window
+    tmux split-window -h "$safe_cmd"
+  else
+    # Create new window
+    tmux new-window -n "$win_name" "$safe_cmd"
+  fi
+  set_pane_title "${PARAMS[$start]}"
+  ((windows_created++))
+
+  # Create remaining panes in this window
+  for ((i = start + 1; i < end; i++)); do
+    safe_cmd=$(build_cmd "$CMD" "${PARAMS[$i]}")
+    tmux split-window -h "$safe_cmd"
+    # Rebalance after each split to prevent "no space for new pane"
+    tmux select-layout "$win_layout"
+    set_pane_title "${PARAMS[$i]}"
   done
+
+  # Final layout pass
+  tmux select-layout "$win_layout"
+
+  # Enable synchronize-panes if requested
+  if [[ "$SYNC_PANES" -eq 1 ]]; then
+    tmux setw synchronize-panes on
+  fi
+done
+
+# --- Success summary ---
+
+sync_info=""
+if [[ "$SYNC_PANES" -eq 1 ]]; then
+  sync_info=", sync: on"
 fi
 
+layout_display=$(auto_layout "$total")
+if [[ $windows_created -eq 1 ]]; then
+  echo "Created $total panes running '${CMD##*/}' [layout: $layout_display$sync_info]"
+else
+  echo "Created $total panes across $windows_created windows running '${CMD##*/}' [layout: $layout_display$sync_info]"
+fi
 
-# Arrange all panes in the current window in a tiled layout for a balanced view.
-tmux select-layout tiled
+# --- Attach if we created a session ---
 
-# If we created a new session, attach to it
-if [ "$SESSION_CREATED" -eq 1 ]; then
+trap - EXIT
+if [[ "$SESSION_CREATED" -eq 1 ]]; then
   tmux attach-session -t "tmux-create-panes-$$"
 fi

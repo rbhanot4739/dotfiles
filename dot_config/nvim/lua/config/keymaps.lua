@@ -2,7 +2,7 @@
 -- Add any additional keymaps here
 
 if not vim.g.vscode then
-  require("config.nvim_maps")
+  require("config.nvim_keymaps")
 else
-  require("config.vscode_maps")
+  require("config.vscode_keymaps")
 end

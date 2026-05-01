@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+plist="$HOME/Library/LaunchAgents/com.rbhanot.theme-monitor.plist"
+label="com.rbhanot.theme-monitor"
+domain="gui/$(id -u)"
+service="$domain/$label"
+
+if [[ ! -f "$plist" ]]; then
+  echo "[theme-launchd] $plist not found; skipping."
+  exit 0
+fi
+
+if ! command -v launchctl >/dev/null 2>&1; then
+  echo "[theme-launchd] launchctl not found; skipping."
+  exit 0
+fi
+
+if launchctl print "$service" >/dev/null 2>&1; then
+  launchctl kickstart -k "$service" >/dev/null 2>&1 || true
+  echo "[theme-launchd] Restarted $label"
+else
+  launchctl bootstrap "$domain" "$plist" >/dev/null 2>&1 || true
+  launchctl kickstart -k "$service" >/dev/null 2>&1 || true
+  echo "[theme-launchd] Loaded $label"
+fi

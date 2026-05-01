@@ -1,0 +1,193 @@
+name: everforest
+mode: adaptive
+description: "Everforest - nature-inspired adaptive"
+
+dark:
+  colors:
+    background:    "#272e33"
+    foreground:    "#d3c6aa"
+    cursor:        "#ffcc00"
+    selection_bg:  "#414b50"
+    selection_fg:  "#d3c6aa"
+    black:         "#4a5560"
+    red:           "#e67e80"
+    green:         "#a7c080"
+    yellow:        "#dbbc7f"
+    blue:          "#7fbbb3"
+    magenta:       "#d699b6"
+    cyan:          "#83c092"
+    white:         "#859289"
+    bright_black:  "#525c62"
+    bright_red:    "#e67e80"
+    bright_green:  "#a7c080"
+    bright_yellow: "#dbbc7f"
+    bright_blue:   "#7fbbb3"
+    bright_magenta: "#d699b6"
+    bright_cyan:   "#83c092"
+    bright_white:  "#d3c6aa"
+
+  terminal:
+    wezterm_scheme: "Everforest Dark Hard (Gogh)"
+    ghostty_uses_palette: true
+
+  tmux:
+    default_bg:           "#272e33"
+    default_fg:           "#d3c6aa"
+    active_pane_border:   "#a7c080"
+    inactive_pane_border: "#6b7a80"
+    left1_bg:             "#a7c080"
+    left1_fg:             "#272e33"
+    copy_mode_bg:         "#a7c080"
+    copy_mode_fg:         "#272e33"
+    window_curr_bg:       "#e69875"
+    window_curr_fg:       "#272e33"
+    window_bg:            "#4d4340"
+    window_fg:            "#e69875"
+    sync_color:           "#e67e80"
+    prefix_indicator:     "#a7c080"
+    right1_bg:            "#a7c080"
+    right1_fg:            "#272e33"
+    right2_bg:            "#9da9a0"
+    right2_fg:            "#272e33"
+
+  fzf:
+    bg:        "#272e33"
+    bg_plus:   "#414b50"
+    fg:        "#d3c6aa"
+    fg_plus:   "#d3c6aa"
+    hl:        "#d699b6"
+    hl_plus:   "#ea9a97"
+    border:    "#a7c080"
+    gutter:    "#414b50"
+    header:    "#83c092"
+    info:      "#9da9a0"
+    label:     "#9da9a0"
+    marker:    "#e67e80"
+    pointer:   "#e67e80"
+    prompt:    "#d699b6"
+    query_fg:  "#9da9a0"
+    scrollbar: "#a7c080"
+    separator: "#dbbc7f"
+    spinner:   "#e67e80"
+
+  delta:
+    section_name:                  "everforest-dark"
+    minus_style:                   'syntax "#493b40"'
+    minus_non_emph_style:          'syntax "#493b40"'
+    minus_emph_style:              '"#ffffff" "#c55555"'
+    minus_empty_line_marker_style: 'syntax "#493b40"'
+    line_numbers_minus_style:      '"#e67e80"'
+    plus_style:                    'syntax "#3c4841"'
+    plus_non_emph_style:           'syntax "#3c4841"'
+    plus_emph_style:               '"#ffffff" "#5a7a42"'
+    plus_empty_line_marker_style:  'syntax "#3c4841"'
+    line_numbers_plus_style:       '"#a7c080"'
+    line_numbers_zero_style:       '"#7a8478"'
+
+  lazygit:
+    active_border_color:         ["#a7c080", "bold"]
+    inactive_border_color:       ["#6b7a80"]
+    searching_active_border:     ["#a7c080", "bold"]
+    options_text_color:          ["#d3c6aa"]
+    selected_line_bg_color:      ["#414b50"]
+    cherry_picked_commit_fg:     ["#d699b6"]
+    cherry_picked_commit_bg:     ["#272e33"]
+    marked_base_commit_fg:       ["#83c092"]
+    marked_base_commit_bg:       ["#dbbc7f"]
+    unstaged_changes_color:      ["#e67e80"]
+    default_fg_color:            ["#d3c6aa"]
+
+light:
+  colors:
+    background:    "#fffbef"
+    foreground:    "#5c6a72"
+    cursor:        "#1f2328"
+    selection_bg:  "#5c6a72"
+    selection_fg:  "#fffbef"
+    black:         "#5c6a72"
+    red:           "#f85552"
+    green:         "#8da101"
+    yellow:        "#dfa000"
+    blue:          "#3a94c5"
+    magenta:       "#df69ba"
+    cyan:          "#35a77c"
+    white:         "#dfddc7"
+    bright_black:  "#708387"
+    bright_red:    "#f85552"
+    bright_green:  "#8da101"
+    bright_yellow: "#dfa000"
+    bright_blue:   "#3a94c5"
+    bright_magenta: "#df69ba"
+    bright_cyan:   "#35a77c"
+    bright_white:  "#f0f0e2"
+
+  terminal:
+    wezterm_scheme: "Everforest Light Hard (Gogh)"
+    ghostty_uses_palette: true
+
+  tmux:
+    default_bg:           "#fffbef"
+    default_fg:           "#5c6a72"
+    active_pane_border:   "#388e3c"
+    inactive_pane_border: "#a6b0a8"
+    left1_bg:             "#8da101"
+    left1_fg:             "#fffbef"
+    copy_mode_bg:         "#388e3c"
+    copy_mode_fg:         "#fffbef"
+    window_curr_bg:       "#f57d26"
+    window_curr_fg:       "#fffbef"
+    window_bg:            "#fcdcbd"
+    window_fg:            "#f57d26"
+    sync_color:           "#f85552"
+    prefix_indicator:     "#8da101"
+    right1_bg:            "#8da101"
+    right1_fg:            "#fffbef"
+    right2_bg:            "#829181"
+    right2_fg:            "#fffbef"
+
+  fzf:
+    bg:        "#fffbef"
+    bg_plus:   "#e8e5d5"
+    fg:        "#5c6a72"
+    fg_plus:   "#5c6a72"
+    hl:        "#d699b6"
+    hl_plus:   "#dfa000"
+    border:    "#93b259"
+    gutter:    "#e8e5d5"
+    header:    "#35a77c"
+    info:      "#829181"
+    label:     "#829181"
+    marker:    "#f85552"
+    pointer:   "#f85552"
+    prompt:    "#df69ba"
+    query_fg:  "#829181"
+    scrollbar: "#93b259"
+    separator: "#dfa000"
+    spinner:   "#f85552"
+
+  delta:
+    section_name:                  "everforest-light"
+    minus_style:                   'syntax "#f4dbd0"'
+    minus_non_emph_style:          'syntax "#f4dbd0"'
+    minus_emph_style:              '"#ffffff" "#e67e80"'
+    minus_empty_line_marker_style: 'syntax "#f4dbd0"'
+    line_numbers_minus_style:      '"#e67e80"'
+    plus_style:                    'syntax "#e5e6c5"'
+    plus_non_emph_style:           'syntax "#e5e6c5"'
+    plus_emph_style:               '"#ffffff" "#83c092"'
+    plus_empty_line_marker_style:  'syntax "#e5e6c5"'
+    line_numbers_plus_style:       '"#83c092"'
+    line_numbers_zero_style:       '"#829181"'
+
+  lazygit:
+    active_border_color:         ["#93b259", "bold"]
+    inactive_border_color:       ["#a6b0a8"]
+    searching_active_border:     ["#93b259", "bold"]
+    options_text_color:          ["#5c6a72"]
+    selected_line_bg_color:      ["#e8e5d5"]
+    cherry_picked_commit_fg:     ["#d699b6"]
+    cherry_picked_commit_bg:     ["#fffbef"]
+    marked_base_commit_fg:       ["#35a77c"]
+    marked_base_commit_bg:       ["#dfa000"]
+    unstaged_changes_color:      ["#f85552"]
+    default_fg_color:            ["#5c6a72"]

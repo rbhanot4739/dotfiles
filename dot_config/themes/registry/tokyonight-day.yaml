@@ -1,0 +1,97 @@
+name: tokyonight-day
+mode: light
+description: "Tokyo Night Day - clean light"
+
+colors:
+  background:    "#e1e2e7"
+  foreground:    "#3760bf"
+  cursor:        "#1f2328"
+  selection_bg:  "#b7c1e3"
+  selection_fg:  "#3760bf"
+  black:         "#b4b5b9"
+  red:           "#f52a65"
+  green:         "#587539"
+  yellow:        "#8c6c3e"
+  blue:          "#2e7de9"
+  magenta:       "#9854f1"
+  cyan:          "#007197"
+  white:         "#6172b0"
+  bright_black:  "#a1a6c5"
+  bright_red:    "#ff4774"
+  bright_green:  "#5c8524"
+  bright_yellow: "#a27629"
+  bright_blue:   "#358aff"
+  bright_magenta: "#a463ff"
+  bright_cyan:   "#007ea8"
+  bright_white:  "#3760bf"
+
+terminal:
+  wezterm_scheme: "tokyonight_day"
+  ghostty_uses_palette: true
+
+tmux:
+  default_bg:           "#e1e2e7"
+  default_fg:           "#3760a1"
+  active_pane_border:   "#2e7de9"
+  inactive_pane_border: "#b4b5b9"
+  left1_bg:             "#2e7de9"
+  left1_fg:             "#e1e2e7"
+  copy_mode_bg:         "#2e7de9"
+  copy_mode_fg:         "#e1e2e7"
+  window_curr_bg:       "#2e7de9"
+  window_curr_fg:       "#e1e2e7"
+  window_bg:            "#b4c9e8"
+  window_fg:            "#3760a1"
+  sync_color:           "#f52a65"
+  prefix_indicator:     "#8c6c3e"
+  right1_bg:            "#2e7de9"
+  right1_fg:            "#e1e2e7"
+  right2_bg:            "#b4b5b9"
+  right2_fg:            "#3760a1"
+
+fzf:
+  bg:        "#e1e2e7"
+  bg_plus:   "#bcc0d0"
+  fg:        "#3760bf"
+  fg_plus:   "#3760bf"
+  hl:        "#188092"
+  hl_plus:   "#e46876"
+  border:    "#4094a3"
+  gutter:    "#d0d5e3"
+  header:    "#b15c00"
+  info:      "#8990b3"
+  label:     "#8990b3"
+  marker:    "#d20065"
+  pointer:   "#d20065"
+  prompt:    "#188092"
+  query_fg:  "#3760bf"
+  scrollbar: "#4094a3"
+  separator: "#b15c00"
+  spinner:   "#d20065"
+
+delta:
+  section_name:                  "tokyonight-day"
+  minus_style:                   'syntax "#ddcace"'
+  minus_non_emph_style:          'syntax "#ddcace"'
+  minus_emph_style:              'syntax "#d59a9d"'
+  minus_empty_line_marker_style: 'syntax "#ddcace"'
+  line_numbers_minus_style:      '"#c47981"'
+  plus_style:                    'syntax "#c8d6dc"'
+  plus_non_emph_style:           'syntax "#c8d6dc"'
+  plus_emph_style:               'syntax "#95bec7"'
+  plus_empty_line_marker_style:  'syntax "#c8d6dc"'
+  line_numbers_plus_style:       '"#4197a4"'
+  line_numbers_zero_style:       '"#a8aecb"'
+
+lazygit:
+  active_border_color:         ["#b15c00", "bold"]
+  inactive_border_color:       ["#4094a3"]
+  searching_active_border:     ["#b15c00", "bold"]
+  options_text_color:          ["#2e7de9"]
+  selected_line_bg_color:      ["#b7c1e3"]
+  cherry_picked_commit_fg:     ["#2e7de9"]
+  cherry_picked_commit_bg:     ["#9854f1"]
+  marked_base_commit_fg:       ["#2e7de9"]
+  marked_base_commit_bg:       ["#8c6c3e"]
+  unstaged_changes_color:      ["#f52a65"]
+  default_fg_color:            ["#3760bf"]

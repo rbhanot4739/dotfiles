@@ -310,7 +310,7 @@ return {
       "<leader>sg",
       function()
         local root_dir = Snacks.git.get_root() ~= nil and Snacks.git.get_root() or LazyVim.root()
-        Snacks.picker.grep({ cwd = root_dir })
+        Snacks.picker.grep({ cwd = root_dir, layout = { preset = "vertical" } })
       end,
       desc = "Grep project root or git root",
     },
@@ -589,6 +589,8 @@ return {
         },
         smart = {
           filter = { cwd = true },
+          -- Buffers first, then Recent, then Files (multi order = source_id 1,2,3)
+          sort = { fields = { "source_id", "score:desc", "idx" } },
           win = {
             input = {
               keys = {

@@ -1,0 +1,18 @@
+[diff]
+    pager = "delta"
+
+[merge]
+    command = "nvim"
+    args = [
+        "--cmd", "set shadafile=NONE",
+        "-d",
+        "{{ .Destination }}",
+        "{{ .Source }}",
+        "-c", "wincmd h | setlocal readonly nomodifiable",
+        "-c", "let &l:winbar='DISK  |  dp=push  u=undo  ]c/[c=nav  ZZ=save+quit'",
+        "-c", "wincmd l | let &l:winbar='SOURCE (chezmoi)'",
+        "-c", "wincmd h | nnoremap <silent> dp :diffput<CR>]c",
+        "-c", "nnoremap <silent> ZZ :wincmd l<bar>w<bar>qa<CR>",
+        "-c", "nnoremap <buffer> <silent> u :wincmd l<bar>undo<bar>wincmd h<bar>diffupdate<CR>",
+        "-c", "autocmd VimEnter * lua vim.defer_fn(function() vim.cmd('wincmd h'); local wr=vim.o.wrapscan; vim.o.wrapscan=false; vim.cmd('normal! G'); local p=-1; while vim.fn.line('.')~=p do p=vim.fn.line('.'); pcall(vim.cmd,'normal! [c') end; vim.o.wrapscan=wr end, 0)",
+    ]

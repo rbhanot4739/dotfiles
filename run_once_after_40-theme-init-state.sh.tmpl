@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+bg_mode_file="$HOME/.bg_mode"
+dark_theme_file="$HOME/.theme_dark"
+light_theme_file="$HOME/.theme_light"
+
+[[ -f "$bg_mode_file" ]] || printf '%s\n' dark > "$bg_mode_file"
+[[ -f "$dark_theme_file" ]] || printf '%s\n' tokyonight-night > "$dark_theme_file"
+[[ -f "$light_theme_file" ]] || printf '%s\n' tokyonight-day > "$light_theme_file"
+
+echo "[theme-init] Ensured default theme state files."

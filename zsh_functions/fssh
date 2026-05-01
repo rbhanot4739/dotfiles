@@ -23,5 +23,4 @@ fssh() {
   [[ -z "$target_host" ]] && return 0
 
   echo -e "$target_host" | tmux-create-panes -c "TERM=xterm-color command ssh"
-
-#fssh "$@"
+}

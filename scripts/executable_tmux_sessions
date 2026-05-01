@@ -2,113 +2,320 @@
 
 export PROMPT_MODE_FILE="$HOME/.tmux_session_mode"
 
+source "$HOME/scripts/truncate_path.sh"
+export -f truncate_path
+
 # ================================================================================
 #                           SESSION ACTIONS
 # ================================================================================
 # Functions that perform actions on tmux sessions
 
-# Get all tmux sessions with attachment status
+# Get all tmux sessions, marking only the current session as (attached)
+# Output: session_name\tsession_name (attached)
 get_tmux_sessions() {
-  sess_cmd="tmux list-sessions -F '#S#{?session_attached, (attached),}' 2> /dev/null"
-  eval "$sess_cmd" || true
+  local current_session
+  current_session=$(tmux display-message -p '#S' 2>/dev/null)
+  printf "HEADER\t\033[2m%s\033[0m\n" "Session"
+  tmux list-sessions -F '#S' 2>/dev/null |
+  while IFS= read -r session; do
+    if [[ "$session" == "$current_session" ]]; then
+      printf "%s\t%s (attached)\n" "$session" "$session"
+    else
+      printf "%s\t%s\n" "$session" "$session"
+    fi
+  done || true
 }
 export -f get_tmux_sessions
 
-# Get all tmux panes (adapted from tmux_panes script)
-get_tmux_panes() {
-  local current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}')
-  
-  tmux list-panes -a -F "#S:#{window_index}.#{pane_index}: #S -> #{window_name} -> #{pane_title} <>#{pane_current_path}" | grep -v "$current_pane" |
-  while read -r line; do
-    # shell expansion
-    path="${line##*<>}"    # this removes everything from beginning of the string upto `*<>`
-    prefix="${line%%<>*}"    # this removes everything from the end of the string upto `<>*`
+# Parse ssh command-line args and return remote host (best effort).
+extract_ssh_host_from_args() {
+  local ssh_args="$1"
+  [[ -z "$ssh_args" ]] && return 1
 
-    path="${path/#$HOME/~}"
-    # Split the path into components
-    IFS='/' read -r -a path_components <<<"$path"
+  local -a tokens
+  read -r -a tokens <<< "$ssh_args"
+  [[ "${#tokens[@]}" -lt 2 ]] && return 1
 
-    truncated_path=""
-    for ((i = 0; i < ${#path_components[@]} - 1; i++)); do
-      if [[ "${path_components[$i]}" == .* ]]; then
-        path_components[$i]="${path_components[$i]:0:3}"
-      else
-        path_components[$i]="${path_components[$i]:0:2}"
+  local expects_value=0
+  local token
+  local option_needs_arg='^-(b|c|D|E|e|F|I|i|J|L|l|m|O|o|p|Q|R|S|W|w)$'
+
+  for token in "${tokens[@]:1}"; do
+    if (( expects_value )); then
+      expects_value=0
+      continue
+    fi
+
+    if [[ "$token" == "--" ]]; then
+      continue
+    fi
+
+    if [[ "$token" == -* ]]; then
+      if [[ "$token" =~ $option_needs_arg ]]; then
+        expects_value=1
       fi
-    done
-    truncated_path=$(
-      IFS=/
-      echo "${path_components[*]}"
-    )
-    echo "$prefix [$truncated_path]"
+      continue
+    fi
+
+    token="${token#*@}"
+    token="${token#[}"
+    token="${token%]}"
+    printf '%s' "$token"
+    return 0
+  done
+
+  return 1
+}
+export -f extract_ssh_host_from_args
+
+# Get all tmux panes with smart labels and aligned columns
+# Output: target_id\tformatted_display (target_id hidden by FZF --with-nth 2..)
+# Display: session(dim)  path(normal)  label(cyan)
+get_tmux_panes() {
+  local current_pane
+  local hostname_str
+  current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}')
+  hostname_str=$(hostname 2>/dev/null)
+
+  # Collect raw pane data (§ as field separator)
+  local raw_data
+  raw_data=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}§#S§#{pane_current_command}§#{?#{@custom_title},#{@custom_title},#{pane_title}}§#{pane_current_path}§#{pane_pid}" | grep -v "^${current_pane}§")
+
+  [[ -z "$raw_data" ]] && return
+
+  # Build a process snapshot once and cache first child args by parent pid.
+  local -A first_child_args_by_parent=()
+  local ppid pid args
+  while read -r ppid pid args; do
+    [[ -z "$ppid" || -z "$pid" ]] && continue
+    if [[ -z "${first_child_args_by_parent[$ppid]+x}" ]]; then
+      first_child_args_by_parent[$ppid]="$args"
+    fi
+  done < <(ps -axo ppid=,pid=,args= 2>/dev/null)
+
+  # Two-pass approach: first compute column widths, then format output
+  local -a targets=() sessions=() paths=() labels=()
+  local max_session=7 max_path=4
+
+  while IFS='§' read -r target_id session cmd title path pid; do
+    # Path: replace HOME with ~, take basename
+    path="${path/#$HOME/\~}"
+    local path_tail="${path##*/}"
+    [[ -z "$path_tail" ]] && path_tail="$path"
+
+    # Smart label:
+    #   version-number cmd (Claude Code) → trimmed pane_title
+    #   real command (not a shell) → command name
+    #   shell with custom title (not hostname/empty) → pane_title
+    #   otherwise → empty
+    local label=""
+    local first_child_args="" ssh_args="" ssh_host=""
+    first_child_args="${first_child_args_by_parent[$pid]}"
+
+    if [[ "$cmd" == "ssh" ]]; then
+      ssh_args="$first_child_args"
+      if [[ "$ssh_args" != ssh* && "$ssh_args" != */ssh* ]]; then
+        ssh_args=$(ps -p "$pid" -o args= 2>/dev/null)
+      fi
+      ssh_host=$(extract_ssh_host_from_args "$ssh_args")
+    fi
+
+    # Check for AI agent icons specifically
+    # Determine the base label first
+    if [[ "$cmd" == "ssh" && -n "$ssh_host" ]]; then
+      label="$ssh_host"
+    elif [[ "$cmd" =~ ^[0-9]+\.[0-9]+ ]]; then
+      label=$(printf '%s' "$title" | sed 's/^[^[:alnum:]]*//;s/[[:space:]]*$//')
+    elif [[ "$cmd" != "zsh" && "$cmd" != "bash" && "$cmd" != "fish" ]]; then
+      label="$cmd"
+    elif [[ -n "$title" && "$title" != "$hostname_str" ]]; then
+      label="$title"
+    fi
+
+    # Prefix command/tool labels with a bracketed tag for clear visual identification.
+    # Uses bash [[ =~ ]] (POSIX ERE) instead of grep to avoid shell aliases (e.g. grep→rg
+    # where -E means encoding, not extended regex). ${var,,} lowercases for case-insensitive
+    # matching. Claude Code sets pane_current_command to its version number (e.g. 2.1.104).
+    local combined="${cmd,,} ${title,,}"
+    local ai_fallback_pattern='node|ai|agent|planner'
+    if [[ "$cmd" == "ssh" ]]; then
+      label="[ssh]${label:+ ${label}}"
+    elif [[ "$cmd" =~ ^[0-9]+\.[0-9]+ ]]; then
+      label="[Claude]${label:+ ${label}}"
+    elif [[ "$combined" =~ cursor ]]; then
+      label="[Cursor]${title:+ ${title}}"
+    elif [[ "$cmd" == "node" ]]; then
+      if [[ "${first_child_args,,}" =~ cursor ]]; then
+        label="[Cursor]${title:+ ${title}}"
+      fi
+    elif [[ "$combined" =~ gemini ]]; then
+      label="[Gemini]${title:+ ${title}}"
+    elif [[ "$combined" =~ $ai_fallback_pattern ]]; then
+      label="[AI]${title:+ ${title}}"
+    fi
+
+    if [[ -z "$label" ]]; then
+      if [[ "$cmd" == "zsh" || "$cmd" == "bash" || "$cmd" == "fish" ]]; then
+        label="$cmd"
+      elif [[ -n "$cmd" ]]; then
+        label="$cmd"
+      else
+        label="[idle]"
+      fi
+    fi
+
+    targets+=("$target_id")
+    sessions+=("$session")
+    paths+=("$path_tail")
+    labels+=("$label")
+
+    (( ${#session} > max_session )) && max_session=${#session}
+    (( ${#path_tail} > max_path )) && max_path=${#path_tail}
+  done <<< "$raw_data"
+
+  # Second pass: format with aligned columns and ANSI colors
+  local dim=$'\033[2m' cyan=$'\033[36m' reset=$'\033[0m'
+
+  local header_display
+  header_display=$(printf "${dim}%-${max_session}s${reset}          %-${max_path}s            ${cyan}%s${reset}" \
+    "Session" "Path" "Command")
+  printf "HEADER\t%s\n" "$header_display"
+
+  for ((i = 0; i < ${#targets[@]}; i++)); do
+    local display
+    if [[ -n "${labels[$i]}" ]]; then
+      display=$(printf "${dim}%-${max_session}s${reset}          %-${max_path}s            ${cyan}%s${reset}" \
+        "${sessions[$i]}" "${paths[$i]}" "${labels[$i]}")
+    else
+      display=$(printf "${dim}%-${max_session}s${reset}          %-${max_path}s" \
+        "${sessions[$i]}" "${paths[$i]}")
+    fi
+    printf "%s\t%s\n" "${targets[$i]}" "$display"
   done
 }
 export -f get_tmux_panes
 
+# Output: full_path\ttruncated_display
 get_zoxide_dirs() {
-  if [[ -f "$HOME/scripts/truncate_path.sh" ]]; then
-    zoxide query -l | head -20 | grep -v '.*\/\s*$' | xargs -I {} "$HOME/scripts/truncate_path.sh" {} 2 2
-  else
-    zoxide query -l | head -20 | grep -v '.*\/\s*$' | xargs -n1 basename
-  fi
+  printf "HEADER\t\033[2m%s\033[0m\n" "Directory"
+  zoxide query -l | grep -v '.*\/\s*$' |
+  while IFS= read -r dir; do
+    local display
+    display=$(truncate_path "$dir" 2 2)
+    printf "%s\t%s\n" "$dir" "$display"
+  done
 }
 export -f get_zoxide_dirs
 
-# Get all tmuxinator projects
-get_tmuxinator_projects() {
-  tmuxinator list | tail -n +2 | sed 's/ \{1,\}/\n/g'
-}
-export -f get_tmuxinator_projects
-
-# Get current active tmux session name
-get_current_session() {
-  [[ -n "$TMUX" ]] && tmux display-message -p '#S'
-}
-
-# Delete a tmux session with user confirmation
+# Delete a tmux session
 del_session() {
-  clear
-  [[ "$1" =~ "attached" ]] && echo "You can't delete the currently attached session !!" && sleep 2 && return
-  echo -n "Are you sure you want to delete session ($1) [y/n]: "
-  read -r -n 1 response
-  response=${response:-n}
-  [[ "$response" =~ ^[Yy]$ ]] && tmux kill-session -t "$1"
+  local session="${1%%$'\t'*}"
+  local current_session
+  current_session=$(tmux display-message -p '#S' 2>/dev/null)
+  [[ "$session" == "$current_session" ]] && return
+  printf '\n  Kill session "%s"? [y/N]: ' "$session"
+  IFS= read -rn1 r; echo
+  [[ "$r" == y ]] && tmux kill-session -t "$session"
 }
 export -f del_session
 
-# Rename a tmux session with interactive input
+# Rename a tmux session
 rename_session() {
-  clear
-  old_name=$(echo "$1" | cut -d' ' -f1)
-  echo -n "Please enter new session name[$old_name] (Escape/Ctrl+C to cancel): "
-
-  user_input=""
-  while true; do
-    read -rsn1 input
-
-    if [[ "$input" == $'\e' ]]; then
-      # Escape key - cancel operation
-      return
-    elif [[ "$input" == $'\n' || "$input" == $'\x0' ]]; then
-      # Enter key - confirm input
-      break
-    elif [[ "$input" == $'\x7f' || "$input" == $'\b' ]]; then
-      # Backspace - remove last character
-      if [[ -n "$user_input" ]]; then
-        user_input="${user_input%?}"
-        echo -ne "\b \b"
-      fi
-    else
-      # Regular character - add to input
-      user_input+="$input"
-      echo -n "$input"
-    fi
-  done
-
-  session_name="$user_input"
-  [[ -n "$session_name" ]] && tmux rename-session -t "$old_name" "$session_name"
+  local old_name="${1%%$'\t'*}"
+  printf '\n  Rename session "%s" to: ' "$old_name"
+  local name old_stty
+  old_stty=$(stty -g 2>/dev/null)
+  stty intr $'\x1b' 2>/dev/null
+  trap 'stty "$old_stty" 2>/dev/null; exit 0' INT
+  IFS= read -r name
+  stty "$old_stty" 2>/dev/null
+  [[ -n "$name" ]] && tmux rename-session -t "$old_name" "$name"
 }
 export -f rename_session
+
+# Kill a specific pane
+del_pane() {
+  local pane_target="${1%%$'\t'*}"
+  local current_pane
+  current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}' 2>/dev/null)
+  [[ "$pane_target" == "$current_pane" ]] && return
+  printf '\n  Kill pane "%s"? [y/N]: ' "$pane_target"
+  IFS= read -rn1 r; echo
+  [[ "$r" == y ]] && tmux kill-pane -t "$pane_target"
+}
+export -f del_pane
+
+# Rename a pane title
+rename_pane() {
+  local pane_target="${1%%$'\t'*}"
+  printf '\n  New title for pane "%s": ' "$pane_target"
+  local name old_stty
+  old_stty=$(stty -g 2>/dev/null)
+  stty intr $'\x1b' 2>/dev/null
+  trap 'stty "$old_stty" 2>/dev/null; exit 0' INT
+  IFS= read -r name
+  stty "$old_stty" 2>/dev/null
+  if [[ -n "$name" ]]; then
+    tmux set-option -p -t "$pane_target" @custom_title "$name"
+    tmux select-pane -t "$pane_target" -T "$name"
+  fi
+}
+export -f rename_pane
+
+# Remove directory from zoxide
+del_zoxide_dir() {
+  local dir="${1%%$'\t'*}"
+  printf '\n  Remove "%s" from zoxide? [y/N]: ' "${dir/#$HOME/~}"
+  IFS= read -rn1 r; echo
+  [[ "$r" == y ]] && zoxide remove "$dir"
+}
+export -f del_zoxide_dir
+
+# Mode-aware dispatchers for FZF bindings
+dispatch_del() {
+  local mode
+  mode=$(cat "$PROMPT_MODE_FILE" 2>/dev/null || echo "tmux")
+  case "$mode" in
+    panes)  del_pane "$1" ;;
+    tmux)   del_session "$1" ;;
+    zoxide) del_zoxide_dir "$1" ;;
+  esac
+}
+export -f dispatch_del
+
+dispatch_rename() {
+  local mode
+  mode=$(cat "$PROMPT_MODE_FILE" 2>/dev/null || echo "tmux")
+  case "$mode" in
+    panes) rename_pane "$1" ;;
+    tmux)  rename_session "$1" ;;
+  esac
+}
+export -f dispatch_rename
+
+reload_current() {
+  local mode
+  mode=$(cat "$PROMPT_MODE_FILE" 2>/dev/null || echo "tmux")
+  case "$mode" in
+    panes)      get_tmux_panes ;;
+    tmux)       get_tmux_sessions ;;
+    zoxide)     get_zoxide_dirs ;;
+  esac
+}
+export -f reload_current
+
+# Return mode-appropriate footer text
+# Usage: get_footer [mode]  — if mode not given, reads from mode file
+get_footer() {
+  local mode="${1:-$(cat "$PROMPT_MODE_FILE" 2>/dev/null || echo "tmux")}"
+  local common='󰌌 Keymaps:\n  󰘳  ?         Switch Modes\n  󰐊  Alt-p     Toggle Preview'
+  case "$mode" in
+    panes)      printf "${common}\n  󰌑  Enter     Switch to Pane\n  󰑕  Ctrl-e    Rename Pane Title\n  󰅖  Del       Kill Pane" ;;
+    tmux)       printf "${common}\n  󰌑  Enter     Attach/Start Session\n  󰑕  Ctrl-e    Rename Session\n  󰅖  Del       Kill Session" ;;
+    zoxide)     printf "${common}\n  󰌑  Enter     Open Directory\n  󰅖  Del       Remove from Zoxide" ;;
+  esac
+}
+export -f get_footer
 
 # Create new session with user confirmation
 create_session() {
@@ -124,13 +331,16 @@ create_session() {
     echo -e "\nSession creation aborted."
   fi
 }
-export -f get_current_session
+export -f create_session
 
 # Generate preview content based on current mode
 generate_preview() {
   local selection="$1"
   local mode_file="$PROMPT_MODE_FILE"
   local current_mode
+
+  # Extract action key (before tab) — works for all modes
+  local action_key="${selection%%$'\t'*}"
 
   # Read current mode, default to tmux if file doesn't exist
   if [[ -f "$mode_file" ]]; then
@@ -141,14 +351,27 @@ generate_preview() {
 
   case "$current_mode" in
   "panes")
-    # Preview for tmux panes (from tmux_panes script)
-    local pane_id=$(echo "$selection" | sed "s/: .*//")
-    tmux capture-pane -ep -t "$pane_id"
+    # Fetch pane metadata
+    local pane_path cmd
+    pane_path=$(tmux display-message -p -t "$action_key" '#{pane_current_path}' 2>/dev/null)
+    cmd=$(tmux display-message -p -t "$action_key" '#{pane_current_command}' 2>/dev/null)
+    
+    # Replace $HOME with ~ for cleaner display
+    pane_path="${pane_path/#$HOME/\~}"
+    
+    # Print the stylized header
+    echo -e "\033[36m🖥️  Pane: \033[0m$action_key"
+    echo -e "\033[36m📁 Path: \033[0m$pane_path"
+    echo -e "\033[36m🚀 Cmd:  \033[0m$cmd"
+    echo -e "\033[2m──────────────────────────────────────────────────\033[0m"
+    echo ""
+    
+    # Print a tail of pane output to keep previews responsive on large scrollback.
+    tmux capture-pane -ep -S -200 -t "$action_key" 2>/dev/null
     ;;
   "zoxide")
-    # Preview for zoxide directories
-    local dir_path
-    dir_path=$(zoxide query "$(eval echo "$selection" | awk -F '/' '{print $(NF-1)"/"$NF}')" 2>/dev/null)
+    # action_key is the full directory path
+    local dir_path="$action_key"
 
     if [[ -n "$dir_path" && -d "$dir_path" ]]; then
       echo "📁 Directory: $dir_path"
@@ -173,8 +396,8 @@ generate_preview() {
     fi
     ;;
   "tmux" | *)
-    # Preview for tmux sessions (existing functionality)
-    local session_name=$(echo "$selection" | cut -d" " -f1)
+    # action_key is the session name
+    local session_name="$action_key"
     if tmux has-session -t "$session_name" 2>/dev/null; then
       echo "Status: 🟢 Active"
       echo "Session: $session_name"
@@ -196,38 +419,31 @@ export -f set_mode
 #                              FZF CONFIGURATION
 # ================================================================================
 tmux_panes_prompt="  󰍹  Tmux Panes › "
-zoxide_prompt="  󰉋  Zoxide Directories (Top 20) › "
+zoxide_prompt="  󰉋  Zoxide Directories › "
 tmux_sessions_prompt="  󰓫  Tmux Sessions › "
-tmuxinator_prompt="  󰜎  Tmuxinator Projects › "
-
 TRANSFORMER="
 if [[ \$FZF_PROMPT =~ Panes ]]; then
-  echo \"change-prompt(${tmux_sessions_prompt})+reload(set_mode tmux; get_tmux_sessions)\"
+  echo \"change-prompt(${tmux_sessions_prompt})+reload(set_mode tmux; get_tmux_sessions)+transform-footer:get_footer tmux\"
 elif [[ \$FZF_PROMPT =~ Sessions ]]; then
   if [[ \$(command -v zoxide) ]]; then
-    echo \"change-prompt(${zoxide_prompt})+reload(set_mode zoxide; get_zoxide_dirs)\"
-  elif [[ \$(command -v tmuxinator) ]]; then
-    echo \"change-prompt(${tmuxinator_prompt})+reload(set_mode tmuxinator; get_tmuxinator_projects)\"
-  fi
-elif [[ \$FZF_PROMPT =~ Zoxide ]]; then
-  if [[ \$(command -v tmuxinator) ]]; then
-    echo \"change-prompt(${tmuxinator_prompt})+reload(set_mode tmuxinator; get_tmuxinator_projects)\"
+    echo \"change-prompt(${zoxide_prompt})+reload(set_mode zoxide; get_zoxide_dirs)+transform-footer:get_footer zoxide\"
   else
-    echo \"change-prompt(${tmux_panes_prompt})+reload(set_mode panes; get_tmux_panes)\"
+    echo \"change-prompt(${tmux_panes_prompt})+reload(set_mode panes; get_tmux_panes)+transform-footer:get_footer panes\"
   fi
 else
-  echo \"change-prompt(${tmux_panes_prompt})+reload(set_mode panes; get_tmux_panes)\"
+  echo \"change-prompt(${tmux_panes_prompt})+reload(set_mode panes; get_tmux_panes)+transform-footer:get_footer panes\"
 fi
 "
 
-# FZF key bindings
-del_bind="del:execute(del_session {})+reload(get_tmux_sessions)"
-rename_bind="ctrl-e:execute(rename_session {})+reload(get_tmux_sessions)"
+# FZF key bindings — mode-aware via dispatcher functions
+del_bind="del:execute(dispatch_del {})+reload(reload_current)"
+rename_bind="ctrl-e:execute(dispatch_rename {})+reload(reload_current)"
 fzf_binds='enter:accept-or-print-query,tab:down,shift-tab:up'
 
 # Theme configuration
 theme_opts=()
-read -r selected_theme _ < <(get-theme)
+. "$HOME/.config/themes/lib/resolve-theme.sh"
+selected_theme=$THEME
 theme_file="$HOME/.config/themes/generated/fzf/${selected_theme}.sh"
 
 if [[ -f "$theme_file" ]]; then
@@ -245,13 +461,16 @@ else
 fi
 
 # Professional footer with keymaps section and improved alignment
-footer=$'󰌌 Keymaps:\n  󰘳  ?         Switch Modes\n  󰌑  Enter     Attach/Start Session\n  󰑕  Ctrl-e    Rename Session\n  󰅖  Del       Kill Session'
+footer=$'󰌌 Keymaps:\n  󰘳  ?         Switch Modes\n  󰐊  Alt-p     Toggle Preview\n  󰌑  Enter     Attach/Start Session\n  󰑕  Ctrl-e    Rename Session\n  󰅖  Del       Kill Session'
 
 # Enhanced FZF options with professional styling
 fzf_opts=(
   "${theme_opts[@]}"
   --ansi
   --cycle
+  --delimiter '\t'
+  --with-nth '2..'
+  --header-lines=1
   --border rounded
   --border-label "  󰓫 Tmux Session Manager  "
   --style full
@@ -262,14 +481,14 @@ fzf_opts=(
   --padding 1,3
   --header-first
   --footer "$footer"
-  --preview-window "right,50%,border-left,wrap"
+  --preview-window "right,50%,border-left,wrap,hidden"
   --no-separator
   --bind "$fzf_binds"
   --bind "$del_bind"
   --bind "$rename_bind"
   $layout
   --bind "?:transform:$TRANSFORMER"
-  --bind "ctrl-/:toggle-preview"
+  --bind "ctrl-/,ctrl-_,alt-p:toggle-preview"
   --preview 'generate_preview {}'
 )
 
@@ -288,18 +507,12 @@ tmux_start_session_in_dir() {
       echo "$session_dir can't be accessed"
       return 1
     }
-    if [[ $? -ne 0 ]]; then
-      return 1
-    fi
     tmux new-session -d -s "$new_session" -c "$session_dir" 2>/dev/null &&
       tmux "$tmux_action" -t "$new_session"
   else
     # Use HOME as fallback
     session_dir="$HOME"
-    cd "$session_dir"
-    if [[ $? -ne 0 ]]; then
-      return 1
-    fi
+    cd "$session_dir" || return 1
     tmux new-session -d -s "$session" -c "$session_dir" 2>/dev/null &&
       tmux "$tmux_action" -t "$session"
   fi
@@ -307,49 +520,20 @@ tmux_start_session_in_dir() {
 }
 export -f tmux_start_session_in_dir
 
-tmux_session_from_dir() {
-  local session="$1"
-  local tmux_sessions="$2"
-  local tmux_action="$3"
-
-  local session_dir
-  session_dir=$(zoxide query "$(eval echo "$session" | awk -F '/' '{print $(NF-1)"/"$NF}')" 2>/dev/null)
-  local new_session
-  new_session=$(basename "$session_dir")
-
-  if [[ $(echo "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$new_session($|[[:space:]]) ]]; then
-    cd "$session_dir" 2>/dev/null || {
-      echo "$session_dir can't be accessed"
-      return 1
-    }
-    tmux "$tmux_action" -t "$new_session"
-  else
-    cd "$session_dir" 2>/dev/null || {
-      echo "$session_dir can't be accessed"
-      return 1
-    }
-    tmux new-session -d -s "$new_session" -c "$session_dir" 2>/dev/null &&
-      tmux "$tmux_action" -t "$new_session"
-  fi
-}
-export -f tmux_session_from_dir
-
 tmux_attach_start() {
-  local session="$1"
+  local raw_selection="$1"
   local mode="$2"
-  # Strip the " (attached)" annotation appended by get_tmux_sessions display format
+  # Extract action key (before tab) — unified for all modes
+  local session="${raw_selection%%$'\t'*}"
   session="${session% (attached)}"
   local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
-  local tmux_sessions=$(get_tmux_sessions)
-
-  # if [[ $current_mode == "panes" ]]; then
-  if [[ $(cat $PROMPT_MODE_FILE) == "panes" ]]; then
-    pane=$(echo $session | sed "s/: .*//")
-    tmux $tmux_action -t "$pane"
-    # tmux switch-client -t "$pane"
+  # Pane mode: action key is the full tmux target (session:window.pane).
+  # Only treat as pane if the selection was an actual list item (contains a tab).
+  # A typed query (no tab) falls through to session creation below.
+  if [[ $(cat $PROMPT_MODE_FILE) == "panes" && "$raw_selection" == *$'\t'* ]]; then
+    tmux $tmux_action -t "$session"
     return 0
   fi
-
 
   if [[ "$mode" == "term" ]]; then
     create_session "$session" "$tmux_action"
@@ -357,32 +541,25 @@ tmux_attach_start() {
   fi
 
   # 1. Check if it's an existing tmux session
-  if [[ $(echo "$tmux_sessions" | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
+  if tmux has-session -t "$session" 2>/dev/null; then
     tmux "$tmux_action" -t "$session"
     return 0
   fi
 
-  # 2. Check if it's a tmuxinator project
-  if command -v tmuxinator >/dev/null && [[ $(tmuxinator list | tail -n +2 | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
-    tmuxinator start "$session"
-    return 0
-  fi
-
-  # handle_zoxide $session $tmux_sessions $tmux_action
-  # 3. Check if it's a zoxide directory
-  if [[ $(get_zoxide_dirs | tr '\n' ' ') =~ (^|[[:space:]])$session($|[[:space:]]) ]]; then
-    tmux_session_from_dir "$session" "$tmux_sessions" "$tmux_action"
-    return 0
-  fi
-
-  # 4. If MODE is "zoxide", try raw zoxide query
+  # 2. Zoxide mode: action key is a full path from list, or a raw query from user input
   if [[ $(cat $PROMPT_MODE_FILE) == "zoxide" ]]; then
-    local session_dir=$(zoxide query "$session" 2>/dev/null)
+    local session_dir
+    if [[ -d "$session" ]]; then
+      session_dir="$session"
+    else
+      session_dir=$(zoxide query "$session" 2>/dev/null)
+    fi
     tmux_start_session_in_dir "$session" "$session_dir"
     return 0
-  else
-    tmux_start_session_in_dir "$session"
   fi
+
+  # 3. Fallback: try starting a new session
+  tmux_start_session_in_dir "$session"
 }
 
 # ================================================================================
@@ -391,7 +568,7 @@ tmux_attach_start() {
 # Entry point and flow control
 
 handler_request() {
-  local shell session tmux_sessions selection
+  local shell session tmux_sessions selection panes_data
   shell=$(command -v bash)
   session="$1"
   tmux_sessions=$(get_tmux_sessions)
@@ -401,22 +578,27 @@ handler_request() {
     return 0
   fi
 
-  # Start with panes if we're in tmux and have panes available
-  if [[ -n "$TMUX" && -n "$(get_tmux_panes)" ]]; then
+  # Build pane data once to avoid duplicate work before launching fzf.
+  panes_data=""
+  if [[ "$FORCE_PANES" -eq 1 ]] || [[ -n "$TMUX" ]]; then
+    panes_data=$(get_tmux_panes)
+  fi
+
+  # Start with panes if forced via --panes flag, or if in tmux with available panes
+  if [[ "$FORCE_PANES" -eq 1 ]] || [[ -n "$TMUX" && -n "$panes_data" ]]; then
     set_mode "panes"
-    selection=$(get_tmux_panes | SHELL="$shell" fzf "${fzf_opts[@]}" --prompt "$tmux_panes_prompt")
+    selection=$(printf '%s\n' "$panes_data" | SHELL="$shell" fzf "${fzf_opts[@]}" --prompt "$tmux_panes_prompt" --footer "$(get_footer)")
   elif [[ -z "$TMUX" && -z "$tmux_sessions" ]]; then
     set_mode "zoxide"
-    selection=$(get_zoxide_dirs | SHELL="$shell" fzf "${fzf_opts[@]}" --prompt "$zoxide_prompt")
+    selection=$(get_zoxide_dirs | SHELL="$shell" fzf "${fzf_opts[@]}" --prompt "$zoxide_prompt" --footer "$(get_footer)")
   else
     set_mode "tmux"
-    selection=$(echo -n -e "$tmux_sessions" | SHELL="$shell" fzf "${fzf_opts[@]}" --prompt "$tmux_sessions_prompt")
+    selection=$(echo -n -e "$tmux_sessions" | SHELL="$shell" fzf "${fzf_opts[@]}" --prompt "$tmux_sessions_prompt" --footer "$(get_footer)")
   fi
 
   [[ -z "$selection" ]] && return 0
   
-  # Handle pane selection differently
-    tmux_attach_start "$selection" "fzf"
+  tmux_attach_start "$selection" "fzf"
   return 0
 }
 
@@ -425,11 +607,30 @@ handler_request() {
 # ================================================================================
 # Argument validation and script execution
 
-# Validate arguments and start the script
-if [[ $# -gt 1 ]]; then
-  echo "Invalid use of command, Usage: \"$0\" [session-name]"
-  return
-fi
+FORCE_PANES=0
+session_arg=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --panes)
+      FORCE_PANES=1
+      shift
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $(basename "$0") [--panes] [session-name]" >&2
+      exit 1
+      ;;
+    *)
+      if [[ -n "$session_arg" ]]; then
+        echo "Usage: $(basename "$0") [--panes] [session-name]" >&2
+        exit 1
+      fi
+      session_arg="$1"
+      shift
+      ;;
+  esac
+done
 
 # Start the main handler
-handler_request "$@"
+handler_request "$session_arg"

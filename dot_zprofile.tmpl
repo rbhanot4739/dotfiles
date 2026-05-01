@@ -33,6 +33,13 @@ fi
 export VISUAL="$EDITOR"
 
 # =====================================
+# Terminfo — ensure ~/.terminfo takes priority over app-set TERMINFO
+# (Ghostty sets $TERMINFO to its bundle; this keeps our user-local overrides effective)
+# =====================================
+export TERMINFO_DIRS="${HOME}/.terminfo:${TERMINFO:-/usr/share/terminfo}"
+unset TERMINFO
+
+# =====================================
 # Bat Configuration
 # =====================================
 if command -v bat >/dev/null; then
@@ -76,6 +83,9 @@ fi
 
 # remove and add ~/.volta/bin at the end
 path=(${path:#$HOME/.volta/bin} $path $HOME/.volta/bin); typeset -U path
+
+# Lazygit: overlay active theme on top of main config (theme-switch writes the active file)
+export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml,$HOME/.config/themes/generated/lazygit/lazygit-active-theme.yml"
 
 [[ -f "$HOME/.gem_key" ]] && export GEMINI_API_KEY=$(cat "$HOME/.gem_key")
 # export GEMINI_MODEL="gemini-2.5-flash"

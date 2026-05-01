@@ -137,7 +137,7 @@ return {
           path = vim.fn.expand("~") .. "/obsidian-vault",
         },
       },
-      new_notes_location = "current_dir",
+      new_notes_location = "notes_subdir",
       notes_subdir = "notes",
       daily_notes = {
         folder = "dailies",
@@ -162,21 +162,36 @@ return {
         customizations = {},
       },
       note_id_func = function(title)
-        -- Create note IDs in a Zettelkasten format with a timestamp and a suffix.
-        -- In this case a note with the title 'My new note' will be given an ID that looks
-        -- like '1657296016-my-new-note', and therefore the file name '1657296016-my-new-note.md'
-        local suffix = ""
         if title ~= nil then
-          -- If title is given, transform it into valid file name.
-          suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+          -- Slugify: lowercase, hyphens, preserve / for paths like work/dcl-migration
+          return title:gsub(" ", "-"):gsub("[^A-Za-z0-9-/]", ""):lower()
         else
-          -- If title is nil, just add 4 random uppercase letters to the suffix.
+          local suffix = ""
           for _ = 1, 4 do
             suffix = suffix .. string.char(math.random(65, 90))
           end
+          return suffix
         end
-        -- return tostring(os.time()) .. "-" .. suffix
-        return tostring(os.date("%Y-%m-%d")) .. "_" .. suffix
+      end,
+      note_frontmatter_func = function(note)
+        local out = {
+          created = os.date("%Y-%m-%d %H:%M"),
+          tags = note.tags or {},
+          aliases = note.aliases or {},
+        }
+        -- Auto-tag notes in work/ directory
+        if note.path and tostring(note.path):find("^work/") then
+          local has_work_tag = false
+          for _, tag in ipairs(out.tags) do
+            if tag:find("^work/") then
+              has_work_tag = true
+            end
+          end
+          if not has_work_tag then
+            table.insert(out.tags, "work")
+          end
+        end
+        return out
       end,
       checkbox = {
         order = { " ", "x" },

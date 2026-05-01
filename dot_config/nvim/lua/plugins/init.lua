@@ -1,38 +1,41 @@
 return {
+  { import = "plugins.rbhanot" },
+
   -- All plugins sorted alphabetically
-  require("plugins.rbhanot.ai"),
-  require("plugins.rbhanot.blink"),
-  require("plugins.rbhanot.colorscheme"),
-  require("plugins.rbhanot.codecompanion"),
-  require("plugins.rbhanot.debugger"),
-  require("plugins.rbhanot.edgy"),
-  require("plugins.rbhanot.flash"),
 
-  require("plugins.rbhanot.git"),
-  require("plugins.rbhanot.lsp"),
-  require("plugins.rbhanot.lualine"),
-  require("plugins.rbhanot.markdown"),
-  require("plugins.rbhanot.mini"),
-  require("plugins.rbhanot.multi-cursors"),
-  require("plugins.rbhanot.neotest"),
-  require("plugins.rbhanot.noice"),
-
-  require("plugins.rbhanot.smart-split"),
-  require("plugins.rbhanot.snacks"),
-
-  require("plugins.rbhanot.term"),
-  require("plugins.rbhanot.todo-comments"),
-  require("plugins.rbhanot.treesitter"),
-  require("plugins.rbhanot.trouble"),
-  require("plugins.rbhanot.util-plugins"),
-  require("plugins.rbhanot.venv-selector"),
-  require("plugins.rbhanot.which-key"),
-  require("plugins.rbhanot.yank"),
+  -- require("plugins.rbhanot.ai"),
+  -- require("plugins.rbhanot.blink"),
+  -- require("plugins.rbhanot.colorscheme"),
+  -- require("plugins.rbhanot.codecompanion"),
+  -- require("plugins.rbhanot.debugger"),
+  -- require("plugins.rbhanot.edgy"),
+  -- require("plugins.rbhanot.flash"),
+  --
+  -- require("plugins.rbhanot.git"),
+  -- require("plugins.rbhanot.lsp"),
+  -- require("plugins.rbhanot.lualine"),
+  -- require("plugins.rbhanot.markdown"),
+  -- require("plugins.rbhanot.mini"),
+  -- require("plugins.rbhanot.multi-cursors"),
+  -- require("plugins.rbhanot.neotest"),
+  -- require("plugins.rbhanot.noice"),
+  --
+  -- require("plugins.rbhanot.smart-split"),
+  -- require("plugins.rbhanot.snacks"),
+  --
+  -- require("plugins.rbhanot.term"),
+  -- require("plugins.rbhanot.todo-comments"),
+  -- require("plugins.rbhanot.treesitter"),
+  -- require("plugins.rbhanot.trouble"),
+  -- require("plugins.rbhanot.util-plugins"),
+  -- require("plugins.rbhanot.venv-selector"),
+  -- require("plugins.rbhanot.which-key"),
+  -- require("plugins.rbhanot.yank"),
 
   -- explicitly disabled
 
   -- require("plugins.rbhanot.fzf"),
   -- require("plugins.rbhanot.nvim-cmp"),
   -- require("plugins.rbhanot.telescope"),
-  require("plugins.rbhanot.folds"),
+  -- require("plugins.rbhanot.folds"),
 }
