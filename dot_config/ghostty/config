@@ -1,47 +1,94 @@
+# ── Window ────────────────────────────────────────────────────────────────────
 macos-titlebar-style = hidden
+# Option key sends Alt sequences (needed by many CLI tools)
 macos-option-as-alt = true
 window-height = 60
 window-width = 180
-link-url = true
+confirm-close-surface = true
+focus-follows-mouse = true
+# Stay zoomed when navigating to another split
+split-preserve-zoom = true
 
-# Font
+# ── Font ──────────────────────────────────────────────────────────────────────
 font-family = JetBrains Mono
 font-size = 14
+# Contextual alternates: adjusts glyphs based on neighbours (e.g. -> as arrow)
 font-feature = calt
+# Standard ligatures: combines character pairs (e.g. fi, ff)
 font-feature = liga
 
-# Shell integration
-# Available features: cursor, sudo, title
-#   cursor - changes cursor shape based on shell mode (e.g. block in normal, bar in insert)
-#   sudo   - preserves shell integration when running sudo commands
-#   title  - automatically sets terminal window title to current command/directory
-# All are disabled here intentionally; enable selectively as needed
+# ── Shell integration ─────────────────────────────────────────────────────────
+# cursor - changes cursor shape based on shell mode (block in normal, bar in insert)
+# sudo   - preserves shell integration when running sudo commands
+# title  - automatically sets terminal window title to current command/directory
 shell-integration-features = cursor,no-sudo,no-title
 
-# Mouse & clipboard
-mouse-hide-while-typing = true
-copy-on-select = clipboard
+# ── Links ─────────────────────────────────────────────────────────────────────
+# Detect and underline URLs on hover
+link-url = true
+# Show URL tooltip on hover (reveals destination of OSC 8 hyperlinks)
+link-previews = true
 
-# Scrollback
+# ── Mouse & clipboard ─────────────────────────────────────────────────────────
+mouse-hide-while-typing = true
+# Selected text goes to system clipboard immediately (not just primary)
+copy-on-select = clipboard
+clipboard-trim-trailing-spaces = true
+# Extra chars treated as part of a word on double-click (for paths/URLs)
+selection-word-chars = -_/.~:@
+# Deselect text as soon as you start typing
+selection-clear-on-typing = true
+
+# ── Scrollback ────────────────────────────────────────────────────────────────
 scrollback-limit = 100000
 
-# Window behavior
-confirm-close-surface = true
-window-inherit-working-directory = true
-focus-follows-mouse = true
+# ── Notifications ─────────────────────────────────────────────────────────────
+# Notify only when Ghostty is not the focused app
+notify-on-command-finish = unfocused
+# OS notification only; no terminal bell
+notify-on-command-finish-action = no-bell,notify
+# notify-on-command-finish-after = 30s    # default 5s
 
-# Clipboard
-clipboard-trim-trailing-spaces = true
+# ── Working directory ─────────────────────────────────────────────────────────
+# New windows start fresh; tabs and splits inherit the current pane's directory
+window-inherit-working-directory = false
+tab-inherit-working-directory = true
+split-inherit-working-directory = true
 
+# ── Keybinds ──────────────────────────────────────────────────────────────────
+
+# Tabs
+keybind = ctrl+shift+n=new_tab
 keybind = ctrl+one=goto_tab:1
 keybind = ctrl+two=goto_tab:2
 keybind = ctrl+three=goto_tab:3
 keybind = ctrl+four=goto_tab:4
 keybind = ctrl+five=goto_tab:5
+
+# Splits — create
 keybind = ctrl+\=new_split:right
 keybind = ctrl+-=new_split:down
-keybind = ctrl+shift+n=new_tab
+
+# Splits — navigate: using Ghostty built-in cmd+opt+arrow (no config needed)
+# ctrl+hjkl passes through to tmux for pane navigation
+
+# Splits — zoom (mirrors tmux prefix+z convention)
+keybind = ctrl+shift+enter=toggle_split_zoom
+
+# Splits — resize (keytable: enter with leader, exit with Escape)
+keybind = resize/arrow_up=resize_split:up,10
+keybind = resize/arrow_down=resize_split:down,10
+keybind = resize/arrow_left=resize_split:left,10
+keybind = resize/arrow_right=resize_split:right,10
+keybind = resize/escape=deactivate_key_table
+keybind = resize/catch_all=ignore
+
+# keybind = ctrl+a=activate_key_table:resize
+
+
+# Misc
 keybind = super+shift+comma=reload_config
 
-# Active color scheme — updated by theme-switch; do not edit directly
+# ── Color scheme ──────────────────────────────────────────────────────────────
+# Updated by theme-switch; do not edit directly
 config-file = ~/.config/ghostty/current-colors.conf

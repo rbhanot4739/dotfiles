@@ -3,17 +3,15 @@ quitOnTopLevelReturn: true
 git:
   pagers:
     - colorArg: always
-      pager: delta --light  --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+      pager: delta-pager --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
   commit:
     autoWrapCommitMessage: true
     autoWrapWidth: 100
   branchPrefix: "rbhanot/"
   branchLogCmd: "git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(red)%d %C(auto)%s %C(green)(%ar) %C(bold blue)[%al]'"
 gui:
-  theme:
-    selectedLineBgColor:
-      - underline
-  sidePanelWidth: 0.3
+  # gui.theme is provided by the active theme overlay via LG_CONFIG_FILE
+  sidePanelWidth: 0.2
   nerdFontsVersion: "3"
   expandFocusedSidePanel: true
   expandedSidePanelWeight: 3

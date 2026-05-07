@@ -1,5 +1,5 @@
-# some work related patterns to exlcude
-~/local-repo/
+# some work related patterns to exclude
+local-repo/
 # Exclude everything in /export
 /export/*
 # But re-include each directory in the path
@@ -38,7 +38,7 @@ MERGE_RR
 .mypy_cache/
 .ideaDataSources/
 dataSources/
-.coverage*
+*.coverage*
 *.neoconf.json
 *lcov*
 pyrightconfig.json
@@ -48,7 +48,8 @@ node_modules/
 
 # Python specific
 __pycache__/
-*.py[cod]  # Covers *.pyc, *.pyo, *.pyd
+# Covers *.pyc, *.pyo, *.pyd
+*.py[cod]
 *.pyi
 *.pdb
 
@@ -67,7 +68,7 @@ Documents/
 Downloads/
 Music/
 Movies/
-Pictures/  # Fixed typo from 'Picture/'
+Pictures/
 Public/
 
 # Application specific
@@ -87,6 +88,7 @@ en.utf-8*
 
 # Database files
 *.db
+*.kdbx
 
 # Binary and compiled files
 *.exe
@@ -152,6 +154,13 @@ en.utf-8*
 *.otf
 *.woff
 *.woff2
+
+# Large home-dir trees (only relevant if ~ is ever git-init'd)
+go/
+nvim-macos-arm64/
+words.txt
+history.db
+nvim-macos-arm64.tar.gz
 
 # Aider
 .aider.*

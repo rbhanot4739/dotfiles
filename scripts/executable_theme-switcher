@@ -14,8 +14,9 @@ if [[ -f "$GHOSTTY_TEMPLATE" && -f "$GHOSTTY_COLORS" ]]; then
 fi
 
 # Update neovim load_colorscheme
-# nvr --serverlist | xargs -I {} nvr --servername {} -c "lua Load_colorscheme();" 
-nvr --serverlist | xargs -I {} nvr --servername {} --remote-send '<Esc>:lua Load_colorscheme()<CR>'
+if command -v nvr >/dev/null 2>&1; then
+  nvr --serverlist | xargs -I {} nvr --servername {} --remote-send '<Esc>:lua Load_colorscheme()<CR>'
+fi
 
 # Update tmux theme
 if [[ -n $TMUX ]]; then
@@ -36,3 +37,20 @@ sd '^(\s*features\s*=).*$' "\$1 ${theme}" "$HOME"/.delta-gitconfig
 
 # update delta bg_mode in lazygit
 sd '(pager: delta[^"]*?)(?: --(light|dark))?([^"]*")' "\$1 --${bg_mode}\$3" "$HOME"/.config/lazygit/config.yml
+
+# Sync theme to remote SSH hosts (fire-and-forget, no slowdown)
+_sync_remote_theme() {
+  local mode="$1"
+  local hosts=()
+  if [[ -f ~/.ssh/config.custom ]]; then
+    while IFS= read -r line; do
+      [[ "$line" =~ ^Host[[:space:]]+([a-zA-Z0-9_-]+)$ ]] && hosts+=("${BASH_REMATCH[1]}")
+    done <~/.ssh/config.custom
+  fi
+  for host in "${hosts[@]}"; do
+    ssh -o ConnectTimeout=2 -o BatchMode=yes "$host" \
+      "echo '$mode' >~/.bg_mode && [[ -x ~/.config/themes/bin/theme-switch ]] && ~/.config/themes/bin/theme-switch" \
+      &>/dev/null &
+  done
+}
+_sync_remote_theme "$bg_mode"

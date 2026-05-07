@@ -3,7 +3,6 @@ return {
     "folke/tokyonight.nvim",
     opts = {
       transparent = false,
-      lazy = true,
       lualine_bold = true,
       on_highlights = function(hl, c)
         hl["FlashLabel"] = { fg = c.magenta2, bold = true }
@@ -16,15 +15,12 @@ return {
   },
   {
     "Shatur/neovim-ayu",
-    lazy = true,
   },
   {
     "rose-pine/neovim",
-    lazy = true,
   },
   {
     "EdenEast/nightfox.nvim",
-    lazy = true,
     opts = {
       options = {
         styles = {

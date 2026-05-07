@@ -6,8 +6,8 @@
     args = [
         "--cmd", "set shadafile=NONE",
         "-d",
-        "{{ .Destination }}",
-        "{{ .Source }}",
+        "{{ `{{ .Destination }}` }}",
+        "{{ `{{ .Source }}` }}",
         "-c", "wincmd h | setlocal readonly nomodifiable",
         "-c", "let &l:winbar='DISK  |  dp=push  u=undo  ]c/[c=nav  ZZ=save+quit'",
         "-c", "wincmd l | let &l:winbar='SOURCE (chezmoi)'",

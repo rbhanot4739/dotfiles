@@ -17,8 +17,18 @@ logs/
 .claude/**
 .aider*
 
-{{- if (and (eq .chezmoi.os "linux") (eq "mariner" .chezmoi.osRelease.id) (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username)) }}
-  .wezterm.lua
+{{- if ne .chezmoi.os "darwin" }}
+dot_config/ghostty
+dot_wezterm.lua
+dot_config/gh-dash
+dot_config/yazi
+dot_config/private_karabiner
+{{- end }}
+
+{{- if and (eq .chezmoi.os "linux") (eq "coder" .chezmoi.username) }}
+dot_config/lazydocker
+dot_config/mise
+dot_config/private_atuin
 {{- end }}
 
 # Legacy theme system — superseded by ~/.config/themes/.

@@ -151,6 +151,13 @@ if [[ -f "$YAML" ]]; then
                .foreground, .background, .cursor"
   mapfile -t _cvals < <(yq "${_prefix}.colors | [${_yq_fields}] | .[]" "$YAML" 2>/dev/null)
 
+  _fg="${_cvals[16]:-}"; _bg="${_cvals[17]:-}"; _cu="${_cvals[18]:-}"
+
+  # Cursor (OSC 12) sent FIRST so it survives any mid-broadcast abort
+  # (theme-switch can be killed by launchd; previously OSC 12 was the
+  # last write and left cursor color stuck on the previous theme).
+  [[ -n "$_cu" && "$_cu" != "null" ]] && _broadcast_osc "12;${_cu}"
+
   # Palette colors 0-15 (ANSI) via OSC 4
   for _i in {0..15}; do
     _val="${_cvals[$_i]:-}"
@@ -158,8 +165,8 @@ if [[ -f "$YAML" ]]; then
     _broadcast_osc "4;${_i};${_val}"
   done
 
-  # Foreground (OSC 10), background (OSC 11), cursor (OSC 12)
-  _fg="${_cvals[16]:-}"; _bg="${_cvals[17]:-}"; _cu="${_cvals[18]:-}"
+  # Foreground (OSC 10), background (OSC 11), cursor (OSC 12) — repeated
+  # at the tail as belt-and-suspenders.
   [[ -n "$_fg" && "$_fg" != "null" ]] && _broadcast_osc "10;${_fg}"
   [[ -n "$_bg" && "$_bg" != "null" ]] && _broadcast_osc "11;${_bg}"
   [[ -n "$_cu" && "$_cu" != "null" ]] && _broadcast_osc "12;${_cu}"

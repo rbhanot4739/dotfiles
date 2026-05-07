@@ -2,19 +2,20 @@
 
 # =================================== Fzf config ===================================
 
-find_all_cmd="fd --ignore-file ~/.global_gitignore --follow ."
+export FZF_HIDDEN_MARKER="${TMPDIR:-/tmp}/fzf_hidden_$$"
+find_all_cmd="fd --ignore-file ~/.ignore --follow ."
 find_files_cmd="$find_all_cmd --type file "
 find_dirs_cmd="$find_all_cmd --type directory "
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
-: "${FZF_UNIFIED_HEADER:=Quick keys: Alt-i toggle hidden | Alt-s/Alt-d mark + move}"
+: "${FZF_UNIFIED_HEADER:=Quick keys: Alt-i toggle ignored | Alt-s/Alt-d mark + move}"
 : "${FZF_UNIFIED_PROMPT:=❯ }"
 : "${FZF_UNIFIED_POINTER:=󰁕}"
 : "${FZF_UNIFIED_LABEL_COLOR:=8}"
 : "${FZF_UNIFIED_PREVIEW_WINDOW:=right,55%,border-rounded,wrap}"
 : "${FZF_UNIFIED_DIR_PREVIEW_WINDOW:=down,20%,border-top,wrap}"
-: "${FZF_UNIFIED_HIDDEN_TOGGLE_ALL_CMD:=[ ! -f /tmp/fzf_hidden ] && (fd --ignore-file ~/.global_gitignore -u --hidden . && touch /tmp/fzf_hidden) || (fd --ignore-file ~/.global_gitignore . && rm -f /tmp/fzf_hidden)}"
-: "${FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD:=[ ! -f /tmp/fzf_hidden ] && (fd --ignore-file ~/.global_gitignore -tf -u --hidden . && touch /tmp/fzf_hidden) || (fd --ignore-file ~/.global_gitignore -tf . && rm -f /tmp/fzf_hidden)}"
-: "${FZF_UNIFIED_HIDDEN_TOGGLE_DIR_CMD:=[ ! -f /tmp/fzf_hidden ] && (fd --ignore-file ~/.global_gitignore -td -u --hidden . && touch /tmp/fzf_hidden) || (fd --ignore-file ~/.global_gitignore -td . && rm -f /tmp/fzf_hidden)}"
+: "${FZF_UNIFIED_HIDDEN_TOGGLE_ALL_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd --ignore-file ~/.ignore -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd --ignore-file ~/.ignore . && rm -f $FZF_HIDDEN_MARKER)}"
+: "${FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd --ignore-file ~/.ignore -tf -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd --ignore-file ~/.ignore -tf . && rm -f $FZF_HIDDEN_MARKER)}"
+: "${FZF_UNIFIED_HIDDEN_TOGGLE_DIR_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd --ignore-file ~/.ignore -td -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd --ignore-file ~/.ignore -td . && rm -f $FZF_HIDDEN_MARKER)}"
 _fzf_theme_opts_str=""
 theme_opts=()
 source "$HOME/.config/themes/lib/resolve-theme.sh"
@@ -32,7 +33,8 @@ FZF_SHARED_KEYBINDS="\
 --bind='alt-s:select+down,alt-d:deselect+up' \
 --bind='alt-g:toggle-all,alt-x:deselect-all' \
 --bind='alt-p:toggle-preview' \
---bind='alt-w:change-preview-window(${FZF_UNIFIED_PREVIEW_WINDOW}|down,40%,border-top,wrap|hidden)'"
+--bind='alt-w:change-preview-window(${FZF_UNIFIED_PREVIEW_WINDOW}|down,40%,border-top,wrap|hidden)' \
+--bind='ctrl-v:execute(nvim {})+abort'"
 export FZF_DEFAULT_OPTS="--ansi --cycle --style full --info=inline-right --height 50% --margin 1,2 --layout=reverse --border rounded --prompt '${FZF_UNIFIED_PROMPT}' --pointer '${FZF_UNIFIED_POINTER}' --color='label:${FZF_UNIFIED_LABEL_COLOR}' ${FZF_SHARED_KEYBINDS} ${_fzf_theme_opts_str}"
 export FZF_COMPLETION_OPTS="${FZF_DEFAULT_OPTS}"
 export FZF_UNIFIED_PREVIEW_WINDOW
@@ -40,20 +42,16 @@ FZF_UNIFIED_COMPLETION_DIR_PREVIEW='eza --git --group --group-directories-first 
 FZF_UNIFIED_COMPLETION_FILE_PREVIEW='[[ -d {} ]] && tree -C {} || bat --style=snip --color=always {}'
 export FZF_COMPLETION_PATH_OPTS="--multi --preview-window '${FZF_UNIFIED_PREVIEW_WINDOW}'"
 export FZF_COMPLETION_DIR_OPTS="--multi --preview-window '${FZF_UNIFIED_DIR_PREVIEW_WINDOW}'"
-completion_find_all_cmd="fd --ignore-file ~/.global_gitignore ."
+completion_find_all_cmd="fd --ignore-file ~/.ignore --follow ."
 completion_find_files_cmd="$completion_find_all_cmd --type file "
 completion_find_dirs_cmd="$completion_find_all_cmd --type directory "
-
-_fzf_with_default_opts() {
-  command fzf "$@"
-}
 
 file_prev_opts_arr=(
  --preview '[[ -d {} ]] && tree -C {} || bat --style=snip --color=always {}'
  --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW"
 )
 file_binds_arr=(
- --bind "start:execute-silent(rm -f /tmp/fzf_hidden)"
+ --bind "start:execute-silent(rm -f $FZF_HIDDEN_MARKER)"
  --bind "alt-i:reload(${FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD})"
 )
 file_opts_arr=(
@@ -73,7 +71,7 @@ dir_prev_opts_arr=(
 )
 
 dir_binds_arr=(
-  --bind "start:execute-silent(rm -f /tmp/fzf_hidden)"
+  --bind "start:execute-silent(rm -f $FZF_HIDDEN_MARKER)"
   --bind "alt-i:reload(${FZF_UNIFIED_HIDDEN_TOGGLE_DIR_CMD})"
 )
 
@@ -90,12 +88,13 @@ mixed_opts_arr=(
   --header-first
   --preview "[[ -d {} ]] && tree -C {} || bat --style=snip --color=always {}"
   --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW"
+  --bind "start:execute-silent(rm -f $FZF_HIDDEN_MARKER)"
   --bind "alt-i:reload(${FZF_UNIFIED_HIDDEN_TOGGLE_ALL_CMD})"
 )
 
 dir_opts_str="${(j: :)${(@q)dir_opts_arr}}"
 export FZF_ALT_C_COMMAND="$find_dirs_cmd"
-export FZF_ALT_C_OPTS="$FZF_DEFAULT_OPTS --walker-skip .git,node_modules,build $dir_opts_str"
+export FZF_ALT_C_OPTS="$FZF_DEFAULT_OPTS $dir_opts_str"
 
 
 export FZF_CTRL_R_OPTS="$FZF_DEFAULT_OPTS --preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview'"
@@ -111,8 +110,10 @@ _fzf_compgen_dir() {
 }
 
 __fzf_list_hosts() {
-  local hosts=($(command awk '/^Host / && $2 !~ /^\*/ {print $2}' ~/.ssh/config.custom))
-  hosts+=($(command awk '!/rdev/ && !/k8s/ && /^[[:alpha:]]/ {print $1}' ~/.ssh/known_hosts))
+  local hosts=()
+  [[ -f ~/.ssh/config.custom ]] && hosts+=($(command awk '/^Host / && $2 !~ /^\*/ {print $2}' ~/.ssh/config.custom))
+  [[ -f ~/.ssh/config.ranges ]] && hosts+=($(command awk '/^Host / {print $2}' ~/.ssh/config.ranges))
+  [[ -f ~/.ssh/range_hosts_cache ]] && hosts+=(${(f)"$(< ~/.ssh/range_hosts_cache)"})
   echo $hosts | command tr ' ' '\n' | sort -u
 }
 
@@ -132,7 +133,6 @@ fzf() {
   default_opts=(
     --style full --info=inline-right --height 60% --margin 1,2 --layout=reverse
     --border rounded --multi
-    --bind 'ctrl-v:become(nvim {})'
   )
 
   # local background_mode selected_theme theme_file
@@ -190,12 +190,11 @@ _fzf_comprun() {
   shift
 
 case "$command" in
-cd | z) _fzf_with_default_opts "${dir_opts_arr[@]}" "$@" ;;
-export | unset) _fzf_with_default_opts --preview "eval 'echo \$'{}" "$@" ;;
-man) _fzf_with_default_opts --preview 'tldr --color=always {} 2>/dev/null' "$@" ;;
-bat | cat) _fzf_with_default_opts "${file_opts_arr[@]}" "$@" ;;
-ls | eza) _fzf_with_default_opts "${mixed_opts_arr[@]}" "$@" ;;
-# ls | eza) eval "fzf --preview \"[[ ! -d {} ]] && $file_prev_opts \" \"\$@\"" ;;
-*) _fzf_with_default_opts "$@" ;;
+cd | z) command fzf "${dir_opts_arr[@]}" "$@" ;;
+export | unset) command fzf --preview "eval 'echo \$'{}" "$@" ;;
+man) command fzf --preview 'tldr --color=always {} 2>/dev/null' "$@" ;;
+bat | cat) command fzf "${file_opts_arr[@]}" "$@" ;;
+ls | eza) command fzf "${mixed_opts_arr[@]}" "$@" ;;
+*) command fzf "$@" ;;
 esac
 }

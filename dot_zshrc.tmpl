@@ -74,13 +74,32 @@ else
     function zvm_after_init() {
         bindkey -M vicmd '^[[1;2A' fzf-history-widget
         bindkey -M viins '^[[1;2A' fzf-history-widget
+        bindkey -M emacs '^R' fzf-history-widget
+        bindkey -M viins '^R' fzf-history-widget
+        bindkey -M vicmd '^R' fzf-history-widget
     }
 fi
 
+{{ if eq .chezmoi.os "linux" -}}
 # =====================================
-# Key Bindings
+# SSH Theme Detection (OSC 11)
 # =====================================
+_apply_terminal_theme() {
+  local response
+  printf '\033]11;?\033\\' >/dev/tty
+  IFS='' read -r -d $'\033' -t 0.1 response </dev/tty 2>/dev/null || return
+  # Response: ]11;rgb:RRRR/GGGG/BBBB — use first byte of R component for brightness
+  local hex_r="${response:8:2}"
+  local brightness=$(( 16#$hex_r ))
+  local mode="dark"
+  [[ $brightness -gt 127 ]] && mode="light"
+  echo "$mode" >~/.bg_mode
+  [[ -x ~/.config/themes/bin/theme-switch ]] && ~/.config/themes/bin/theme-switch
+}
+[[ -n $SSH_CONNECTION ]] && _apply_terminal_theme
+{{- end }}
 
+# =====================================
 # Plugins (Zinit)
 # =====================================
 
@@ -229,7 +248,7 @@ zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 # Restrict cat/bat completion candidates to regular files only.
-zstyle ':completion:*:*:(cat|bat):*' file-patterns '*(-.):regular-files'
+zstyle ':completion:*:*:(cat|bat):*' file-patterns '*(-.D):regular-files *(-/D):directories'
 
 # Set SSH completion to use only your function's output
 zstyle -e ':completion:*:(ssh|scp|sftp|rsync):*:hosts' hosts 'reply=($(__fzf_list_hosts))'
@@ -257,6 +276,7 @@ FZF_UNIFIED_TAB_COMMON_FLAGS=(
   --color "label:$FZF_UNIFIED_LABEL_COLOR"
   --header "$FZF_UNIFIED_HEADER"
   --header-first
+  --bind "start:execute-silent(rm -f $FZF_HIDDEN_MARKER)"
 )
 FZF_UNIFIED_TAB_DIR_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_DIR_PREVIEW_WINDOW" --border-label 'Fuzzy Find Dirs')
 FZF_UNIFIED_TAB_FILE_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Find Files')

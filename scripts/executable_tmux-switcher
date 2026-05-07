@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# tmux_switcher — pane-centric tmux navigator
+# tmux-switcher — pane-centric tmux navigator
 #
 # Primary view: all panes across sessions, sorted by last activity
 # Session management via context-aware action menu (?)
@@ -9,6 +9,14 @@
 
 source "$HOME/scripts/truncate_path.sh"
 export -f truncate_path
+
+# Capture the user's login shell BEFORE handler_request exports SHELL=bash for
+# fzf. Subshells spawned by fzf's execute() inherit SHELL, and if one of them
+# cold-starts the tmux server, tmux locks default-shell to bash for the life of
+# the server. Pass this value explicitly when creating sessions.
+USER_LOGIN_SHELL="${SHELL:-/bin/zsh}"
+[[ ! -x "$USER_LOGIN_SHELL" ]] && USER_LOGIN_SHELL="/bin/zsh"
+export USER_LOGIN_SHELL
 
 # ================================================================================
 #                           SHARED HELPERS
@@ -58,6 +66,67 @@ session_of() {
 }
 export -f session_of
 
+# Returns the attached client's session name, or empty when not inside tmux.
+# Outside tmux, `tmux display-message -p '#S'` falls back to the most recently
+# active client — that fallback would falsely match the selected session and
+# hide context-sensitive actions like kill-session.
+get_current_session() {
+  [[ -n "$TMUX" ]] || return 0
+  tmux display-message -p '#S' 2>/dev/null
+}
+export -f get_current_session
+
+# Same gate, for the attached client's pane id (session:window.pane).
+get_current_pane() {
+  [[ -n "$TMUX" ]] || return 0
+  tmux display-message -p '#S:#{window_index}.#{pane_index}' 2>/dev/null
+}
+export -f get_current_pane
+
+# Returns the right tmux command to attach the calling client to a session:
+# switch-client when already inside tmux, attach-session when outside.
+tmux_attach_cmd() {
+  [[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session"
+}
+
+# Create a tmux session if it doesn't already exist. Forces the user's login
+# shell rather than whatever bash fzf set via SHELL=. The explicit shell-command
+# argument (`exec $USER_LOGIN_SHELL`) makes the first window correct even when
+# the server's default-shell was already locked to bash by a prior cold start.
+ensure_session() {
+  local name="$1" dir="${2:-$HOME}"
+  tmux has-session -t "$name" 2>/dev/null && return 0
+  SHELL="$USER_LOGIN_SHELL" tmux new-session -d -s "$name" -c "$dir" \
+    "exec $USER_LOGIN_SHELL" 2>/dev/null
+}
+export -f ensure_session
+
+# Attach the calling client to a session. Safe to call from the parent script
+# after fzf has exited — NOT from inside fzf's execute() (popup still open).
+attach_session() {
+  tmux "$(tmux_attach_cmd)" -t "$1"
+}
+
+# From inside fzf's execute() (popup still open), record a session for the
+# parent script to attach to once fzf returns. switch-client from a popup is
+# unreliable — it gets queued, masked, or dropped entirely.
+queue_session_attach() {
+  printf '%s' "$1" > "$SWITCHER_FLAG_FILE" 2>/dev/null
+}
+export -f queue_session_attach
+
+# Called by handler_request after fzf returns. Attach to whatever session
+# create_blank_session or open_zoxide_picker queued. Returns non-zero when
+# nothing is queued so callers can chain `consume_pending_attach && return 0`.
+consume_pending_attach() {
+  [[ -s "$SWITCHER_FLAG_FILE" ]] || return 1
+  local pending; pending=$(< "$SWITCHER_FLAG_FILE")
+  rm -f "$SWITCHER_FLAG_FILE"
+  [[ -n "$pending" ]] || return 1
+  tmux has-session -t "$pending" 2>/dev/null || return 1
+  attach_session "$pending"
+}
+
 # ================================================================================
 #                           DATA FUNCTIONS
 # ================================================================================
@@ -72,14 +141,14 @@ export -f session_of
 #   - Current session panes rendered in bold (others dim)
 get_tmux_panes() {
   local current_pane current_session hostname_str
-  # When invoked outside tmux, display-message has no client to report on; suppress its error.
-  current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}' 2>/dev/null)
-  current_session=$(tmux display-message -p '#S' 2>/dev/null)
+  current_pane=$(get_current_pane)
+  current_session=$(get_current_session)
   hostname_str=$(hostname 2>/dev/null)
 
   # Collect raw pane data — tmux list-panes -a naturally orders by session → window → pane
   local raw_data
-  raw_data=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}§#S§#{pane_current_command}§#{?#{@custom_title},#{@custom_title},#{pane_title}}§#{pane_current_path}§#{pane_pid}§#{window_name}§#{automatic-rename}" | grep -v "^${current_pane}§")
+  raw_data=$(tmux list-panes -a -F "#S:#{window_index}.#{pane_index}§#S§#{pane_current_command}§#{?#{@custom_title},#{@custom_title},#{pane_title}}§#{pane_current_path}§#{pane_pid}§#{window_name}§#{automatic-rename}")
+  [[ -n "$current_pane" ]] && raw_data=$(printf '%s\n' "$raw_data" | grep -v "^${current_pane}§")
 
   [[ -z "$raw_data" ]] && return
 
@@ -239,9 +308,8 @@ export -f get_zoxide_dirs
 
 del_pane() {
   local pane_target="${1%%$'\t'*}"
-  local current_pane
-  current_pane=$(tmux display-message -p '#S:#{window_index}.#{pane_index}' 2>/dev/null)
-  [[ "$pane_target" == "$current_pane" ]] && return
+  local current_pane; current_pane=$(get_current_pane)
+  [[ -n "$current_pane" && "$pane_target" == "$current_pane" ]] && return
   printf '\n  Kill pane "%s"? [y/N]: ' "$pane_target"
   IFS= read -rn1 r; echo
   [[ "$r" == y ]] && tmux kill-pane -t "$pane_target"
@@ -306,11 +374,9 @@ del_zoxide_dir() {
 export -f del_zoxide_dir
 
 del_session_from_pane() {
-  local session
-  session=$(session_of "$1")
-  local current_session
-  current_session=$(tmux display-message -p '#S' 2>/dev/null)
-  if [[ "$session" == "$current_session" ]]; then
+  local session; session=$(session_of "$1")
+  local current_session; current_session=$(get_current_session)
+  if [[ -n "$current_session" && "$session" == "$current_session" ]]; then
     printf '\n  Cannot kill the current session.\n'
     sleep 1
     return
@@ -411,10 +477,8 @@ export -f move_window_to_session
 # Context-aware action menu for the selected pane.
 action_menu() {
   local selection="$1"
-  local session
-  session=$(session_of "$selection")
-  local current_session
-  current_session=$(tmux display-message -p '#S' 2>/dev/null)
+  local session; session=$(session_of "$selection")
+  local current_session; current_session=$(get_current_session)
 
   # Re-source theme for this subshell
   local theme_opts=()
@@ -422,9 +486,12 @@ action_menu() {
     set -o noglob; source "$SWITCHER_THEME_FILE"; set +o noglob
   fi
 
-  # Build action list — context-aware with icons
+  # Build action list — context-aware with icons. When run outside tmux,
+  # current_session is empty: skip rename-current (nothing to rename) and let
+  # the inequality below always match so kill/rename apply to any session.
   local actions=""
-  actions+="rename-current\t  󰑕  Rename current session '${current_session}'\n"
+  [[ -n "$current_session" ]] && \
+    actions+="rename-current\t  󰑕  Rename current session '${current_session}'\n"
   actions+="move-pane\t  󱂬  Move pane to another session\n"
   actions+="move-window\t  󱂬  Move window to another session\n"
   if [[ "$session" != "$current_session" ]]; then
@@ -518,16 +585,7 @@ open_zoxide_picker() {
 
   local session_name
   session_name=$(basename "$dir")
-  local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
-
-  if tmux has-session -t "$session_name" 2>/dev/null; then
-    tmux "$tmux_action" -t "$session_name"
-  else
-    tmux new-session -d -s "$session_name" -c "$dir" 2>/dev/null &&
-      tmux "$tmux_action" -t "$session_name"
-  fi
-  # Signal to FZF transform that a session was created (picker should close)
-  touch "$SWITCHER_FLAG_FILE" 2>/dev/null
+  ensure_session "$session_name" "$dir" && queue_session_attach "$session_name"
 }
 export -f open_zoxide_picker
 
@@ -542,16 +600,7 @@ create_blank_session() {
   stty "$old_stty" 2>/dev/null
   [[ -z "$name" ]] && return
 
-  local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
-
-  if tmux has-session -t "$name" 2>/dev/null; then
-    tmux "$tmux_action" -t "$name"
-  else
-    tmux new-session -d -s "$name" -c "$HOME" 2>/dev/null &&
-      tmux "$tmux_action" -t "$name"
-  fi
-  # Signal to FZF transform that a session was created (picker should close)
-  touch "$SWITCHER_FLAG_FILE" 2>/dev/null
+  ensure_session "$name" "$HOME" && queue_session_attach "$name"
 }
 export -f create_blank_session
 
@@ -662,8 +711,8 @@ pane_fzf_opts=(
   --bind 'del:execute(del_pane {})+reload(get_tmux_panes)'
   --bind 'ctrl-e:execute(rename_pane {})+reload(get_tmux_panes)'
   --bind '?:execute(action_menu {})+reload(get_tmux_panes)'
-  --bind 'alt-n:execute(open_zoxide_picker)+transform:[[ -f "$SWITCHER_FLAG_FILE" ]] && { rm -f "$SWITCHER_FLAG_FILE"; echo abort; } || echo "reload(get_tmux_panes)"'
-  --bind 'alt-N:execute(create_blank_session)+transform:[[ -f "$SWITCHER_FLAG_FILE" ]] && { rm -f "$SWITCHER_FLAG_FILE"; echo abort; } || echo "reload(get_tmux_panes)"'
+  --bind 'alt-n:execute(open_zoxide_picker)+transform:[[ -s "$SWITCHER_FLAG_FILE" ]] && echo abort || echo "reload(get_tmux_panes)"'
+  --bind 'alt-N:execute(create_blank_session)+transform:[[ -s "$SWITCHER_FLAG_FILE" ]] && echo abort || echo "reload(get_tmux_panes)"'
   --bind 'ctrl-/,ctrl-_,alt-p:toggle-preview'
   --preview 'pane_preview {}'
   $layout
@@ -710,38 +759,24 @@ handler_request() {
 
   # Direct session name argument: attach or create
   if [[ -n "$session" ]]; then
-    local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
-
-    # 1. Existing session
     if tmux has-session -t "$session" 2>/dev/null; then
-      tmux "$tmux_action" -t "$session"
+      attach_session "$session"
       return 0
     fi
 
-    # 2. Try zoxide lookup
     if command -v zoxide >/dev/null 2>&1; then
       local dir
       dir=$(zoxide query "$session" 2>/dev/null)
       if [[ -n "$dir" && -d "$dir" ]]; then
-        local dir_session
-        dir_session=$(basename "$dir")
-        if tmux has-session -t "$dir_session" 2>/dev/null; then
-          tmux "$tmux_action" -t "$dir_session"
-        else
-          tmux new-session -d -s "$dir_session" -c "$dir" 2>/dev/null &&
-            tmux "$tmux_action" -t "$dir_session"
-        fi
+        local dir_session; dir_session=$(basename "$dir")
+        ensure_session "$dir_session" "$dir" && attach_session "$dir_session"
         return 0
       fi
     fi
 
-    # 3. Ask to create blank session
     echo -n "No session or directory found for '$session'. Create blank session? [y/N]: "
     IFS= read -rn1 r; echo
-    if [[ "$r" == [yY] ]]; then
-      tmux new-session -d -s "$session" -c "$HOME" 2>/dev/null &&
-        tmux "$tmux_action" -t "$session"
-    fi
+    [[ "$r" == [yY] ]] && ensure_session "$session" "$HOME" && attach_session "$session"
     return 0
   fi
 
@@ -769,22 +804,17 @@ handler_request() {
 
     # Primary: pane picker — stream directly into fzf so the frame paints immediately.
     selection=$(get_tmux_panes | SHELL="$shell" fzf "${pane_fzf_opts[@]}" --border-label "$border_label")
+
+    # alt-n / alt-N queued an attach from inside the popup — service it now.
+    consume_pending_attach && return 0
     [[ -z "$selection" ]] && return 0
 
     local target="${selection%%$'\t'*}"
-    local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
-
     if [[ "$selection" == *$'\t'* ]]; then
-      # Selected a pane from the list
-      tmux "$tmux_action" -t "$target"
+      attach_session "$target"
     else
-      # Typed a query — try as session name, then create
-      if tmux has-session -t "$target" 2>/dev/null; then
-        tmux "$tmux_action" -t "$target"
-      else
-        tmux new-session -d -s "$target" -c "$HOME" 2>/dev/null &&
-          tmux "$tmux_action" -t "$target"
-      fi
+      # Typed query — try as session name, else create blank under $HOME.
+      ensure_session "$target" "$HOME" && attach_session "$target"
     fi
   else
     # Fallback: zoxide picker (no panes available)
@@ -795,26 +825,19 @@ handler_request() {
     fi
 
     selection=$(get_zoxide_dirs | SHELL="$shell" fzf "${zoxide_fzf_opts[@]}")
+
+    consume_pending_attach && return 0
     [[ -z "$selection" ]] && return 0
 
     local dir="${selection%%$'\t'*}"
-    local tmux_action=$([[ -n "$TMUX" ]] && echo "switch-client" || echo "attach-session")
-
-    # If typed query (no tab), try zoxide lookup
     if [[ "$selection" != *$'\t'* ]]; then
       dir=$(zoxide query "$selection" 2>/dev/null)
       [[ -z "$dir" || ! -d "$dir" ]] && return 0
     fi
 
     if [[ -d "$dir" ]]; then
-      local session_name
-      session_name=$(basename "$dir")
-      if tmux has-session -t "$session_name" 2>/dev/null; then
-        tmux "$tmux_action" -t "$session_name"
-      else
-        tmux new-session -d -s "$session_name" -c "$dir" 2>/dev/null &&
-          tmux "$tmux_action" -t "$session_name"
-      fi
+      local session_name; session_name=$(basename "$dir")
+      ensure_session "$session_name" "$dir" && attach_session "$session_name"
     fi
   fi
 
@@ -845,7 +868,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-export SWITCHER_FLAG_FILE="/tmp/.tmux_switcher_$$"
+export SWITCHER_FLAG_FILE="/tmp/.tmux-switcher_$$"
 trap 'rm -f "$SWITCHER_FLAG_FILE"' EXIT
 
 handler_request "$session_arg"

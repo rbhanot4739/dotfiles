@@ -106,6 +106,12 @@
                     },
                     "ignore": false,
                     "ignore_vendor_events": true,
+                    "simple_modifications": [
+                        {
+                            "from": { "key_code": "right_control" },
+                            "to": [{ "key_code": "right_option" }]
+                        }
+                    ],
                     "treat_as_built_in_keyboard": true
                 }
             ],

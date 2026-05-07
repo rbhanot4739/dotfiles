@@ -10,6 +10,4 @@ return {
   { "hrsh7th/nvim-cmp", enabled = false },
   { "nvim-telescope/telescope.nvim", enabled = false },
   { "kevinhwang91/nvim-ufo", enabled = false },
-
-  -- my plugins
 }

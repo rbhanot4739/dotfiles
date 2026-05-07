@@ -64,16 +64,20 @@ local function get_colorscheme()
   return theme
 end
 
-function Load_colorscheme()
-  -- Don't try to load colorscheme during shutdown
-  if vim.v.exiting ~= vim.NIL then
-    return
-  end
+-- v:exiting is sticky once set and some plugins trigger it during normal
+-- operation, so use a VimLeavePre flag instead.
+local _is_exiting = false
+vim.api.nvim_create_autocmd("VimLeavePre", {
+  callback = function() _is_exiting = true end,
+})
 
+function Load_colorscheme()
+  if _is_exiting then return end
   local theme = get_colorscheme()
   local ok, err = pcall(vim.cmd, "colorscheme " .. theme)
   if not ok then
-    vim.notify("Failed to load colorscheme: " .. theme, vim.log.levels.WARN)
+    vim.notify("Failed to load colorscheme: " .. theme .. " (" .. tostring(err) .. ")",
+               vim.log.levels.WARN)
   end
 end
 

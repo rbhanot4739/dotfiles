@@ -90,7 +90,7 @@ end)
 -- Core configuration
 config.initial_cols = 180
 config.initial_rows = 60
-config.enable_kitty_keyboard = true
+config.enable_kitty_keyboard = false
 config.color_scheme = get_current_scheme()
 config.font = wezterm.font("JetBrainsMonoNL Nerd Font")
 config.font_size = 14

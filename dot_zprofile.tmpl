@@ -21,6 +21,22 @@ export XDG_DATA_HOME="$HOME/.local/share"
 [[ -d "$HOME/bin"    ]] && export PATH="$HOME/bin:$PATH"
 
 # =====================================
+# Homebrew — must come before Editor/Pager so command -v resolves brew bins
+# =====================================
+
+{{- if eq .chezmoi.os "darwin" }}
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+{{- end }}
+
+{{- if eq .chezmoi.os "linux" }}
+if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+{{- end }}
+
+# =====================================
 # Editor and Pager
 # =====================================
 if command -v nvim >/dev/null; then
@@ -49,25 +65,6 @@ else
   export PAGER="less -R"
   export MANPAGER="less -R"
 fi
-
-
-# =====================================
-# Homebrew
-# =====================================
-
-{{- if eq .chezmoi.os "darwin" }}
-if [[ -x /opt/homebrew/bin/brew ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-[[ -d "$HOME/nvim-macos-arm64/bin" ]] && export PATH="$HOME/nvim-macos-arm64/bin:$PATH"
-{{- end }}
-
-{{- if eq .chezmoi.os "linux" }}
-if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-[[ -d "$HOME/nvim-linux-x86_64/bin" ]] && export PATH="$HOME/nvim-linux-x86_64/bin:$PATH"
-{{- end }}
 
 # =====================================
 # PATH Modifications

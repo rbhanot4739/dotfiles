@@ -3,6 +3,10 @@
 # vim:set foldmarker=<<<,>>>:
 # vim:set foldlevelstart=1:
 
+# Force zsh as login shell in panes (overrides /etc/passwd lookup on remote hosts)
+set-option -g default-shell /bin/zsh
+set-option -g default-command "/bin/zsh -l"
+
 set -g set-clipboard on
 setw -g mouse on
 set-option -g display-time 500
@@ -61,18 +65,16 @@ bind-key -T copy-mode-vi 'C-l' select-pane -R
 bind-key -T copy-mode-vi 'C-\' select-pane -l
 
 # <<< Key bindings
-{{- if not (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
 unbind C-b
 set-option -g prefix M-a
 bind M-a send-prefix
-{{- end }}
 
 bind-key r source-file ~/.tmux.conf \; display-message "Conf reloaded..."
 
 bind-key N new-session
 bind-key c new-window -c "#{pane_current_path}"
 bind-key M-o run-shell 'tmux_sessions'
-bind-key -n M-space run-shell 'tmux_switcher'
+bind-key -n M-space run-shell 'tmux-switcher'
 
 bind M command-prompt -p "Show man page for:" "popup -w95% -h95% -xC -yC -E 'man %%'"
 bind G new-window -c "#{pane_current_path}" "lazygit"
@@ -93,6 +95,8 @@ bind-key M-, display-menu -T "#[align=centre]Quick Actions" -xR -yS \
 bind-key -n S-right next
 bind-key -n S-left prev
 bind-key l last-window
+bind-key -n M-o last-window           # quick toggle to previous window
+bind-key -n "M-`" switch-client -l    # quick toggle to previous session
 
 bind-key -n M-Enter resize-pane -Z    # maximize current pane
 bind-key i command-prompt -p "New pane title: " "select-pane -T '%%'"    # rename pane-title

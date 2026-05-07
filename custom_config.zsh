@@ -36,6 +36,22 @@ alias ks='ls' # typo-prone fallback
 # Update installed packages (manual, explicit)
 alias brew-up='brew update && brew upgrade && brew cleanup'
 
+# Force-apply a theme locally (useful on remote SSH boxes when auto-sync missed)
+# Usage: sync-theme          → re-apply current ~/.bg_mode
+#        sync-theme light    → switch to light and apply
+#        sync-theme dark     → switch to dark and apply
+sync-theme() {
+  local mode="${1:-}"
+  if [[ -n "$mode" ]]; then
+    echo "$mode" >~/.bg_mode
+  fi
+  if [[ -x ~/.config/themes/bin/theme-switch ]]; then
+    ~/.config/themes/bin/theme-switch
+  else
+    echo "sync-theme: theme-switch not found at ~/.config/themes/bin/theme-switch" >&2
+  fi
+}
+
 # Sync core CLI tools into chezmoi
 brew-sync() {
   brew bundle dump \
@@ -127,10 +143,21 @@ alias man='fman'
 alias vims="nvim_conf_switcher"
 alias tm='tmux_sessions'
 alias cc='claude'
-alias ca='cursor-agent'
+alias ca='agent'
 alias oc='opencode'
 alias py="python3"
 alias tssh='tmux-create-panes -s -c ssh'
+
+# Ensure Cursor CLI keeps rich terminal rendering.
+_cursor_cli() {
+  TERM="${TERM:-xterm-256color}" NO_COLOR= FORCE_COLOR=1 command "$@"
+}
+
+agent() {
+  _cursor_cli agent "$@"
+}
+
+
 
 # ===================================
 # Functions
@@ -284,8 +311,8 @@ zle -N cd_up_widget
 bind_widget cd_up_widget '^[[1;3A'
 
 # Tmux session/pane switcher — mirrors tmux's M-space (no-prefix) binding
-zle -N tmux_switcher_widget
-bind_widget tmux_switcher_widget '^[ '
+zle -N tmux-switcher-widget
+bind_widget tmux-switcher-widget '^[ '
 
 # Expand alias or insert space
 # expand_alias_or_space() {

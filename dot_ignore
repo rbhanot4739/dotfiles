@@ -1,7 +1,40 @@
-!.*ignore
-!.config/nvim
-!config/app
+# Consolidated global ignore rules for ripgrep/fd.
+# NOTE: Keep patterns comment-only (no inline comments after patterns).
+
+# Hidden directories and explicit allow-list
 .*/
+!.*ignore
+!.config/
+.config/*
+!.config/nvim/
+!config/app
+
+# Dotfiles — explicit allowlist
+!.tmux.conf
+!.tmux_session_mode
+!.zshrc
+!.zprofile
+!.zshrc.bak
+!.zprofile.bak
+!.gitconfig
+!.work-gitconfig
+!.global_gitignore
+!.delta-gitconfig
+!.wezterm.lua
+!.wezterm_new.lua
+!.wezterm_themes.lua
+!.fzf.zsh
+!.ideavimrc
+!.p10k.zsh
+!.envrc
+!.shrc_managed
+!.in_engineering
+
+# Dotdirs — explicit allowlist
+!.tmux/
+!base_pyrightconfig.json
+
+# macOS user folders
 Library/
 Desktop/
 Applications/
@@ -9,45 +42,87 @@ Documents/
 Downloads/
 Music/
 Movies/
-Picture/
+Pictures/
 Public/
+
+# Git and VCS internals
+.git/
+.git-blame-ignore-revs
+hooks/
+info/
+logs/
+objects/
+refs/
+rr-cache/
+COMMIT_EDITMSG
+description
+HEAD
+index
+MERGE_RR
+
+# Development and tooling
+.vim/
+.mypy_cache/
+.idea/
+.vscode/
+.ideaDataSources/
+dataSources/
+node_modules/
+*.neoconf.json
+*lcov*
+pyrightconfig.json
+cspell.json
+mise.toml
+en.utf-8*
+
+# App/system specific
 Postman/
 powerlevel10k/
 local-repo/
-.git/
-*.db
+/export/apps/
 .zsh/
-.config/
 .ssh/
 *.itermcolors
-*.html
-node_modules/
+
+# Python
 __pycache__/
-*.pyo
-*.pyd
-*.pdb
-*.pyc
+*.py[cod]
 *.pyi
+*.pdb
+*.coverage*
 
-# macOS
-.DS_Store
-*.swp
-
-# Temporary files
-*.tmp
-*.bak
-*.old
-
-# Build directories
+# Build and temp
 build/
 dist/
 target/
+.DS_Store
+*.tmp
+*.bak
+*.old
+*.swp
 
-# IDE specific
-.idea/
-.vscode/
+# Database
+*.db
+*.kdbx
 
-# Non-text files
+# Large files at ~/
+words.txt
+history.db
+nvim-macos-arm64.tar.gz
+
+# Large home-dir trees (100k+ files, not source code)
+go/
+nvim-macos-arm64/
+
+# Documents
+*.html
+*.pdf
+*.doc*
+*.ppt*
+*.xls*
+*.rtf
+
+# Images
 *.jpg
 *.jpeg
 *.png
@@ -56,6 +131,12 @@ target/
 *.tiff
 *.ico
 *.svg
+*.psd
+*.ai
+*.eps
+*.indd
+
+# Audio/video
 *.mp3
 *.wav
 *.flac
@@ -65,11 +146,15 @@ target/
 *.mkv
 *.mov
 *.wmv
+
+# Archives
 *.zip
 *.tar
 *.gz
 *.rar
 *.7z
+
+# Binaries
 *.exe
 *.dll
 *.so
@@ -85,32 +170,9 @@ target/
 *.a
 *.lib
 *.out
-*.pdf
-*.doc
-*.docx
-*.ppt
-*.pptx
-*.xls
-*.xlsx
-*.rtf
-*.psd
-*.ai
-*.eps
-*.indd
+
+# Fonts
 *.ttf
 *.otf
 *.woff
 *.woff2
-
-# Git bare repository files and directories
-hooks/
-info/
-logs/
-objects/
-refs/
-rr-cache/
-COMMIT_EDITMSG
-description
-HEAD
-index
-MERGE_RR
