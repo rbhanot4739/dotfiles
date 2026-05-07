@@ -139,6 +139,7 @@ fzf_select_hosts() {
     --style full \
     --border --padding 1,1 --border-label=' Select Hosts ' \
     --prompt 'Hosts > ' \
+    --ghost 'Filter hosts (Tab to multi-select)…' \
     --header 'Tab: select/deselect  Enter: confirm  Esc: cancel' \
     --header-first \
     --info=hidden \

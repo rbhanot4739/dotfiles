@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Usage: update-ssh-hosts.sh <range1> [range2 ...]
+# Usage: refresh-ssh-hosts <range1[:prefix]> [range2[:prefix]] ...
 #
-# Ranges without a prefix write plain hostnames to ~/.ssh/range_hosts_cache
+# Ranges without a prefix write plain hostnames to ~/.ssh/.range_hosts_cache
 # Ranges with a prefix (range:prefix) write SSH config stanzas to ~/.ssh/config.ranges
 #
 # Example:
-#   update-ssh-hosts.sh %corp-lca1.dcl.1:dcl %all-shell-hosts
+#   refresh-ssh-hosts %corp-lca1.dcl.1:dcl %all-shell-hosts
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
@@ -13,7 +13,7 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-PLAIN_CACHE=~/.ssh/range_hosts_cache
+PLAIN_CACHE=~/.ssh/.range_hosts_cache
 STANZA_CACHE=~/.ssh/config.ranges
 PLAIN_TMP="${PLAIN_CACHE}.tmp.$$"
 STANZA_TMP="${STANZA_CACHE}.tmp.$$"

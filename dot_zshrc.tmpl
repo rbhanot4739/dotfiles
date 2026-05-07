@@ -278,9 +278,9 @@ FZF_UNIFIED_TAB_COMMON_FLAGS=(
   --header-first
   --bind "start:execute-silent(rm -f $FZF_HIDDEN_MARKER)"
 )
-FZF_UNIFIED_TAB_DIR_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_DIR_PREVIEW_WINDOW" --border-label 'Fuzzy Find Dirs')
-FZF_UNIFIED_TAB_FILE_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Find Files')
-FZF_UNIFIED_TAB_MIXED_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Files/Dirs')
+FZF_UNIFIED_TAB_DIR_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_DIR_PREVIEW_WINDOW" --border-label 'Fuzzy Find Dirs' --ghost "$FZF_GHOST_DIRS")
+FZF_UNIFIED_TAB_FILE_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Find Files' --ghost "$FZF_GHOST_FILES")
+FZF_UNIFIED_TAB_MIXED_FLAGS=("${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --preview-window "$FZF_UNIFIED_PREVIEW_WINDOW" --border-label 'Fuzzy Files/Dirs' --ghost "$FZF_GHOST_MIXED")
 zstyle ':fzf-tab:*' fzf-flags "${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}"
 zstyle ':fzf-tab:complete:(cd|z):*' fzf-preview "$FZF_UNIFIED_FZF_TAB_DIR_PREVIEW"
 zstyle ':fzf-tab:complete:(cd|z):*' fzf-flags "${FZF_UNIFIED_TAB_DIR_FLAGS[@]}"
@@ -291,8 +291,18 @@ zstyle ':fzf-tab:complete:(eza|ls):*' fzf-bindings "alt-i:reload($FZF_UNIFIED_HI
 zstyle ':fzf-tab:complete:(cat|bat):*' fzf-preview "$FZF_UNIFIED_FZF_TAB_FILE_PREVIEW"
 zstyle ':fzf-tab:complete:(cat|bat):*' fzf-flags "${FZF_UNIFIED_TAB_FILE_FLAGS[@]}"
 zstyle ':fzf-tab:complete:(cat|bat):*' fzf-bindings "alt-i:reload($FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD)"
+# Editor: vim/nvim/v should hint "Open file in vim…" instead of generic "Find files…".
+# Append --ghost after FILE_FLAGS so the later value wins in fzf option parsing.
+zstyle ':fzf-tab:complete:(vim|nvim|v):*' fzf-preview "$FZF_UNIFIED_FZF_TAB_FILE_PREVIEW"
+zstyle ':fzf-tab:complete:(vim|nvim|v):*' fzf-flags "${FZF_UNIFIED_TAB_FILE_FLAGS[@]}" --ghost "$FZF_GHOST_VIM"
+zstyle ':fzf-tab:complete:(vim|nvim|v):*' fzf-bindings "alt-i:reload($FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD)"
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-flags "${FZF_UNIFIED_TAB_DIR_FLAGS[@]}"
 zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' fzf-preview 'echo ${(P)word}'
+zstyle ':fzf-tab:complete:(-command-|-parameter-|-brace-parameter-|export|unset|expand):*' fzf-flags "${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --ghost "$FZF_GHOST_ENV"
+zstyle ':fzf-tab:complete:man:*' fzf-preview 'tldr --color=always $word 2>/dev/null'
+zstyle ':fzf-tab:complete:man:*' fzf-flags "${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --ghost "$FZF_GHOST_MAN"
+zstyle ':fzf-tab:complete:ssh:*' fzf-flags "${FZF_UNIFIED_TAB_COMMON_FLAGS[@]}" --ghost "$FZF_GHOST_HOSTS"
 
 # =====================================
 # Prompt: P10k Theme

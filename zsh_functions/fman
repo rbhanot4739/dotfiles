@@ -14,7 +14,7 @@ fman() {
   else
     # __fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null' | xargs man
 
-    selection=$(__fzf_list_man_pages | fzf --preview 'tldr --color=always {} 2>/dev/null')
+    selection=$(__fzf_list_man_pages | fzf --ghost "$FZF_GHOST_MAN" --preview 'tldr --color=always {} 2>/dev/null')
   fi
   [[ -z "$selection" ]] && return 0
 

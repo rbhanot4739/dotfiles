@@ -417,6 +417,7 @@ move_pane_to_session() {
     --border-label "  󱂬 Move Pane ❯ Session  " \
     --style full --info hidden \
     --prompt "❯ " --pointer "󰁕" --padding 1 \
+    --ghost "$FZF_TS_GHOST_TARGET_SESSION" \
     --no-separator --reverse --no-scrollbar \
     --height 40% \
   )
@@ -459,6 +460,7 @@ move_window_to_session() {
     --border-label "  󱂬 Move Window ❯ Session  " \
     --style full --info hidden \
     --prompt "❯ " --pointer "󰁕" --padding 1 \
+    --ghost "$FZF_TS_GHOST_TARGET_SESSION" \
     --no-separator --reverse --no-scrollbar \
     --height 40% \
   )
@@ -509,6 +511,7 @@ action_menu() {
     --border-label "  ? Actions  " \
     --style full --info hidden \
     --prompt "❯ " --pointer "󰁕" --padding 1 \
+    --ghost "$FZF_TS_GHOST_ACTIONS" \
     --no-separator --reverse --no-scrollbar \
     --height 40% \
   )
@@ -560,6 +563,7 @@ open_zoxide_picker() {
     --pointer "󰁕" \
     --padding 1,2 \
     --header-first \
+    --ghost "$FZF_TS_GHOST_ZOXIDE" \
     --footer $'  󰌑  Enter  Create Session    󰅖  Del  Remove from Zoxide    󰐩  Alt-p  Preview' \
     --preview-window "right,55%,border-rounded,wrap,hidden" \
     --no-separator \
@@ -660,6 +664,14 @@ export -f zoxide_preview
 #                           FZF CONFIGURATION
 # ================================================================================
 
+# Ghost text strings (single source of truth for this script).
+# Exported so subshells launched by fzf execute() (action_menu, open_zoxide_picker,
+# move_pane_to_session, move_window_to_session) can reference them.
+export FZF_TS_GHOST_PANES='Filter panes or type new session name…'
+export FZF_TS_GHOST_ZOXIDE='Search recent directories…'
+export FZF_TS_GHOST_TARGET_SESSION='Pick destination session…'
+export FZF_TS_GHOST_ACTIONS='Pick action…'
+
 # Theme
 theme_opts=()
 . "$HOME/.config/themes/lib/resolve-theme.sh"
@@ -693,6 +705,7 @@ pane_fzf_opts=(
   --delimiter '\t'
   --with-nth '2..'
   --header-lines=1
+  --header-lines-border=inline
   --border rounded
   --border-label "  󰓫 Tmux Switcher  "
   --style full
@@ -702,7 +715,9 @@ pane_fzf_opts=(
   --marker "󰄲"
   --padding 1,2
   --header-first
+  --ghost "$FZF_TS_GHOST_PANES"
   --footer "$pane_footer"
+  --footer-border=inline
   --preview-window "right,35%,border-rounded"
   --preview-label "  󰹉 Pane Preview  "
   --bind 'focus:transform-preview-label:pane_preview_label {}'
@@ -729,6 +744,7 @@ zoxide_fzf_opts=(
   --delimiter '\t'
   --with-nth '2..'
   --header-lines=1
+  --header-lines-border=inline
   --border rounded
   --border-label "  󰉋 New Session  "
   --style full
@@ -738,7 +754,9 @@ zoxide_fzf_opts=(
   --marker "󰄲"
   --padding 1,2
   --header-first
+  --ghost "$FZF_TS_GHOST_ZOXIDE"
   --footer "$zoxide_footer"
+  --footer-border=inline
   --preview-window "right,50%,border-rounded,wrap,hidden"
   --no-separator
   --bind 'enter:accept-or-print-query,tab:down,shift-tab:up'
