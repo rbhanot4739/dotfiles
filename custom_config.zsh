@@ -234,7 +234,7 @@ agent() {
 
 # ==== File Listing (eza or ls) ====
 
-unalias ls 2>/dev/null
+unalias ls ll la l lsa lt lla lS lSa llA lsd lsf llf lld lsh llh fd fda bat cat less glow gg 2>/dev/null
 
 if command -v eza &>/dev/null; then
   ls() {
@@ -317,7 +317,6 @@ if command -v bat &>/dev/null; then
     command bat --style=snip --color=always "$@"
   }
 
-  unalias cat 2>/dev/null
   cat() {
     # Check if output is to terminal
     if [[ -t 1 ]]; then
@@ -345,18 +344,15 @@ if command -v bat &>/dev/null; then
     fi
   }
 
-  unalias less 2>/dev/null
   less() {
     command bat --style=snip --color=always -p "$@"
   }
 fi
 
-unalias glow 2>/dev/null
 glow() {
   PAGER="less -R" command glow --style "$(cat ~/.bg_mode 2>/dev/null || echo dark)" "$@"
 }
 
-unalias gg 2>/dev/null
 gg() {
   lazygit
 }
