@@ -33,7 +33,7 @@ files_to_add=(
     ~/custom_config.zsh
     ~/delta-themes.gitconfig
     ~/fzf-themes
-    ~/fzf_config.zsh
+    ~/.config/fzf/
     ~/minimal.lua
     ~/project-mise.toml
     ~/scripts/

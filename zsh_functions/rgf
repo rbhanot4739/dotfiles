@@ -1,22 +1,134 @@
 #!/bin/zsh
 
 rgf() {
-  #!/usr/bin/env bash
+  emulate -L zsh
+  setopt pipefail no_aliases
 
-  # Switch between Ripgrep launcher mode (CTRL-R) and fzf filtering mode (CTRL-F)
-  rm -f /tmp/rg-fzf-{r,f}
-  INITIAL_QUERY="${*:-}"
-  RG_PREFIX="rg --column --line-number --no-heading --color=always --smart-case "
-  fzf --ansi --disabled --query "$INITIAL_QUERY" \
-    --bind "start:reload($RG_PREFIX {q})+unbind(ctrl-r)" \
-    --bind "change:reload:sleep 0.1; $RG_PREFIX {q} || true" \
-    --bind "ctrl-f:unbind(change,ctrl-f)+change-prompt(2. fzf> )+enable-search+rebind(ctrl-r)+transform-query(echo {q} > /tmp/rg-fzf-r; cat /tmp/rg-fzf-f)" \
-    --bind "ctrl-r:unbind(ctrl-r)+change-prompt(1. ripgrep> )+disable-search+reload($RG_PREFIX {q} || true)+rebind(change,ctrl-f)+transform-query(echo {q} > /tmp/rg-fzf-f; cat /tmp/rg-fzf-r)" \
-    --color "hl:-1:underline,hl+:-1:underline:reverse" \
-    --prompt '1. ripgrep> ' \
-    --delimiter : \
-    --header '╱ CTRL-R (ripgrep mode) ╱ CTRL-F (fzf mode) ╱' \
-    --preview 'bat --style=snip --color=always {1} --highlight-line {2}' \
-    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
-    --bind 'enter:become($EDITOR {1} +{2})'
+  command -v rg >/dev/null 2>&1 || { echo "rgf: rg not found in PATH" >&2; return 127; }
+  command -v fzf >/dev/null 2>&1 || { echo "rgf: fzf not found in PATH" >&2; return 127; }
+
+  # Usage:
+  #   rgf <query>
+  #   rgf <query> -- <rg flags>      # query-first style
+  #   rgf <rg flags> -- <query>       # flag-first style
+  local -a rg_user_opts query_parts lhs rhs
+  local -i has_sep=0 in_rhs=0
+  rg_user_opts=()
+  query_parts=()
+  lhs=()
+  rhs=()
+  for arg in "$@"; do
+    if (( !in_rhs )) && [[ "$arg" == "--" ]]; then
+      has_sep=1
+      in_rhs=1
+      continue
+    fi
+    if (( in_rhs )); then
+      rhs+=("$arg")
+    else
+      lhs+=("$arg")
+    fi
+  done
+  if (( has_sep )); then
+    if (( ${#lhs[@]} )) && [[ "${lhs[1]}" == -* ]]; then
+      rg_user_opts=("${lhs[@]}")
+      query_parts=("${rhs[@]}")
+    else
+      query_parts=("${lhs[@]}")
+      rg_user_opts=("${rhs[@]}")
+    fi
+  else
+    if (( $# )) && [[ "$1" == -* ]]; then
+      rg_user_opts=("$@")
+    else
+      query_parts=("$@")
+    fi
+  fi
+  local initial_query="${(j: :)query_parts}"
+
+  local editor="${EDITOR:-nvim}"
+  local state_dir mode_file hits_file case_file rg_query_file fzf_query_file
+  local rg_base rg_opts_str
+  local preview_cmd
+  local mode_header
+  local preview_window
+  local start_cmd reload_cmd toggle_mode_cmd toggle_case_cmd prompt_cmd query_cmd
+  local refresh_state_cmd
+  local initial_rg_query flags_display flags_suffix
+  local start_bind
+  local -i suffix_rewind rewind_idx
+
+  state_dir=$(mktemp -d "${TMPDIR:-/tmp}/rgf.XXXXXX") || return 1
+  mode_file="$state_dir/mode"
+  hits_file="$state_dir/hits"
+  case_file="$state_dir/case"
+  rg_query_file="$state_dir/rg.query"
+  fzf_query_file="$state_dir/fzf.query"
+
+  rg_opts_str=""
+  (( ${#rg_user_opts[@]} )) && rg_opts_str="${(j: :)${(@q)rg_user_opts}}"
+  rg_base="rg --column --line-number --no-heading --color=always --hidden --glob=!.git --no-messages${rg_opts_str:+ ${rg_opts_str}}"
+  initial_rg_query="$initial_query"
+  flags_suffix=""
+  suffix_rewind=0
+  if (( ${#rg_user_opts[@]} )); then
+    # Quote invocation flags for display so globs/whitespace are preserved
+    # in the prefilled prompt text (e.g. --glob '*.go').
+    flags_display="${(j: :)${(@qq)rg_user_opts}}"
+    flags_suffix=" -- ${flags_display}"
+    if [[ -n "$initial_rg_query" ]]; then
+      initial_rg_query="${initial_rg_query}${flags_suffix}"
+      suffix_rewind=${#flags_suffix}
+    else
+      initial_rg_query="-- ${flags_display}"
+      suffix_rewind=${#initial_rg_query}
+    fi
+  fi
+  preview_cmd='if command -v bat >/dev/null 2>&1; then bat --style=snip --color=always --highlight-line {2} -- {1}; else sed -n "{2}p" -- {1}; fi'
+  preview_window='down,52%,border-top,+{2}+3/3,~3,wrap'
+  mode_header='Ctrl-G mode rg<->fzf | Ctrl-S case smart/ignore | rg > <query> -- <flags>'
+  start_cmd="echo rg > ${mode_file}; echo smart > ${case_file}; : > ${hits_file}"
+  reload_cmd="mode=\$(cat ${mode_file} 2>/dev/null); case_mode=\$(cat ${case_file} 2>/dev/null); case_flag=--smart-case; [ \"\$case_mode\" = ignore ] && case_flag=-i; if [ \"\$mode\" = rg ]; then q={q}; search=\"\$q\"; inline=\"\"; case \"\$q\" in *\" -- \"*) search=\${q%% -- *}; inline=\${q#* -- };; \"-- \"*) search=\"\"; inline=\${q#-- };; esac; sleep 0.08; set -f; if [ -n \"\$inline\" ]; then eval \"${rg_base} \$case_flag \$inline -- \\\"\$search\\\"\" | tee ${hits_file}; else eval \"${rg_base} \$case_flag -- \\\"\$search\\\"\" | tee ${hits_file}; fi; set +f; else cat ${hits_file}; fi"
+  toggle_mode_cmd="mode=\$(cat ${mode_file} 2>/dev/null); if [ \"\$mode\" = rg ]; then printf %s {q} > ${rg_query_file}; echo fzf > ${mode_file}; else printf %s {q} > ${fzf_query_file}; echo rg > ${mode_file}; fi"
+  toggle_case_cmd="case_mode=\$(cat ${case_file} 2>/dev/null); if [ \"\$case_mode\" = smart ]; then echo ignore > ${case_file}; else echo smart > ${case_file}; fi"
+  prompt_cmd="if [ \"\$(cat ${mode_file} 2>/dev/null)\" = rg ]; then echo 'rg > '; else echo 'fzf > '; fi"
+  query_cmd="if [ \"\$(cat ${mode_file} 2>/dev/null)\" = rg ]; then cat ${rg_query_file} 2>/dev/null; else cat ${fzf_query_file} 2>/dev/null; fi"
+
+  print -rn -- "$initial_rg_query" > "$rg_query_file"
+  : > "$fzf_query_file"
+
+  refresh_state_cmd="transform-prompt(${prompt_cmd})+transform-query(${query_cmd})+reload(${reload_cmd} || true)"
+  start_bind="start:execute-silent(${start_cmd})+${refresh_state_cmd}"
+  if (( suffix_rewind > 0 )); then
+    for (( rewind_idx = 0; rewind_idx < suffix_rewind; rewind_idx++ )); do
+      start_bind="${start_bind}+backward-char"
+    done
+  fi
+
+  trap 'command rm -rf "$state_dir"' EXIT INT TERM
+
+  command fzf --ansi --query "$initial_rg_query" --disabled \
+    --delimiter ':' \
+    --with-nth '1,2,4..' \
+    --nth '1,4..' \
+    --prompt 'rg > ' \
+    --height '78%' \
+    --border-label 'RGF Search' \
+    --ghost '<query> -- <rg flags> (example: cache -- -w --glob *.go)' \
+    --header "$mode_header" \
+    --header-first \
+    --preview "$preview_cmd" \
+    --preview-window "$preview_window" \
+    --bind "$start_bind" \
+    --bind "change:reload(${reload_cmd} || true)" \
+    --bind "ctrl-g:toggle-search+execute-silent(${toggle_mode_cmd})+${refresh_state_cmd}" \
+    --bind "ctrl-s:execute-silent(${toggle_case_cmd})+reload(${reload_cmd} || true)" \
+    --bind "ctrl-o:execute(${editor} +{2} -- {1})" \
+    --color 'hl:-1:underline,hl+:-1:underline:reverse,border:#7d9fc0,header:#c1c9d4,info:#c1c9d4,label:#7d9fc0' \
+    --bind "enter:become(${editor} +{2} -- {1})"
+
+  local rc=$?
+  trap - EXIT INT TERM
+  command rm -rf "$state_dir"
+  return "$rc"
 }

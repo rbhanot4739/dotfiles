@@ -107,8 +107,78 @@ alias gpl='git pull'
 alias gps='git push '
 
 # Log/Reflog
-alias gl="git log --graph --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'"
-alias gla="git log --graph --all --color=always --abbrev-commit --pretty=format:'%C(auto)%h%C(auto)%d %s %C(green)(%ar) %C(bold blue)[%al]'"
+# _GIT_LOG_PRETTY_TAGGED, _GIT_LOG_PRETTY_BASE and _GIT_TAG_CANON_ERE live in
+# ~/.config/fzf/common.zsh (loaded later in .zshrc) and are read at call time.
+unalias gl 2>/dev/null
+gl() {
+  local -a log_cmd
+  log_cmd=(
+    git log --graph --decorate=short --color=always --abbrev-commit
+    --pretty=format:"$_GIT_LOG_PRETTY_TAGGED"
+  )
+
+  # canonicalize_tag turns any tag carrying a semver suffix into vX.Y.Z so the
+  # column stays consistent across DCL's parallel tag schemes (dcl/v3.0.61,
+  # dcl_3.0.61, dcli/v3.0.61) and unrelated repos (ucm-pie-core-dcl_0.0.46).
+  # Tags without a semver suffix pass through unchanged. Only commits whose %D
+  # decoration actually contains a `tag:` ref are annotated — no nearest-tag
+  # fallback, matching lazygit / `git log --decorate` semantics.
+  # Regex passed through ENVIRON so awk -v's C-escape pass doesn't eat the
+  # backslashes in `\.`. Same source as the sed regex in fzf gbf/gwt previews.
+  local awk_prog='
+    BEGIN {
+      FS = "\037"
+      esc = sprintf("%c", 27)
+      tag_on = esc "[38;5;214m"
+      tag_off = esc "[0m"
+      canon_ere = ENVIRON["_GIT_TAG_CANON_ERE"]
+    }
+    function canonicalize_tag(t) {
+      if (match(t, canon_ere))
+        return "v" substr(t, RSTART, RLENGTH)
+      return t
+    }
+    function first_tag(decor,    n, i, tok, parts) {
+      n = split(decor, parts, ",")
+      for (i = 1; i <= n; i++) {
+        tok = parts[i]
+        gsub(esc "\\[[0-9;]*m", "", tok)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", tok)
+        if (index(tok, "tag: ") == 1) {
+          return substr(tok, 6)
+        }
+      }
+      return ""
+    }
+    {
+      if (NF < 3) {
+        print
+        next
+      }
+
+      graph = $1
+      hash = $2
+      rest = $3
+      decor = (NF >= 4 ? $4 : "")
+      tag_disp = canonicalize_tag(first_tag(decor))
+
+      if (tag_disp != "")
+        printf "%s%s[%s]%s %s %s\n", graph, tag_on, tag_disp, tag_off, hash, rest
+      else
+        printf "%s%s %s\n", graph, hash, rest
+    }
+  '
+
+  if [[ -t 1 ]]; then
+    local pager_cmd="${PAGER:-less -R}"
+    local -a pager_arr
+    pager_arr=(${=pager_cmd})
+    "${log_cmd[@]}" "$@" | _GIT_TAG_CANON_ERE="$_GIT_TAG_CANON_ERE" awk "$awk_prog" | "${pager_arr[@]}"
+  else
+    "${log_cmd[@]}" "$@" | _GIT_TAG_CANON_ERE="$_GIT_TAG_CANON_ERE" awk "$awk_prog"
+  fi
+}
+gla() { git log --graph --all --color=always --abbrev-commit --pretty=format:"$_GIT_LOG_PRETTY_BASE" "$@"; }
 alias grf='git reflog --date=local'
 
 # Rebase
@@ -292,7 +362,7 @@ gg() {
 }
 # ==== zshrc* edit  ====
 ee() {
-  $EDITOR ~/.zshrc ~/.zprofile ~/custom_config.zsh ~/fzf_config.zsh
+  $EDITOR ~/.zshrc ~/.zprofile ~/custom_config.zsh ~/.config/fzf/config.zsh ~/.config/fzf/common.zsh ~/.config/fzf/tab.zsh
 }
 
 # ===================================
@@ -307,36 +377,32 @@ bind_widget() {
   bindkey -M viins "$key" "$name"
 }
 # Go up a directory
-zle -N cd_up_widget
 bind_widget cd_up_widget '^[[1;3A'
 
 # Tmux session/pane switcher — mirrors tmux's M-space (no-prefix) binding
-zle -N tmux-switcher-widget
 bind_widget tmux-switcher-widget '^[ '
 
-# Expand alias or insert space
-# expand_alias_or_space() {
-#   zle _expand_alias
-#   if [[ $LBUFFER[-1] == ' ' ]]; then
-#     return
-#   else
-#     zle self-insert
-#   fi
-# }
-zle -N expand_alias_or_space
-# bindkey " " expand_alias_or_space  # optional
+# RGF launcher (Alt-/) across all keymaps.
+rgf-widget() {
+  zle -I
+  rgf </dev/tty
+  zle redisplay
+}
+bind_widget rgf-widget '^[/'
+__bind_rgf_alt_slash() {
+  bindkey -M emacs '^[/' rgf-widget
+  bindkey -M vicmd '^[/' rgf-widget
+  bindkey -M viins '^[/' rgf-widget
+}
+__bind_rgf_alt_slash
+typeset -ag precmd_functions
+[[ -z ${precmd_functions[(r)__bind_rgf_alt_slash]} ]] && precmd_functions+=(__bind_rgf_alt_slash)
 
 # Theme switcher
 set-theme-widget() {
   zle -I
-  # set-theme </dev/tty
   theme-list </dev/tty
   zle reset-prompt
 }
-zle -N set-theme-widget
 bind_widget set-theme-widget '^[>'
 
-# ===================================
-# Final Initialization
-# ===================================
-source "$HOME/fzf_config.zsh"

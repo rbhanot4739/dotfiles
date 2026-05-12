@@ -1,0 +1,6 @@
+#!/bin/zsh
+
+tmux-switcher-widget() {
+    BUFFER="tmux-switcher"
+    zle accept-line
+}
