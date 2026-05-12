@@ -36,21 +36,7 @@ alias ks='ls' # typo-prone fallback
 # Update installed packages (manual, explicit)
 alias brew-up='brew update && brew upgrade && brew cleanup'
 
-# Force-apply a theme locally (useful on remote SSH boxes when auto-sync missed)
-# Usage: sync-theme          → re-apply current ~/.bg_mode
-#        sync-theme light    → switch to light and apply
-#        sync-theme dark     → switch to dark and apply
-sync-theme() {
-  local mode="${1:-}"
-  if [[ -n "$mode" ]]; then
-    echo "$mode" >~/.bg_mode
-  fi
-  if [[ -x ~/.config/themes/bin/theme-switch ]]; then
-    ~/.config/themes/bin/theme-switch
-  else
-    echo "sync-theme: theme-switch not found at ~/.config/themes/bin/theme-switch" >&2
-  fi
-}
+
 
 # Sync core CLI tools into chezmoi
 brew-sync() {

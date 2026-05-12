@@ -19,6 +19,11 @@ log() {
   return 0
 }
 
+# Optional mode override: theme-switch [dark|light]
+if [[ "${1:-}" == "dark" || "${1:-}" == "light" ]]; then
+  printf '%s\n' "$1" > "$HOME/.bg_mode"
+fi
+
 # Read current state via shared snippet (single source of truth)
 . "$HOME/.config/themes/lib/resolve-theme.sh"
 
