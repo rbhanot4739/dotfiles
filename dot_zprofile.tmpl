@@ -24,13 +24,11 @@ export XDG_DATA_HOME="$HOME/.local/share"
 # Homebrew — must come before Editor/Pager so command -v resolves brew bins
 # =====================================
 
-{{- if eq .chezmoi.os "darwin" }}
+{{- if .is_mac }}
 if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
-{{- end }}
-
-{{- if eq .chezmoi.os "linux" }}
+{{- else }}
 if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi

@@ -17,7 +17,7 @@ logs/
 .claude/**
 .aider*
 
-{{- if ne .chezmoi.os "darwin" }}
+{{- if not .is_mac }}
 dot_config/ghostty
 dot_wezterm.lua
 dot_config/gh-dash
@@ -25,7 +25,7 @@ dot_config/yazi
 dot_config/private_karabiner
 {{- end }}
 
-{{- if and (eq .chezmoi.os "linux") (eq "coder" .chezmoi.username) }}
+{{- if .is_rdev }}
 dot_config/lazydocker
 dot_config/mise
 dot_config/private_atuin

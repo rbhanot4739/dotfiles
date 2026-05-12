@@ -80,7 +80,7 @@ else
     }
 fi
 
-{{ if eq .chezmoi.os "linux" -}}
+{{ if not .is_mac -}}
 # =====================================
 # SSH Theme Detection (OSC 11)
 # =====================================
@@ -168,7 +168,7 @@ fi
 #fi
 
 # setup directory colors
-{{- if (eq .chezmoi.os "darwin") }}
+{{- if .is_mac }}
 # on Mac the command is gdircolors, on Linux it's dircolors
 [[ $(command -v gdircolors) ]] && eval $(gdircolors -b)
 {{- else }}

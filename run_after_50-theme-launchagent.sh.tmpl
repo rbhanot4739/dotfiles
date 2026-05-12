@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-{{- if ne .chezmoi.os "darwin" }}
+{{- if not .is_mac }}
 exit 0
 {{- end }}
 

@@ -4,7 +4,7 @@ set -euo pipefail
 # ======================================================
 # macOS → Homebrew + Brewfiles
 # ======================================================
-{{- if eq .chezmoi.os "darwin" }}
+{{- if .is_mac }}
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Homebrew..."
@@ -39,10 +39,7 @@ fi
 # ======================================================
 # Linux NON-RDEV → Homebrew + Brewfiles
 # ======================================================
-{{- if and (eq .chezmoi.os "linux")
-          (not (and (contains "rdev" (env "RDEV_ID"))
-                    (eq "coder" .chezmoi.username)
-                    (eq "/home/coder" .chezmoi.homeDir))) }}
+{{- if .is_linux_vm }}
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Linuxbrew..."
@@ -81,10 +78,7 @@ fi
 # ======================================================
 # Linux RDEV → Pixi ONLY (no Homebrew)
 # ======================================================
-{{- if and (eq .chezmoi.os "linux")
-          (contains "rdev" (env "RDEV_ID"))
-          (eq "coder" .chezmoi.username)
-          (eq "/home/coder" .chezmoi.homeDir) }}
+{{- if .is_rdev }}
 
 install_pixi() {
   if [[ ! -d "$HOME/.pixi" ]]; then

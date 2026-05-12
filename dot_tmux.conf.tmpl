@@ -180,7 +180,7 @@ bind-key -n MouseUp2Status kill-window -t=
 bind-key -n DoubleClick1Status new-window
 # --------------------------------------------------------------------------------
 
-{{- if not (and (eq .chezmoi.os "linux") (contains "rdev" (env "RDEV_ID")) (eq "coder" .chezmoi.username) (eq "/home/coder" .chezmoi.homeDir)) }}
+{{- if not .is_rdev }}
 
 # TPM settings
 set -g @plugin 'tmux-plugins/tpm'
