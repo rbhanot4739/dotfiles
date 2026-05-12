@@ -43,11 +43,12 @@ fi
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Linuxbrew..."
-  # Ensure Linuxbrew prefix exists and is user-owned
   if [[ ! -d /home/linuxbrew ]]; then
     echo "Creating /home/linuxbrew (requires sudo once)..."
     sudo mkdir -p /home/linuxbrew
   fi
+  # chown unconditionally — installer runs as user; root-owned dir breaks it.
+  sudo chown -R "$(id -un):$(id -gn)" /home/linuxbrew
 
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
