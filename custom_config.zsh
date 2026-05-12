@@ -207,7 +207,6 @@ alias cz='chezmoi'
 alias ccd='chezmoi cd'
 alias mvim="NVIM_APPNAME=nvim-minimal nvim"
 alias tvim="NVIM_APPNAME=lazyvim-test nvim"
-# alias ssh='fssh'
 alias s='fssh'
 alias man='fman'
 alias vims="nvim_conf_switcher"

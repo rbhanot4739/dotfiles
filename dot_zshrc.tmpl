@@ -16,15 +16,7 @@ fi
 
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
 autoload -Uz _zinit
-{{/*
-# (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# Enable Powerlevel10k instant prompt
-# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-# fi
-# (( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
-*/}}
 # =====================================
 # Terminal Behavior
 # =====================================
@@ -119,8 +111,6 @@ ZVM_INIT_MODE=sourcing
 ZVM_LAZY_KEYBINDINGS=true
 ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
 
-# zinit snippet OMZ::plugins/git/git.plugin.zsh
-
 zinit ice wait"1" lucid blockf \
     atload'bindkey -M vicmd "k" history-substring-search-up
            bindkey -M vicmd "j" history-substring-search-down
@@ -134,19 +124,18 @@ zinit light zsh-users/zsh-history-substring-search
 
 function zvm_after_lazy_keybindings() {
   # Line movement (Ctrl+A / Ctrl+E).
-  bindkey -M emacs '^A' beginning-of-line                    # Ctrl+A
-  bindkey -M emacs '^E' end-of-line                          # Ctrl+E
-  bindkey -M viins '^A' beginning-of-line                    # Ctrl+A
-  bindkey -M viins '^E' end-of-line                          # Ctrl+E
-  bindkey -M vicmd '^A' beginning-of-line                    # Ctrl+A
-  bindkey -M vicmd '^E' end-of-line                          # Ctrl+E
+  bindkey -M emacs '^A' beginning-of-line
+  bindkey -M emacs '^E' end-of-line
+  bindkey -M viins '^A' beginning-of-line
+  bindkey -M viins '^E' end-of-line
+  bindkey -M vicmd '^A' beginning-of-line
+  bindkey -M vicmd '^E' end-of-line
 
   # Word movement (Ctrl+B / Ctrl+W).
-  bindkey -M emacs '^B' backward-word                        # Ctrl+B
-  bindkey -M emacs '^W' forward-word                         # Ctrl+W
-  bindkey -M viins '^B' backward-word                        # Ctrl+B
-  bindkey -M viins '^W' forward-word                         # Ctrl+W
-
+  bindkey -M emacs '^B' backward-word
+  bindkey -M emacs '^W' forward-word
+  bindkey -M viins '^B' backward-word
+  bindkey -M viins '^W' forward-word
 }
 
 zinit ice wait"1" lucid
@@ -158,14 +147,6 @@ zinit light zdharma-continuum/fast-syntax-highlighting
 if command -v direnv >/dev/null; then
     emulate zsh -c "$(direnv hook zsh)"
 fi
-
-# =====================================
-# Tools
-# =====================================
-#if [[ $(command -v devbox) ]]; then
-#  eval "$(devbox global shellenv)" 2> /dev/null
-#  alias refresh-global='eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r'
-#fi
 
 # setup directory colors
 {{- if .is_mac }}
@@ -215,9 +196,6 @@ typeset -U fpath=($CUSTOM_PATHS $fpath)
 if type brew &>/dev/null; then
   fpath=($(brew --prefix)/share/zsh/site-functions $fpath)
 fi
-{{- if (contains "linkedin" .chezmoi.fqdnHostname) }}
-# fpath=("/usr/local/linkedin/etc/zsh" "/export/content/linkedin/etc/zsh" $fpath)
-{{- end }}
 
 # Autoload all functions from zsh_functions directory
 for func in $HOME/zsh_functions/*(.N:t); do
@@ -265,8 +243,6 @@ if command -v zoxide >/dev/null; then
   eval "$(zoxide init zsh)"
   alias zi=__zoxide_zi
   alias zz='z -'
-  # cd() { _lazy_zoxide; __zoxide_z "$@"; }
-  # z() { _lazy_zoxide; __zoxide_z "$@"; }
 fi
 
 

@@ -456,7 +456,6 @@ fi
 if [[ -n "$TMUX" ]]; then
   layout="--tmux center,95%,85% --reverse --no-scrollbar"
 else
-  # layout="--height 85% --layout=reverse --margin 2%,2%,2%,2% --no-scrollbar"
   layout="--height 85% --layout=reverse --margin 1% --no-scrollbar"
 fi
 

@@ -1,7 +1,4 @@
-{{/* Platform detection — single source of truth for templates.
-     Consumers reference .is_mac / .is_rdev / .is_linux_vm.
-     If this predicate changes, re-run `chezmoi init` to refresh
-     ~/.config/chezmoi/chezmoi.toml on each host. */}}
+{{/* Edits here require `chezmoi init` to refresh ~/.config/chezmoi/chezmoi.toml. */}}
 {{- $isRdev := and (eq .chezmoi.os "linux")
                     (contains "rdev" (env "RDEV_ID"))
                     (eq "/home/coder" .chezmoi.homeDir) -}}
