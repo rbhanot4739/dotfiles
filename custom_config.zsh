@@ -234,8 +234,9 @@ agent() {
 
 # ==== File Listing (eza or ls) ====
 
+unalias ls 2>/dev/null
+
 if command -v eza &>/dev/null; then
-  unalias ls 2>/dev/null
   ls() {
     command eza -I '*pyc*' ${eza_params:+"${eza_params[@]}"} "${@:-.}"
   }

@@ -77,13 +77,14 @@ fi
 # SSH Theme Detection (OSC 11)
 # =====================================
 _apply_terminal_theme() {
-  local response
+  local response hex_r brightness mode
   printf '\033]11;?\033\\' >/dev/tty
-  IFS='' read -r -d $'\033' -t 0.1 response </dev/tty 2>/dev/null || return
-  # Response: ]11;rgb:RRRR/GGGG/BBBB — use first byte of R component for brightness
-  local hex_r="${response:8:2}"
-  local brightness=$(( 16#$hex_r ))
-  local mode="dark"
+  IFS= read -rs -d $'\\' -t 1 response </dev/tty 2>/dev/null
+  [[ -z "$response" ]] && return
+  hex_r="${response#*rgb:}"; hex_r="${hex_r:0:2}"
+  [[ -z "$hex_r" ]] && return
+  brightness=$(( 16#$hex_r ))
+  mode="dark"
   [[ $brightness -gt 127 ]] && mode="light"
   echo "$mode" >~/.bg_mode
   [[ -x ~/.config/themes/bin/theme-switch ]] && ~/.config/themes/bin/theme-switch
