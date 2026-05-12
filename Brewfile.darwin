@@ -1,3 +1,12 @@
+brew "bitwarden-cli"
+brew "docker"
+brew "docker-buildx"
+brew "docker-compose"
+brew "fswatch"
+brew "gemini-cli", link: false
+brew "tectonic"
+brew "terminal-notifier"
+
 cask "betterdisplay"
 cask "bitwarden"
 cask "cursor"
