@@ -1,0 +1,12 @@
+{{- if .is_linux_vm -}}
+#!/bin/bash
+set -euo pipefail
+
+echo "Installing Docker (moby) packages..."
+sudo dnf install -y moby-engine moby-cli moby-compose moby-buildx
+
+sudo systemctl enable --now docker
+
+sudo usermod -aG docker "$USER"
+echo "NOTE: Log out and back in for docker group membership to take effect."
+{{- end }}

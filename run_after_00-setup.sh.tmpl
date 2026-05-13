@@ -62,18 +62,6 @@ if [[ -f "$HOME/Brewfile.linux" ]]; then
   brew bundle --file "$HOME/Brewfile.linux" --no-upgrade
 fi
 
-# ======================================================
-# Setup docker
-# ======================================================
-if ! command -v docker >/dev/null 2>&1; then
-  if [[ -f "$HOME/docker_install_linux.sh" ]]; then
-    echo "Docker not found. Running installation script..."
-    bash "$HOME/docker_install_linux.sh"
-  else
-    echo "Warning: ~/docker_install_linux.sh not found. Skipping Docker install."
-  fi
-fi
-
 {{- end }}
 
 # ======================================================
