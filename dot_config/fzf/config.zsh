@@ -3,9 +3,9 @@
 
 source "$HOME/.config/fzf/common.zsh"
 
-find_all_cmd="fd --ignore-file ~/.ignore --follow ."
-find_files_cmd="$find_all_cmd --type file"
-find_dirs_cmd="$find_all_cmd --type directory"
+find_all_cmd="$FZF_FD_FIND_ALL_CMD"
+find_files_cmd="$FZF_FD_FIND_FILES_CMD"
+find_dirs_cmd="$FZF_FD_FIND_DIRS_CMD"
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
 
 # Load theme once at startup.
@@ -97,16 +97,16 @@ export FZF_CTRL_R_OPTS="${FZF_DEFAULT_OPTS} --ghost '$FZF_GHOST_HISTORY' --previ
 # fzf-trigger candidate generators (`,<TAB>`).
 _fzf_compgen_path() {
   if [[ "$1" == "." ]]; then
-    command fd --ignore-file ~/.ignore --follow . --strip-cwd-prefix=always
+    _fzf_fd . --strip-cwd-prefix=always
   else
-    command fd --ignore-file ~/.ignore --follow . "$1"
+    _fzf_fd . "$1"
   fi
 }
 _fzf_compgen_dir() {
   if [[ "$1" == "." ]]; then
-    command fd --ignore-file ~/.ignore --follow --type directory . --strip-cwd-prefix=always
+    _fzf_fd --type directory . --strip-cwd-prefix=always
   else
-    command fd --ignore-file ~/.ignore --follow --type directory . "$1"
+    _fzf_fd --type directory . "$1"
   fi
 }
 
@@ -116,7 +116,7 @@ _fzf_complete_man() {
 
 # Restrict cat/bat trigger completion to files.
 _fzf_complete_cat() {
-  _fzf_complete -- "$@" < <(command fd --ignore-file ~/.ignore --follow --type file . --strip-cwd-prefix=always)
+  _fzf_complete -- "$@" < <(_fzf_fd --type file . --strip-cwd-prefix=always)
 }
 _fzf_complete_bat() { _fzf_complete_cat "$@"; }
 
