@@ -215,6 +215,20 @@ if tmux list-sessions &>/dev/null 2>&1; then
     tmux source-file "$TMUX_CONF" 2>/dev/null || true
     tmux refresh-client -S 2>/dev/null || true
   fi
+
+  # Update @fzf-url-fzf-options so tmux-fzf-url popup uses the new theme.
+  # The plugin calls raw fzf (not the shell wrapper) and reads colors from this tmux var.
+  if [[ "$THEME_MODE" == "adaptive" ]]; then
+    _FZF_THEME_FILE="$GENERATED/fzf/${THEME}-${BG_MODE}.sh"
+  elif [[ -f "$GENERATED/fzf/${THEME}-${BG_MODE}.sh" ]]; then
+    _FZF_THEME_FILE="$GENERATED/fzf/${THEME}-${BG_MODE}.sh"
+  else
+    _FZF_THEME_FILE="$GENERATED/fzf/${THEME}.sh"
+  fi
+  if [[ -f "$_FZF_THEME_FILE" ]]; then
+    _fzf_color_args=$(grep -oE -- '--color=[^ )]+' "$_FZF_THEME_FILE" 2>/dev/null | tr '\n' ' ')
+    tmux set -g @fzf-url-fzf-options "--tmux center,100%,50% --multi --exit-0 --no-preview ${_fzf_color_args}" 2>/dev/null || true
+  fi
 fi
 
 # --- DELTA ---
