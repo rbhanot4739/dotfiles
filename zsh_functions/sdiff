@@ -1,2 +1,10 @@
 # vim: ft=zsh
-delta --side-by-side $1 $2
+
+sdiff() {
+  if [[ $# -ne 2 ]]; then
+    echo "Usage: sdiff <left-file> <right-file>" >&2
+    return 2
+  fi
+
+  command delta --side-by-side --line-numbers -- "$1" "$2"
+}
