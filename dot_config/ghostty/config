@@ -23,6 +23,12 @@ font-feature = liga
 # title  - automatically sets terminal window title to current command/directory
 shell-integration-features = cursor,no-sudo,no-title
 
+# Default cursor shape. Shell-integration's DECSCUSR overrides at every prompt
+# (bar in insert, block in vi normal). This default takes effect only in the
+# brief windows when DECSCUSR hasn't fired yet — fresh windows, mid-reload,
+# any glitch — so use the insert-mode shape, not Ghostty's built-in block.
+cursor-style = bar
+
 # ── Links ─────────────────────────────────────────────────────────────────────
 # Detect and underline URLs on hover
 link-url = true

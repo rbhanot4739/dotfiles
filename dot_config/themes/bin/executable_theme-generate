@@ -13,6 +13,18 @@ mkdir -p "$GENERATED"/{fzf,tmux,ghostty,delta,lazygit}
 WEZTERM_COLORS_DIR="$HOME/.config/wezterm/colors"
 mkdir -p "$WEZTERM_COLORS_DIR"
 
+STAMP="$GENERATED/.last-generated"
+FORCE=0
+[[ "${1:-}" == "--force" ]] && FORCE=1
+
+if [[ "$FORCE" -eq 0 && -f "$STAMP" ]]; then
+  newest=$(find "$REGISTRY" -name '*.yaml' -newer "$STAMP" -print -quit 2>/dev/null)
+  if [[ -z "$newest" ]]; then
+    echo "Nothing changed. Use --force to regenerate anyway."
+    exit 0
+  fi
+fi
+
 # Accumulator for delta themes gitconfig
 DELTA_OUT="$GENERATED/delta/delta-themes.gitconfig"
 echo '; vim: set filetype=gitconfig:' > "$DELTA_OUT"
@@ -115,6 +127,8 @@ echo "Processing themes..."
 for yaml in "$REGISTRY"/*.yaml; do
   process_theme "$yaml"
 done
+
+touch "$STAMP"
 
 echo ""
 echo "Done! Generated files:"

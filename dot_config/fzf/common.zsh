@@ -7,7 +7,30 @@ typeset -g _FZF_COMMON_LOADED=1
 
 export FZF_HIDDEN_MARKER="${TMPDIR:-/tmp}/fzf_hidden_$$"
 
+# Shared fd helper (also used by custom_config.zsh).
+[[ -f "$HOME/.config/fzf/fd-args.zsh" ]] && source "$HOME/.config/fzf/fd-args.zsh"
+
+# Shared fd args for all fzf candidate generation paths.
+typeset -ga FZF_FD_ARGS=()
+# Use shared builder when available so fd flags stay in one source of truth.
+if (( $+functions[_fd_shared_args] )); then
+  # Rebuild exact argv safely; preserves spaces/special chars in paths/flags.
+  FZF_FD_ARGS=("${(@0)$(_fd_shared_args --follow)}")
+else
+  # Fallback if helper wasn't sourced; keeps fd usable in partial loads.
+  FZF_FD_ARGS=(--ignore-file "${FD_SHARED_IGNORE_FILE:-$HOME/.ignore}" --follow)
+fi
+typeset -g FZF_FD_ARGS_STR="${(j: :)${(@q)FZF_FD_ARGS}}"
+typeset -g FZF_FD_FIND_ALL_CMD="fd ${FZF_FD_ARGS_STR} ."
+typeset -g FZF_FD_FIND_FILES_CMD="fd ${FZF_FD_ARGS_STR} --type file ."
+typeset -g FZF_FD_FIND_DIRS_CMD="fd ${FZF_FD_ARGS_STR} --type directory ."
+
+_fzf_fd() {
+  command fd "${FZF_FD_ARGS[@]}" "$@"
+}
+
 # Context-specific headers (only advertise relevant keys).
+# `: "${var:=default}"` keeps defaults overridable by environment.
 : "${FZF_UNIFIED_HEADER_FILE:=Alt-i ignored  ·  Alt-s/d mark  ·  Alt-g all  ·  Alt-p preview  ·  ^v edit}"
 : "${FZF_UNIFIED_HEADER_DIR:=Alt-i ignored  ·  Alt-s/d mark  ·  Alt-g all  ·  Alt-p preview}"
 : "${FZF_UNIFIED_HEADER_ENV:=Alt-s/d mark  ·  Alt-g all  ·  Alt-p preview}"
@@ -31,9 +54,9 @@ export FZF_UNIFIED_PREVIEW_WINDOW
 : "${FZF_GHOST_HOSTS:=Search hosts…}"
 
 # Hidden-file toggle commands (Alt-i).
-: "${FZF_UNIFIED_HIDDEN_TOGGLE_ALL_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd --ignore-file ~/.ignore --follow -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd --ignore-file ~/.ignore --follow . && rm -f $FZF_HIDDEN_MARKER)}"
-: "${FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd --ignore-file ~/.ignore --follow -tf -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd --ignore-file ~/.ignore --follow -tf . && rm -f $FZF_HIDDEN_MARKER)}"
-: "${FZF_UNIFIED_HIDDEN_TOGGLE_DIR_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd --ignore-file ~/.ignore --follow -td -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd --ignore-file ~/.ignore --follow -td . && rm -f $FZF_HIDDEN_MARKER)}"
+: "${FZF_UNIFIED_HIDDEN_TOGGLE_ALL_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd ${FZF_FD_ARGS_STR} -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd ${FZF_FD_ARGS_STR} . && rm -f $FZF_HIDDEN_MARKER)}"
+: "${FZF_UNIFIED_HIDDEN_TOGGLE_FILE_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd ${FZF_FD_ARGS_STR} -tf -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd ${FZF_FD_ARGS_STR} -tf . && rm -f $FZF_HIDDEN_MARKER)}"
+: "${FZF_UNIFIED_HIDDEN_TOGGLE_DIR_CMD:=[ ! -f $FZF_HIDDEN_MARKER ] && (fd ${FZF_FD_ARGS_STR} -td -u --hidden . && touch $FZF_HIDDEN_MARKER) || (fd ${FZF_FD_ARGS_STR} -td . && rm -f $FZF_HIDDEN_MARKER)}"
 
 # Preview templates. Single source per kind (file vs dir); sentinel @PATH@ is
 # substituted to produce three variants:

@@ -33,25 +33,48 @@ alias wh='which '
 alias W='wc -l'
 alias ks='ls' # typo-prone fallback
 
-# Update installed packages (manual, explicit)
-alias brew-up='brew update && brew upgrade && brew cleanup'
-
-
-
-# Sync core CLI tools into chezmoi
+# Update packages and sync Brewfiles into chezmoi
 brew-sync() {
-  brew bundle dump \
-    --file "$HOME/Brewfile" \
-    --force \
-    --formula \
-    --no-vscode || return 1
+  local common="$HOME/Brewfile"
+  local darwin="$HOME/Brewfile.darwin"
+
+  local -a darwin_only=(
+    bitwarden-cli
+    chezmoi
+    docker
+    docker-buildx
+    docker-compose
+    fswatch
+    gemini-cli
+    tectonic
+    terminal-notifier
+  )
+
+  local pattern
+  printf -v pattern '%s|' "${darwin_only[@]}"
+  pattern="${pattern%|}"
+
+  brew update && brew upgrade && brew cleanup || return 1
+
+  local tmp_formula tmp_cask
+  tmp_formula="$(mktemp)" || return 1
+  tmp_cask="$(mktemp)" || { rm -f "$tmp_formula"; return 1; }
+  trap 'rm -f "$tmp_formula" "$tmp_cask"' EXIT INT TERM
+
+  brew bundle dump --file "$tmp_formula" --force --formula --no-vscode || return 1
+  rg -v "^brew \"(${pattern})\"(,.*)?$" "$tmp_formula" > "$common"
 
   if [[ "$(uname -s)" == "Darwin" ]]; then
-    brew bundle dump \
-      --cask \
-      --file "$HOME/Brewfile.darwin" \
-      --force || return 1
+    brew bundle dump --file "$tmp_cask" --force --cask --no-vscode || return 1
+    {
+      rg "^brew \"(${pattern})\"(,.*)?$" "$tmp_formula" || true
+      echo
+      rg '^cask "' "$tmp_cask" || true
+    } > "$darwin"
   fi
+
+  trap - EXIT INT TERM
+  rm -f "$tmp_formula" "$tmp_cask"
 }
 
 
@@ -190,7 +213,12 @@ alias dkc='docker-compose'
 # Misc + Shortcuts
 # ===================================
 alias cz='chezmoi'
+alias cza='chezmoi add'
 alias ccd='chezmoi cd'
+alias czd='chezmoi diff'
+alias cze='chezmoi edit'
+alias czm='chezmoi merge'
+alias czs='chezmoi status'
 alias mvim="NVIM_APPNAME=nvim-minimal nvim"
 alias tvim="NVIM_APPNAME=lazyvim-test nvim"
 alias s='fssh'
@@ -286,9 +314,21 @@ fi
 
 # ==== fd/find ====
 
+[[ -f "$HOME/.config/fzf/fd-args.zsh" ]] && source "$HOME/.config/fzf/fd-args.zsh"
+
 if command -v fd &>/dev/null; then
+  typeset -ga _FD_DEFAULT_ARGS=()
+  # Reuse shared fd args so custom fd() and fzf stay consistent.
+  if (( $+functions[_fd_shared_args] )); then
+    # Rebuild exact argv safely; avoids splitting args with spaces.
+    _FD_DEFAULT_ARGS=("${(@0)$(_fd_shared_args)}")
+  else
+    # Fallback if helper wasn't sourced; avoids breaking fd().
+    _FD_DEFAULT_ARGS=(--ignore-file "${FD_SHARED_IGNORE_FILE:-$HOME/.ignore}")
+  fi
+
   fd() {
-    command fd --ignore-file "$HOME/.global_gitignore" "$@"
+    command fd "${_FD_DEFAULT_ARGS[@]}" "$@"
   }
 
   fda() {
