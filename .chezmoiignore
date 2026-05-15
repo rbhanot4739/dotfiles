@@ -25,11 +25,6 @@ dot_config/yazi
 dot_config/private_karabiner
 {{- end }}
 
-{{- if .is_rdev }}
-dot_config/lazydocker
-dot_config/mise
-dot_config/private_atuin
-{{- end }}
 
 # Legacy theme system — superseded by ~/.config/themes/.
 # Source files kept in repo as backup; not deployed and hidden from status/diff.
