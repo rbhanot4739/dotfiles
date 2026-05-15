@@ -5,7 +5,7 @@ Personal dotfiles managed with [chezmoi](https://chezmoi.io).
 ## Fresh macOS Setup — One Command
 
 ```bash
-curl -fsLS https://raw.githubusercontent.com/rbhanot4739/dotfiles/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/rbhanot4739/dotfiles/main/install.sh)
 ```
 
 That's it. The script handles everything from scratch.
