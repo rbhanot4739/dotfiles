@@ -1,12 +1,8 @@
 {{/* Edits here require `chezmoi init` to refresh ~/.config/chezmoi/chezmoi.toml. */}}
-{{- $isRdev := and (eq .chezmoi.os "linux")
-                    (contains "rdev" (env "RDEV_ID"))
-                    (eq "/home/coder" .chezmoi.homeDir) -}}
 
 [data]
     is_mac = {{ eq .chezmoi.os "darwin" }}
-    is_rdev = {{ $isRdev }}
-    is_linux_vm = {{ and (eq .chezmoi.os "linux") (not $isRdev) }}
+    is_linux_vm = {{ eq .chezmoi.os "linux" }}
 
 [diff]
     pager = "delta"

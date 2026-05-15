@@ -180,8 +180,6 @@ bind-key -n MouseUp2Status kill-window -t=
 bind-key -n DoubleClick1Status new-window
 # --------------------------------------------------------------------------------
 
-{{- if not .is_rdev }}
-
 # TPM settings
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
@@ -218,4 +216,3 @@ if "test ! -d ~/.tmux/plugins/tpm" \
 
 run '~/.tmux/plugins/tpm/tpm'
 
-{{- end }}

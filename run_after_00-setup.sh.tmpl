@@ -7,7 +7,9 @@ set -euo pipefail
 {{- if .is_mac }}
 
 if ! command -v brew >/dev/null 2>&1; then
-  echo "Installing Homebrew..."
+  echo "Installing Homebrew (sudo required once)..."
+  sudo -v
+  ( while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done ) 2>/dev/null &
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
@@ -50,6 +52,8 @@ if ! command -v brew >/dev/null 2>&1; then
   # chown unconditionally — installer runs as user; root-owned dir breaks it.
   sudo chown -R "$(id -un):$(id -gn)" /home/linuxbrew
 
+  sudo -v
+  ( while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done ) 2>/dev/null &
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
@@ -63,57 +67,3 @@ if [[ -f "$HOME/Brewfile.linux" ]]; then
 fi
 
 {{- end }}
-
-# ======================================================
-# Linux RDEV → Pixi ONLY (no Homebrew)
-# ======================================================
-{{- if .is_rdev }}
-
-install_pixi() {
-  if [[ ! -d "$HOME/.pixi" ]]; then
-    curl -fsSL https://pixi.sh/install.sh | bash || {
-      mkdir -p "$HOME/.pixi/bin"
-      curl -L -o "$HOME/.pixi/bin/pixi" \
-        https://github.com/prefix-dev/pixi/releases/download/v0.40.3/pixi-x86_64-unknown-linux-musl
-      chmod +x "$HOME/.pixi/bin/pixi"
-    }
-  fi
-}
-
-install_pixi
-
-base_packages=(
-  bat
-  direnv
-  eza
-  fd-find
-  fzf
-  jq
-  lua
-  luajit
-  luarocks
-  nodejs
-  nvim
-  ripgrep
-  ripgrep-all
-  sd
-  sqlite
-  tealdeer
-  yq
-  zoxide
-)
-
-"$HOME/.pixi/bin/pixi" global install "${base_packages[@]}"
-
-{{- end }}
-
-# ======================================================
-# Neovim Python provider (unchanged)
-# ======================================================
-if [[ ! -d "$HOME/.nvim-env" ]]; then
-  if [[ -f /export/apps/python/3.12/bin/python3 ]]; then
-    /export/apps/python/3.12/bin/python3 -m venv "$HOME/.nvim-env"
-    "$HOME/.nvim-env/bin/python" -m pip install neovim
-  fi
-fi
-
