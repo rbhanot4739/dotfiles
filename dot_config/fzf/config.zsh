@@ -94,17 +94,24 @@ export FZF_ALT_C_COMMAND="$find_dirs_cmd"
 export FZF_ALT_C_OPTS="${FZF_DEFAULT_OPTS} ${dir_opts_str}"
 export FZF_CTRL_R_OPTS="${FZF_DEFAULT_OPTS} --ghost '$FZF_GHOST_HISTORY' --preview 'echo {}' --preview-window down:3:hidden:wrap --bind '?:toggle-preview'"
 
+# fd helper for cwd searches: omits the explicit '.' path arg because
+# --strip-cwd-prefix conflicts with any explicit [path]... argument in fd.
+# fd defaults to cwd when no path is given, so behaviour is identical.
+_fzf_fd_cwd() {
+  _fzf_fd --strip-cwd-prefix=always "$@"
+}
+
 # fzf-trigger candidate generators (`,<TAB>`).
 _fzf_compgen_path() {
   if [[ "$1" == "." ]]; then
-    _fzf_fd . --strip-cwd-prefix=always
+    _fzf_fd_cwd
   else
     _fzf_fd . "$1"
   fi
 }
 _fzf_compgen_dir() {
   if [[ "$1" == "." ]]; then
-    _fzf_fd --type directory . --strip-cwd-prefix=always
+    _fzf_fd_cwd --type directory
   else
     _fzf_fd --type directory . "$1"
   fi
@@ -116,7 +123,7 @@ _fzf_complete_man() {
 
 # Restrict cat/bat trigger completion to files.
 _fzf_complete_cat() {
-  _fzf_complete -- "$@" < <(_fzf_fd --type file . --strip-cwd-prefix=always)
+  _fzf_complete -- "$@" < <(_fzf_fd_cwd --type file)
 }
 _fzf_complete_bat() { _fzf_complete_cat "$@"; }
 
