@@ -1,97 +1,159 @@
+```bash
 #!/usr/bin/env bash
-# Bootstrap script for a fresh macOS install.
-# Usage (recommended — works with curl | bash):
-#   curl -fsLS https://raw.githubusercontent.com/rbhanot4739/dotfiles/main/install.sh | bash
-# Or run directly:
-#   bash install.sh
-set -euo pipefail
+# Fresh macOS bootstrap
+# Usage:
+#   bash <(curl -fsSL https://raw.githubusercontent.com/rbhanot4739/dotfiles/main/install.sh)
 
-# ── Restore TTY so interactive prompts work when piped via curl | bash ────────
-exec < /dev/tty
+set -Eeuo pipefail
 
-# ── Banner ────────────────────────────────────────────────────────────────────
+# Debugging (optional)
+# set -x
+
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║         dotfiles bootstrap — fresh macOS setup       ║"
+echo "║         dotfiles bootstrap — fresh macOS setup      ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
 
-# ── 1. GITHUB_USERNAME ────────────────────────────────────────────────────────
+# ── Ensure interactive terminal ──────────────────────────────────────────────
+if [[ ! -t 1 ]]; then
+  echo "Error: this script requires an interactive terminal."
+  exit 1
+fi
+
+TTY="/dev/tty"
+
+# ── 1. GitHub username ───────────────────────────────────────────────────────
 if [[ -z "${GITHUB_USERNAME:-}" ]]; then
   printf "GitHub username: "
-  read -r GITHUB_USERNAME
+  read -r GITHUB_USERNAME < "${TTY}"
 fi
+
 export GITHUB_USERNAME
+
 echo "→ Using GitHub username: ${GITHUB_USERNAME}"
 
-# ── 2. Pre-cache sudo + keepalive ─────────────────────────────────────────────
+# ── 2. Request sudo upfront ──────────────────────────────────────────────────
 echo ""
-echo "→ Requesting sudo access (required once for Homebrew install)..."
-sudo -v
-# Renew sudo timestamp every 60 s so it doesn't expire mid-install
-( while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done ) 2>/dev/null &
-SUDO_KEEPALIVE_PID=$!
-trap 'kill "${SUDO_KEEPALIVE_PID}" 2>/dev/null || true' EXIT
+echo "→ Requesting sudo access..."
 
-# ── 3. Install Homebrew ───────────────────────────────────────────────────────
+sudo -v < "${TTY}"
+
+# Keep sudo alive
+(
+  while true; do
+    sudo -n true
+    sleep 60
+    kill -0 "$$" || exit
+  done
+) 2>/dev/null &
+
+SUDO_KEEPALIVE_PID=$!
+
+cleanup() {
+  kill "${SUDO_KEEPALIVE_PID}" 2>/dev/null || true
+}
+
+trap cleanup EXIT
+
+# ── 3. Install Xcode Command Line Tools ──────────────────────────────────────
+if ! xcode-select -p >/dev/null 2>&1; then
+  echo ""
+  echo "→ Installing Xcode Command Line Tools..."
+  xcode-select --install || true
+
+  echo "→ Waiting for Command Line Tools installation..."
+
+  until xcode-select -p >/dev/null 2>&1; do
+    sleep 5
+  done
+fi
+
+# ── 4. Install Homebrew ──────────────────────────────────────────────────────
 if ! command -v brew >/dev/null 2>&1; then
   echo ""
   echo "→ Installing Homebrew..."
+
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Ensure brew is on PATH for the rest of this script
+# ── 5. Configure brew shellenv ───────────────────────────────────────────────
 if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-# ── 4. Install gh CLI ─────────────────────────────────────────────────────────
+# ── 6. Install GitHub CLI ────────────────────────────────────────────────────
 if ! command -v gh >/dev/null 2>&1; then
   echo ""
-  echo "→ Installing GitHub CLI (gh)..."
+  echo "→ Installing GitHub CLI..."
   brew install gh
 fi
 
-# ── 5. GitHub authentication ──────────────────────────────────────────────────
+# ── 7. Authenticate GitHub ───────────────────────────────────────────────────
 echo ""
+
 if ! gh auth status >/dev/null 2>&1; then
-  echo "→ Authenticating with GitHub (browser will open)..."
+  echo "→ GitHub authentication required."
+  echo "→ A browser window may open."
+
   gh auth login --web --git-protocol ssh
 else
   echo "→ Already authenticated with GitHub."
 fi
 
-# ── 6. SSH key setup ──────────────────────────────────────────────────────────
+# ── 8. SSH key setup ─────────────────────────────────────────────────────────
 SSH_KEY="${HOME}/.ssh/id_ed25519"
+
 mkdir -p "${HOME}/.ssh"
 chmod 700 "${HOME}/.ssh"
 
 if [[ ! -f "${SSH_KEY}" ]]; then
   echo ""
-  echo "→ Generating SSH key (~/.ssh/id_ed25519)..."
-  ssh-keygen -t ed25519 -C "${GITHUB_USERNAME}@$(hostname -s)" -f "${SSH_KEY}" -N ""
+  echo "→ Generating SSH key..."
+
+  ssh-keygen \
+    -t ed25519 \
+    -C "${GITHUB_USERNAME}@$(hostname -s)" \
+    -f "${SSH_KEY}" \
+    -N ""
+
   echo ""
-  echo "→ Uploading SSH public key to GitHub..."
-  gh ssh-key add "${SSH_KEY}.pub" --title "$(hostname -s)"
+  echo "→ Uploading SSH key to GitHub..."
+
+  gh ssh-key add "${SSH_KEY}.pub" \
+    --title "$(hostname -s)"
 else
-  echo "→ SSH key already exists at ${SSH_KEY}."
+  echo "→ SSH key already exists."
 fi
 
-# Ensure the SSH key is in the agent
-eval "$(ssh-agent -s)" >/dev/null 2>&1
-ssh-add "${SSH_KEY}" 2>/dev/null || true
+# ── 9. Start ssh-agent ───────────────────────────────────────────────────────
+eval "$(ssh-agent -s)" >/dev/null
 
-# ── 7. Install chezmoi + apply dotfiles ───────────────────────────────────────
+ssh-add "${SSH_KEY}" >/dev/null 2>&1 || true
+
+# ── 10. Install chezmoi ──────────────────────────────────────────────────────
+if ! command -v chezmoi >/dev/null 2>&1; then
+  echo ""
+  echo "→ Installing chezmoi..."
+
+  brew install chezmoi
+fi
+
+# ── 11. Apply dotfiles ───────────────────────────────────────────────────────
 echo ""
-echo "→ Installing chezmoi and applying dotfiles..."
-sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply \
+echo "→ Applying dotfiles..."
+
+chezmoi init --apply \
   "git@github.com:${GITHUB_USERNAME}/dotfiles.git"
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# ── Done ─────────────────────────────────────────────────────────────────────
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║  ✅  Bootstrap complete!                             ║"
-echo "║  Open a new terminal to get your full environment.  ║"
+echo "║  ✅ Bootstrap complete!                             ║"
+echo "║  Open a new terminal to load your environment.      ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
+```
