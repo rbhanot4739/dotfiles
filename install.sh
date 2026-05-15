@@ -1,13 +1,34 @@
-```bash
 #!/usr/bin/env bash
-# Fresh macOS bootstrap
+# macOS bootstrap — idempotent + shell agnostic
+#
 # Usage:
 #   bash <(curl -fsSL https://raw.githubusercontent.com/rbhanot4739/dotfiles/main/install.sh)
+#
+# Safe to re-run anytime from:
+#   - bash
+#   - zsh
+#   - sh (as long as bash exists for execution)
+#
+# Guarantees:
+#   - no duplicate shell config entries
+#   - no duplicate SSH uploads
+#   - no repeated installs
+#   - safe chezmoi re-apply
+#   - works across Intel + Apple Silicon
 
 set -Eeuo pipefail
 
-# Debugging (optional)
-# set -x
+###############################################################################
+# UI
+###############################################################################
+
+bold="$(tput bold 2>/dev/null || true)"
+reset="$(tput sgr0 2>/dev/null || true)"
+
+info()  { printf "\n${bold}→ %s${reset}\n" "$*"; }
+ok()    { printf "✓ %s\n" "$*"; }
+warn()  { printf "⚠ %s\n" "$*"; }
+error() { printf "✗ %s\n" "$*" >&2; }
 
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
@@ -15,15 +36,49 @@ echo "║         dotfiles bootstrap — fresh macOS setup      ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
 
-# ── Ensure interactive terminal ──────────────────────────────────────────────
-if [[ ! -t 1 ]]; then
-  echo "Error: this script requires an interactive terminal."
+###############################################################################
+# REQUIRE INTERACTIVE TERMINAL
+###############################################################################
+
+if [[ ! -t 0 || ! -t 1 ]]; then
+  error "This script requires an interactive terminal."
   exit 1
 fi
 
 TTY="/dev/tty"
 
-# ── 1. GitHub username ───────────────────────────────────────────────────────
+###############################################################################
+# HELPERS
+###############################################################################
+
+append_if_missing() {
+  local line="$1"
+  local file="$2"
+
+  mkdir -p "$(dirname "$file")"
+  touch "$file"
+
+  grep -Fqs "$line" "$file" || printf '\n%s\n' "$line" >> "$file"
+}
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+brew_bin() {
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    echo "/opt/homebrew/bin/brew"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    echo "/usr/local/bin/brew"
+  else
+    return 1
+  fi
+}
+
+###############################################################################
+# GITHUB USERNAME
+###############################################################################
+
 if [[ -z "${GITHUB_USERNAME:-}" ]]; then
   printf "GitHub username: "
   read -r GITHUB_USERNAME < "${TTY}"
@@ -31,15 +86,16 @@ fi
 
 export GITHUB_USERNAME
 
-echo "→ Using GitHub username: ${GITHUB_USERNAME}"
+ok "Using GitHub username: ${GITHUB_USERNAME}"
 
-# ── 2. Request sudo upfront ──────────────────────────────────────────────────
-echo ""
-echo "→ Requesting sudo access..."
+###############################################################################
+# SUDO
+###############################################################################
+
+info "Requesting sudo access..."
 
 sudo -v < "${TTY}"
 
-# Keep sudo alive
 (
   while true; do
     sudo -n true
@@ -56,104 +112,191 @@ cleanup() {
 
 trap cleanup EXIT
 
-# ── 3. Install Xcode Command Line Tools ──────────────────────────────────────
+###############################################################################
+# XCODE CLT
+###############################################################################
+
 if ! xcode-select -p >/dev/null 2>&1; then
-  echo ""
-  echo "→ Installing Xcode Command Line Tools..."
+  info "Installing Xcode Command Line Tools..."
+
   xcode-select --install || true
 
-  echo "→ Waiting for Command Line Tools installation..."
+  info "Waiting for Xcode Command Line Tools installation..."
 
   until xcode-select -p >/dev/null 2>&1; do
     sleep 5
   done
+
+  ok "Xcode Command Line Tools installed."
+else
+  ok "Xcode Command Line Tools already installed."
 fi
 
-# ── 4. Install Homebrew ──────────────────────────────────────────────────────
-if ! command -v brew >/dev/null 2>&1; then
-  echo ""
-  echo "→ Installing Homebrew..."
+###############################################################################
+# HOMEBREW
+###############################################################################
+
+if ! command_exists brew; then
+  info "Installing Homebrew..."
 
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  ok "Homebrew installed."
+else
+  ok "Homebrew already installed."
 fi
 
-# ── 5. Configure brew shellenv ───────────────────────────────────────────────
-if [[ -x /opt/homebrew/bin/brew ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -x /usr/local/bin/brew ]]; then
-  eval "$(/usr/local/bin/brew shellenv)"
+BREW_BIN="$(brew_bin)"
+
+if [[ -z "${BREW_BIN:-}" ]]; then
+  error "brew not found after installation."
+  exit 1
 fi
 
-# ── 6. Install GitHub CLI ────────────────────────────────────────────────────
-if ! command -v gh >/dev/null 2>&1; then
-  echo ""
-  echo "→ Installing GitHub CLI..."
-  brew install gh
-fi
+eval "$("${BREW_BIN}" shellenv)"
 
-# ── 7. Authenticate GitHub ───────────────────────────────────────────────────
-echo ""
+###############################################################################
+# PERSIST BREW SHELLENV (IDEMPOTENT)
+###############################################################################
 
-if ! gh auth status >/dev/null 2>&1; then
-  echo "→ GitHub authentication required."
-  echo "→ A browser window may open."
+BREW_SHELLENV_LINE="eval \"\$(${BREW_BIN} shellenv)\""
+
+append_if_missing "${BREW_SHELLENV_LINE}" "${HOME}/.zprofile"
+
+# bash users
+append_if_missing "${BREW_SHELLENV_LINE}" "${HOME}/.bash_profile"
+
+###############################################################################
+# HOMEBREW PACKAGES
+###############################################################################
+
+brew_install_if_missing() {
+  local formula="$1"
+
+  if brew list --formula | grep -Fxq "$formula"; then
+    ok "${formula} already installed."
+  else
+    info "Installing ${formula}..."
+    brew install "${formula}"
+  fi
+}
+
+brew_install_if_missing gh
+brew_install_if_missing chezmoi
+
+###############################################################################
+# GITHUB AUTH
+###############################################################################
+
+if gh auth status >/dev/null 2>&1; then
+  ok "Already authenticated with GitHub."
+else
+  info "GitHub authentication required."
+  info "A browser window may open."
 
   gh auth login --web --git-protocol ssh
-else
-  echo "→ Already authenticated with GitHub."
 fi
 
-# ── 8. SSH key setup ─────────────────────────────────────────────────────────
-SSH_KEY="${HOME}/.ssh/id_ed25519"
+###############################################################################
+# SSH SETUP
+###############################################################################
 
-mkdir -p "${HOME}/.ssh"
-chmod 700 "${HOME}/.ssh"
+SSH_DIR="${HOME}/.ssh"
+SSH_KEY="${SSH_DIR}/id_ed25519"
+SSH_PUB="${SSH_KEY}.pub"
+HOSTNAME_SHORT="$(hostname -s)"
+
+mkdir -p "${SSH_DIR}"
+chmod 700 "${SSH_DIR}"
 
 if [[ ! -f "${SSH_KEY}" ]]; then
-  echo ""
-  echo "→ Generating SSH key..."
+  info "Generating SSH key..."
 
   ssh-keygen \
     -t ed25519 \
-    -C "${GITHUB_USERNAME}@$(hostname -s)" \
+    -C "${GITHUB_USERNAME}@${HOSTNAME_SHORT}" \
     -f "${SSH_KEY}" \
     -N ""
 
-  echo ""
-  echo "→ Uploading SSH key to GitHub..."
-
-  gh ssh-key add "${SSH_KEY}.pub" \
-    --title "$(hostname -s)"
+  ok "SSH key generated."
 else
-  echo "→ SSH key already exists."
+  ok "SSH key already exists."
 fi
 
-# ── 9. Start ssh-agent ───────────────────────────────────────────────────────
-eval "$(ssh-agent -s)" >/dev/null
+###############################################################################
+# SSH AGENT
+###############################################################################
 
-ssh-add "${SSH_KEY}" >/dev/null 2>&1 || true
-
-# ── 10. Install chezmoi ──────────────────────────────────────────────────────
-if ! command -v chezmoi >/dev/null 2>&1; then
-  echo ""
-  echo "→ Installing chezmoi..."
-
-  brew install chezmoi
+if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
+  eval "$(ssh-agent -s)" >/dev/null
 fi
 
-# ── 11. Apply dotfiles ───────────────────────────────────────────────────────
-echo ""
-echo "→ Applying dotfiles..."
+ssh-add --apple-use-keychain "${SSH_KEY}" >/dev/null 2>&1 || true
 
-chezmoi init --apply \
-  "git@github.com:${GITHUB_USERNAME}/dotfiles.git"
+###############################################################################
+# SSH CONFIG (IDEMPOTENT)
+###############################################################################
 
-# ── Done ─────────────────────────────────────────────────────────────────────
+SSH_CONFIG="${SSH_DIR}/config"
+
+append_if_missing "Host github.com" "${SSH_CONFIG}"
+append_if_missing "  AddKeysToAgent yes" "${SSH_CONFIG}"
+append_if_missing "  UseKeychain yes" "${SSH_CONFIG}"
+append_if_missing "  IdentityFile ~/.ssh/id_ed25519" "${SSH_CONFIG}"
+
+chmod 600 "${SSH_CONFIG}"
+
+###############################################################################
+# ADD SSH KEY TO GITHUB (IDEMPOTENT)
+###############################################################################
+
+PUBKEY_CONTENT="$(cat "${SSH_PUB}")"
+
+if gh ssh-key list | grep -Fq "${PUBKEY_CONTENT}"; then
+  ok "SSH key already uploaded to GitHub."
+else
+  info "Uploading SSH key to GitHub..."
+
+  gh ssh-key add "${SSH_PUB}" \
+    --title "${HOSTNAME_SHORT}"
+
+  ok "SSH key uploaded."
+fi
+
+###############################################################################
+# VERIFY SSH ACCESS
+###############################################################################
+
+info "Verifying GitHub SSH access..."
+
+ssh -o StrictHostKeyChecking=accept-new \
+    -T git@github.com || true
+
+###############################################################################
+# CHEZMOI
+###############################################################################
+
+DOTFILES_REPO="git@github.com:${GITHUB_USERNAME}/dotfiles.git"
+
+if [[ -d "${HOME}/.local/share/chezmoi/.git" ]]; then
+  info "Updating existing chezmoi repo..."
+
+  chezmoi update
+else
+  info "Initializing chezmoi..."
+
+  chezmoi init --apply "${DOTFILES_REPO}"
+fi
+
+###############################################################################
+# DONE
+###############################################################################
+
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
 echo "║  ✅ Bootstrap complete!                             ║"
-echo "║  Open a new terminal to load your environment.      ║"
+echo "║  Re-run this script anytime safely.                 ║"
+echo "║  Open a new terminal to reload your environment.    ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
-```
