@@ -3,20 +3,7 @@
 # ===================================
 # Work-Specific Aliases
 # ===================================
-alias m="mint "
-alias mf="mint format"
-alias mb="mint build"
-alias mbc="mint build-cfg"
-alias mun="mint undeploy"
-alias mbd="mint deploy"
 
-alias rfmt="rexec mint format"
-alias rbld="rexec mint build"
-alias rcfg="rexec mint build-cfg"
-alias rundep="rexec mint undeploy"
-alias rdep="rexec mint deploy"
-alias topo="topology-v3 "
-alias gos="go-status"
 
 # ===================================
 # ===================================
