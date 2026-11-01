@@ -39,10 +39,12 @@ fi
 {{- end }}
 
 # ======================================================
-# Linux NON-RDEV → Homebrew + Brewfiles
+# Linux, Work vs other
+# check .chezmoi.toml.tmpl for variables
 # ======================================================
-{{- if .is_linux_vm }}
+{{- if .is_linux_work }}
 
+{{ else }}
 if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Linuxbrew..."
   if [[ ! -d /home/linuxbrew ]]; then

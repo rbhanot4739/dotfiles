@@ -50,14 +50,14 @@ tmux:
   right2_fg:            "#222436"
 
 fzf:
-  bg:        "#1e2030"
+  bg:        "#222436"
   bg_plus:   "#2d3f76"
   fg:        "#c8d3f5"
   fg_plus:   "#c8d3f5"
   hl:        "#65bcff"
   hl_plus:   "#ff966c"
   border:    "#589ed7"
-  gutter:    "#1e2030"
+  gutter:    "#222436"
   header:    "#ff966c"
   info:      "#545c7e"
   label:     "#545c7e"

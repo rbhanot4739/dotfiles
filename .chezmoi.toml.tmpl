@@ -1,8 +1,22 @@
-{{/* Edits here require `chezmoi init` to refresh ~/.config/chezmoi/chezmoi.toml. */}}
+{{- /* Edits here require `chezmoi init` to refresh ~/.config/chezmoi/chezmoi.toml.
+
+Run this non interactively
+    chezmoi init --promptBool is_work=true      # work box
+    chezmoi init --promptBool is_work=false     # personal box
+
+
+*/ -}}
+
+{{- $is_mac   := eq .chezmoi.os "darwin" -}}
+{{- $is_linux := eq .chezmoi.os "linux" -}}
+{{- $is_work := promptBoolOnce . "is_work" "Is this a work machine" false -}}
 
 [data]
-    is_mac = {{ eq .chezmoi.os "darwin" }}
-    is_linux_vm = {{ eq .chezmoi.os "linux" }}
+    is_mac = {{ $is_mac }}
+    is_linux = {{ $is_linux }}
+    is_work = {{ $is_work }}
+    is_linux_work = {{ and $is_linux $is_work }}
+
 
 [diff]
     pager = "delta"

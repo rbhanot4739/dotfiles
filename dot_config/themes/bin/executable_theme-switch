@@ -1,275 +1,288 @@
 #!/usr/bin/env bash
-# New theme orchestrator — reads same state files as existing system
-# Compatible with theme-monitor (passed as $1 from launchd)
+# theme-switch [-q|--quiet] [<theme> | dark | light | --mode [dark|light]]
+# theme-switch --list | --apply
+#
+#   (no argument)  fzf popup with every theme in the registry; Enter applies it.
+#                  Without a terminal (and outside tmux) it prints the list instead.
+#   --apply        re-apply the current state (never prompts); used by theme-generate
+#   <theme>        use that theme. Themes that are dark-only or light-only also set
+#                  ~/.bg_mode to match; adaptive themes keep the current mode.
+#   dark | light   set ~/.bg_mode and apply the theme remembered for that mode.
+#   --mode         small fzf popup to choose dark or light. Without a terminal (and outside
+#                  tmux) it prints the current mode. `--mode dark|light` = `dark|light`.
+#   --list         print all themes: name, mode, description. '*' = active now,
+#                  '+' = remembered for the other mode. Lines starting with # are header.
+#
+# State files (shared with nvim and the shell):
+#   ~/.bg_mode                   dark | light
+#   ~/.theme_dark ~/.theme_light the theme chosen for each mode
+#
+# Applies to: tmux (source-file + fzf-url options), fzf (generated/fzf/active.*),
+# delta (generated/delta/delta-active.gitconfig), lazygit
+# (generated/lazygit/lazygit-active-theme.yml), running Neovim instances (nvr), then any
+# executables in hooks/apply.d/ (env: THEME BG_MODE THEME_KEY THEMES_QUIET THEMES_GENERATED).
+# Missing generated files are created by running theme-generate once.
+# Set THEMES_SKIP_NVIM=1 to skip the Neovim step.
 set -euo pipefail
-trap 'echo "[theme-switch] Error at line $LINENO (command: $BASH_COMMAND)" >&2' ERR
 
-THEMES_DIR="$HOME/.config/themes"
-GENERATED="$THEMES_DIR/generated"
-REGISTRY="$THEMES_DIR/registry"
-GHOSTTY_DIR="$HOME/.config/ghostty"
-THEME_SWITCH_VERBOSE="${THEME_SWITCH_VERBOSE:-0}"
-THEME_SWITCH_APPLY_CURRENT_OSC="${THEME_SWITCH_APPLY_CURRENT_OSC:-0}"
-THEME_SWITCH_APPLY_CALLER_TTY="${THEME_SWITCH_APPLY_CALLER_TTY:-0}"
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SELF_DIR/../lib/registry.sh"
+. "$SELF_DIR/../lib/state.sh"
+. "$SELF_DIR/../lib/util.sh"
+. "$SELF_DIR/../lib/picker.sh"
+export THEMES_ROOT THEMES_REGISTRY THEMES_GENERATED
 
-log() {
-  if [[ "$THEME_SWITCH_VERBOSE" == "1" ]]; then
-    echo "$*"
-  fi
-  return 0
-}
+QUIET=0
+LIST=0
+APPLY_ONLY=0
+MODE_PICK=0
+TARGET=""
+for arg in "$@"; do
+  case "$arg" in
+    -q|--quiet) QUIET=1 ;;
+    -l|--list)  LIST=1 ;;
+    --apply)    APPLY_ONLY=1 ;;
+    --mode)     MODE_PICK=1 ;;
+    -h|--help)  awk 'NR > 1 { if (/^#/) { sub(/^# ?/, ""); print } else exit }' "$0"; exit 0 ;;
+    -*) echo "theme-switch: unknown option: $arg" >&2; exit 2 ;;
+    *)
+      if [ -n "$TARGET" ]; then echo "theme-switch: too many arguments" >&2; exit 2; fi
+      TARGET="$arg" ;;
+  esac
+done
 
-# Optional mode override: theme-switch [dark|light]
-if [[ "${1:-}" == "dark" || "${1:-}" == "light" ]]; then
-  printf '%s\n' "$1" > "$HOME/.bg_mode"
-fi
+log()  { [ "$QUIET" = 1 ] || printf '%s\n' "$*"; }
+warn() { printf 'theme-switch: %s\n' "$*" >&2; }
 
-# Read current state via shared snippet (single source of truth)
-. "$HOME/.config/themes/lib/resolve-theme.sh"
+# ---------------------------------------------------------------------------
+# listing
+# ---------------------------------------------------------------------------
 
-log "Switching to theme: $THEME ($BG_MODE)"
-
-YAML="$REGISTRY/${THEME}.yaml"
-if [[ ! -f "$YAML" ]]; then
-  echo "Error: theme registry not found: $YAML" >&2
-  exit 1
-fi
-
-THEME_MODE=$(yq '.mode' "$YAML")
-
-# --- GHOSTTY ---
-# Ghostty macOS has NO file-watch auto-reload (no FSEvents/kqueue watcher) and
-# no usable programmatic IPC: SIGHUP is ignored or triggers a disruptive full
-# window close/reopen, and osascript requires Accessibility permission that a
-# terminal shell does not have.
-#
-# Two-pronged approach:
-#   1. Write ~/.config/ghostty/config  → new Ghostty windows load the new theme
-#   2. OSC 4/10/11/12 escape sequences → live-update existing terminal sessions:
-#      a. Written directly to each Ghostty PTY (process tree walk from ghostty PID)
-#         This works regardless of whether theme-switch runs inside Ghostty or not.
-#      b. DCS passthrough (\033Ptmux;...) to update the outer terminal hosting tmux.
-if [[ "$THEME_MODE" == "adaptive" ]]; then
-  GHOSTTY_COLORS="$GENERATED/ghostty/${THEME}-${BG_MODE}.conf"
-elif [[ -f "$GENERATED/ghostty/${THEME}-${BG_MODE}.conf" ]]; then
-  GHOSTTY_COLORS="$GENERATED/ghostty/${THEME}-${BG_MODE}.conf"
-else
-  GHOSTTY_COLORS="$GENERATED/ghostty/${THEME}.conf"
-fi
-
-if [[ -f "$GHOSTTY_COLORS" ]]; then
-  cp "$GHOSTTY_COLORS" "$GHOSTTY_DIR/current-colors.conf"
-  # Touch the main config so Ghostty detects a change and re-reads
-  # current-colors.conf when the next new window/tab is created.
-  touch "$GHOSTTY_DIR/config" 2>/dev/null || true
-fi
-
-# Live-update terminal colors via OSC escape sequences.
-#
-# Performance design: two invariants are hoisted out of the per-color loop:
-#   1. Process table + PTY lists — computed once, not once per color.
-#   2. Color values — read in a single yq call, not 19 separate ones.
-# This reduces ~38 pgrep calls + ~19 yq startups to 2 + 1 respectively.
-
-# Emit OSC to the current terminal; DCS passthrough when inside tmux.
-_osc_current() {
-  if [[ -n "${TMUX:-}" ]]; then
-    printf '\033Ptmux;\033\033]%s\007\033\\' "$1"
-  else
-    printf '\033]%s\007' "$1"
-  fi
-}
-
-# Generic BFS: walk a named app's process tree and print all PTY device paths.
-# Terminal emulators are GUI apps with no TTY themselves; each tab/pane spawns
-# a shell child that holds the PTY slave (/dev/ttysN). Writing an OSC sequence
-# to a PTY slave delivers it to that terminal emulator's PTY master read loop.
-# Uses $_PROCTABLE (captured once below) so multiple calls share one ps snapshot.
-_terminal_ttys() {
-  local app_name="$1"
-  local app_pid
-  app_pid=$(pgrep -ix "$app_name" 2>/dev/null | head -1 || true)
-  [[ -z "$app_pid" ]] && return 0
-
-  local -a queue=("$app_pid") visited=("$app_pid") result=()
-
-  while [[ ${#queue[@]} -gt 0 ]]; do
-    local cur="${queue[0]}"
-    queue=("${queue[@]:1}")
-
-    while IFS= read -r line; do
-      local pid ppid tty
-      read -r pid ppid tty <<< "$line"
-      # ps pads the tty column to a fixed width; strip spaces so /dev/ttysN is clean.
-      tty="${tty//[[:space:]]/}"
-      [[ "$ppid" == "$cur" ]] || continue
-      [[ " ${visited[*]} " == *" $pid "* ]] && continue
-      visited+=("$pid")
-      queue+=("$pid")
-      [[ -n "$tty" && "$tty" != "??" ]] && result+=("/dev/$tty")
-    done <<< "$_PROCTABLE"
-  done
-
-  [[ ${#result[@]} -gt 0 ]] && printf '%s\n' "${result[@]}" | sort -u
-}
-
-# Write an OSC sequence to every readable PTY in a newline-separated list.
-_osc_to_ttys() {
-  local seq="$1" tty_dev
-  while IFS= read -r tty_dev; do
-    [[ -n "$tty_dev" && -w "$tty_dev" ]] || continue
-    if [[ "$THEME_SWITCH_APPLY_CALLER_TTY" != "1" && -n "${_CURRENT_TTY:-}" && "$tty_dev" == "$_CURRENT_TTY" ]]; then
-      continue
+# Rows "name<TAB>display" for the picker/list: themes usable in the current mode
+# first (matching mode or adaptive), then the rest. Needs BG_MODE/THEME resolved.
+list_rows() {
+  local other other_theme t marker line first="" second=""
+  if [ "$BG_MODE" = dark ]; then other=light; else other=dark; fi
+  other_theme=$(state_read_theme "$other")
+  for t in $(registry_list); do
+    theme_meta "$t" 2>/dev/null || continue
+    marker=" "
+    if [ "$t" = "$THEME" ]; then marker="*"
+    elif [ "$t" = "$other_theme" ]; then marker="+"
     fi
-    printf '\033]%s\007' "$seq" > "$tty_dev" 2>/dev/null || true
+    line=$(printf '%s\t%s %-20s %-9s %s' "$t" "$marker" "$t" "$T_mode" "$T_description")
+    if [ "$T_mode" = adaptive ] || [ "$T_mode" = "$BG_MODE" ]; then
+      first="$first$line
+"
+    else
+      second="$second$line
+"
+    fi
+  done
+  printf '%s%s' "$first" "$second"
+}
+
+print_list() {
+  printf '# bg_mode: %s   active theme: %s   (dark: %s, light: %s)\n' \
+    "$BG_MODE" "$THEME" "$(state_read_theme dark | sed 's/^$/default/')" "$(state_read_theme light | sed 's/^$/default/')"
+  printf '# * active now, + remembered for the other mode\n'
+  list_rows | while IFS=$'\t' read -r _ display; do
+    [ -n "$display" ] && printf '%s\n' "$display"
   done
 }
 
-# Snapshot process table once; reused by all _terminal_ttys calls below.
-_PROCTABLE=$(ps -ax -o pid=,ppid=,tty= 2>/dev/null)
-_CURRENT_TTY=$(tty 2>/dev/null || true)
-[[ "$_CURRENT_TTY" == not\ a\ tty* ]] && _CURRENT_TTY=""
-
-# Pre-compute PTY device lists once (one pgrep + BFS per app, not one per color).
-_ghostty_ttys=$(_terminal_ttys "ghostty")
-_wezterm_ttys=$(_terminal_ttys "wezterm-gui")
-
-# Send an OSC sequence to all live terminals + the current session.
-_broadcast_osc() {
-  local seq="$1"
-  [[ -n "$_ghostty_ttys" ]] && _osc_to_ttys "$seq" <<< "$_ghostty_ttys"
-  [[ -n "$_wezterm_ttys" ]] && _osc_to_ttys "$seq" <<< "$_wezterm_ttys"
-  if [[ "$THEME_SWITCH_APPLY_CURRENT_OSC" == "1" ]]; then
-    _osc_current "$seq"
-  fi
-}
-
-if [[ -f "$YAML" ]]; then
-  _prefix=""
-  [[ "$THEME_MODE" == "adaptive" ]] && _prefix=".${BG_MODE}"
-
-  # Read all 19 color values in one yq invocation (avoids 19 separate process startups).
-  # Order: palette 0-15, then foreground(16) background(17) cursor(18).
-  _yq_fields=".black, .red, .green, .yellow, .blue, .magenta, .cyan, .white,
-               .bright_black, .bright_red, .bright_green, .bright_yellow,
-               .bright_blue, .bright_magenta, .bright_cyan, .bright_white,
-               .foreground, .background, .cursor"
-  mapfile -t _cvals < <(yq "${_prefix}.colors | [${_yq_fields}] | .[]" "$YAML" 2>/dev/null)
-
-  _fg="${_cvals[16]:-}"; _bg="${_cvals[17]:-}"; _cu="${_cvals[18]:-}"
-
-  # Cursor (OSC 12) sent FIRST so it survives any mid-broadcast abort
-  # (theme-switch can be killed by launchd; previously OSC 12 was the
-  # last write and left cursor color stuck on the previous theme).
-  [[ -n "$_cu" && "$_cu" != "null" ]] && _broadcast_osc "12;${_cu}"
-
-  # Palette colors 0-15 (ANSI) via OSC 4
-  for _i in {0..15}; do
-    _val="${_cvals[$_i]:-}"
-    [[ -z "$_val" || "$_val" == "null" ]] && continue
-    _broadcast_osc "4;${_i};${_val}"
-  done
-
-  # Foreground (OSC 10), background (OSC 11), cursor (OSC 12) — repeated
-  # at the tail as belt-and-suspenders.
-  [[ -n "$_fg" && "$_fg" != "null" ]] && _broadcast_osc "10;${_fg}"
-  [[ -n "$_bg" && "$_bg" != "null" ]] && _broadcast_osc "11;${_bg}"
-  [[ -n "$_cu" && "$_cu" != "null" ]] && _broadcast_osc "12;${_cu}"
+state_resolve
+if [ "$LIST" = 1 ]; then
+  [ -z "$TARGET" ] && [ "$MODE_PICK" = 0 ] || { echo "theme-switch: --list takes no other argument" >&2; exit 2; }
+  print_list
+  exit 0
 fi
 
-# --- NEOVIM ---
-# Update all Neovim instances via nvr. Uses --remote-expr so the call is
-# mode-independent (works in insert/visual/terminal mode). `silent!` suppresses
-# errors for nvim instances whose config doesn't define Load_colorscheme().
-# --embed instances (Cursor, VSCode) are included: they load the user's full
-# init.lua with colorscheme plugins and respond correctly.
-if command -v nvr &>/dev/null; then
-  # Run entire nvr section in a background subshell: nvr --serverlist itself
-  # takes ~100ms; backgrounding the outer block keeps it off the critical path.
-  # Each per-socket nvr call is also backgrounded so they run concurrently.
+# ---------------------------------------------------------------------------
+# choose what to switch to
+# ---------------------------------------------------------------------------
+
+if [ "$APPLY_ONLY" = 1 ] && [ -n "$TARGET" ]; then
+  echo "theme-switch: --apply takes no theme argument" >&2
+  exit 2
+fi
+
+if [ "$MODE_PICK" = 1 ]; then
+  if [ "$APPLY_ONLY" = 1 ]; then echo "theme-switch: --mode and --apply cannot be combined" >&2; exit 2; fi
+  case "$TARGET" in
+    ""|dark|light) ;;
+    *) echo "theme-switch: --mode takes dark or light, not '$TARGET'" >&2; exit 2 ;;
+  esac
+  if [ -z "$TARGET" ]; then
+    if [ -z "${TMUX:-}" ] && ! { [ -t 0 ] && [ -t 1 ]; }; then
+      printf '%s\n' "$BG_MODE"       # no terminal to pick with: just report
+      exit 0
+    fi
+    rows=""
+    for m in dark light; do
+      marker=" "
+      [ "$m" = "$BG_MODE" ] && marker="*"
+      rows="$rows$(printf '%s\t%s %-6s theme: %s' "$m" "$marker" "$m" "$(state_read_theme "$m")")
+"
+    done
+    rc=0
+    TARGET=$(printf '%s' "$rows" | picker_run " mode: ${BG_MODE}  " "Enter: switch   Esc: cancel") || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      [ "$rc" -eq 1 ] && exit 0
+      exit "$rc"
+    fi
+  fi
+fi
+
+if [ -z "$TARGET" ] && [ "$APPLY_ONLY" = 0 ]; then
+  if [ -n "${TMUX:-}" ] || { [ -t 0 ] && [ -t 1 ]; }; then
+    rc=0
+    TARGET=$(list_rows | picker_run " ${BG_MODE}:${THEME}  " "Enter: switch   Esc: cancel   (* active, + other mode)") || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      [ "$rc" -eq 1 ] && exit 0      # cancelled: change nothing
+      exit "$rc"
+    fi
+  else
+    print_list                       # no terminal to pick with: just list
+    exit 0
+  fi
+fi
+
+case "$TARGET" in
+  "")
+    ;;   # re-apply the current state
+  dark|light)
+    state_set_bg_mode "$TARGET"
+    state_resolve
+    ;;
+  *)
+    if ! registry_file "$TARGET" >/dev/null 2>&1; then
+      echo "theme-switch: unknown theme '$TARGET' (see: theme-switch --list)" >&2
+      exit 1
+    fi
+    theme_meta "$TARGET" || exit 1
+    if [ "$T_mode" != adaptive ] && [ "$T_mode" != "$BG_MODE" ]; then
+      log "note: $TARGET is a $T_mode theme, switching bg_mode to $T_mode"
+      state_set_bg_mode "$T_mode"
+      BG_MODE="$T_mode"
+    fi
+    state_set_theme "$BG_MODE" "$TARGET"
+    state_resolve
+    ;;
+esac
+
+# A stored theme that no longer exists: say so, and persist the default so nvim,
+# the shell and tmux all agree.
+if [ "$THEME_FALLBACK" = 1 ]; then
+  if [ -n "$THEME_STORED" ]; then
+    warn "theme '$THEME_STORED' not found for $BG_MODE mode, using $THEME"
+  fi
+  [ -f "$THEMES_REGISTRY/$THEME.yaml" ] || { echo "theme-switch: default theme '$THEME' is not in the registry" >&2; exit 1; }
+  state_set_theme "$BG_MODE" "$THEME"
+fi
+
+# Persist the effective mode too (the file may be missing or invalid on a fresh host);
+# nvim and the shell read ~/.bg_mode directly.
+[ "$(_state_read "$THEMES_STATE_DIR/.bg_mode")" = "$BG_MODE" ] || state_set_bg_mode "$BG_MODE"
+
+# ---------------------------------------------------------------------------
+# make sure the generated files exist
+# ---------------------------------------------------------------------------
+
+locate_generated() {
+  C_TMUX=$(gen_find tmux conf) && C_FZF_OPTS=$(gen_find fzf opts) && C_FZF_SH=$(gen_find fzf sh) \
+    && C_LAZYGIT=$(gen_find lazygit yml) && C_DELTA=$(gen_find delta/sections gitconfig)
+}
+
+if ! locate_generated 2>/dev/null; then
+  log "generated files for $THEME ($BG_MODE) missing, running theme-generate"
+  "$SELF_DIR/theme-generate" --no-apply --quiet || { echo "theme-switch: theme-generate failed" >&2; exit 1; }
+  locate_generated || { echo "theme-switch: no generated files for '$THEME' ($BG_MODE) even after theme-generate" >&2; exit 1; }
+fi
+THEME_KEY="${C_TMUX##*/}"
+THEME_KEY="${THEME_KEY%.conf}"
+
+# ---------------------------------------------------------------------------
+# apply
+# ---------------------------------------------------------------------------
+rc=0
+fail() { warn "$*"; rc=1; }
+
+# tmux: only if a server is already running (never start one).
+apply_tmux() {
+  command -v tmux >/dev/null 2>&1 || { log "  tmux     not installed, skipped"; return 0; }
+  run_limited 5 tmux list-sessions >/dev/null 2>&1 || { log "  tmux     no server running, skipped"; return 0; }
+  local opts="" l
+  run_limited 5 tmux source-file "$C_TMUX" || return 1
+  # tmux-fzf-url calls raw fzf and reads its options from this variable.
+  while IFS= read -r l; do
+    [ -n "$l" ] && opts="$opts $l"
+  done < "$C_FZF_OPTS"
+  run_limited 5 tmux set -g @fzf-url-fzf-options "--tmux center,100%,50% --multi --exit-0 --no-preview$opts" || return 1
+  run_limited 5 tmux refresh-client -S >/dev/null 2>&1 || true
+  log "  tmux     applied"
+}
+
+apply_fzf() {
+  atomic_copy "$C_FZF_OPTS" "$THEMES_GENERATED/fzf/active.opts" \
+    && atomic_copy "$C_FZF_SH" "$THEMES_GENERATED/fzf/active.sh" || return 1
+  log "  fzf      applied"
+}
+
+# delta: features = <section>; dark/light is set too, so plain `git diff` through delta
+# does not need to auto-detect the terminal background.
+apply_delta() {
+  local section tmp f="$THEMES_GENERATED/delta/delta-active.gitconfig"
+  section=$(sed -n '1s/^\[delta "\(.*\)"\]$/\1/p' "$C_DELTA")
+  [ -n "$section" ] || { warn "cannot read delta section name from $C_DELTA"; return 1; }
+  mkdir -p "$THEMES_GENERATED/delta"
+  tmp=$(mktemp "$f.XXXXXX") || return 1
+  {
+    printf '; Auto-generated by theme-switch, do not edit\n'
+    printf '[delta]\n'
+    printf '    features = %s\n' "$section"
+    printf '    %s = true\n' "$BG_MODE"
+  } > "$tmp" && chmod 644 "$tmp" && mv -f "$tmp" "$f" || { rm -f "$tmp"; return 1; }
+  log "  delta    applied ($section)"
+}
+
+apply_lazygit() {
+  atomic_copy "$C_LAZYGIT" "$THEMES_GENERATED/lazygit/lazygit-active-theme.yml" || return 1
+  log "  lazygit  applied"
+}
+
+# Neovim: ask every running instance to reload its colorscheme (see Load_colorscheme in
+# nvim's config). Backgrounded and time-limited so a stuck instance never blocks us.
+apply_nvim() {
+  if [ "${THEMES_SKIP_NVIM:-0}" = 1 ] || ! command -v nvr >/dev/null 2>&1; then
+    log "  nvim     skipped"
+    return 0
+  fi
   (
-    while IFS= read -r socket; do
-      [[ -z "$socket" ]] && continue
-      nvr --servername "$socket" \
-          --remote-expr "execute('silent! lua Load_colorscheme()')" \
-          >/dev/null 2>&1 &
-    done < <(nvr --serverlist 2>/dev/null)
-  ) &
+    for sock in $(run_limited 5 nvr --serverlist 2>/dev/null); do
+      run_limited 5 nvr --servername "$sock" \
+        --remote-expr "execute('silent! lua Load_colorscheme()')" >/dev/null 2>&1 &
+    done
+    wait
+  ) >/dev/null 2>&1 &
+  log "  nvim     requested"
+}
+
+apply_tmux   || fail "tmux apply failed"
+apply_fzf    || fail "fzf apply failed"
+apply_delta  || fail "delta apply failed"
+apply_lazygit || fail "lazygit apply failed"
+apply_nvim
+
+# Optional extra targets (e.g. terminal emulators) live in hooks/apply.d/.
+if [ -d "$THEMES_ROOT/hooks/apply.d" ]; then
+  export THEME BG_MODE THEME_KEY
+  export THEMES_QUIET="$QUIET"
+  for hook in "$THEMES_ROOT"/hooks/apply.d/*; do
+    [ -f "$hook" ] && [ -x "$hook" ] || continue
+    "$hook" || warn "hook ${hook##*/} failed (continuing)"
+  done
 fi
 
-# --- TMUX ---
-# Use `tmux list-sessions` instead of $TMUX so this works whether called
-# from inside tmux or from an external terminal.
-# `tmux refresh-client -S` forces an immediate status bar redraw; without it
-# the new colours appear only after the next status-interval tick (~15 s).
-if tmux list-sessions &>/dev/null 2>&1; then
-  if [[ "$THEME_MODE" == "adaptive" ]]; then
-    TMUX_CONF="$GENERATED/tmux/${THEME}-${BG_MODE}.conf"
-  elif [[ -f "$GENERATED/tmux/${THEME}-${BG_MODE}.conf" ]]; then
-    TMUX_CONF="$GENERATED/tmux/${THEME}-${BG_MODE}.conf"
-  else
-    TMUX_CONF="$GENERATED/tmux/${THEME}.conf"
-  fi
-
-  if [[ -f "$TMUX_CONF" ]]; then
-    tmux source-file "$TMUX_CONF" 2>/dev/null || true
-    tmux refresh-client -S 2>/dev/null || true
-  fi
-
-  # Update @fzf-url-fzf-options so tmux-fzf-url popup uses the new theme.
-  # The plugin calls raw fzf (not the shell wrapper) and reads colors from this tmux var.
-  if [[ "$THEME_MODE" == "adaptive" ]]; then
-    _FZF_THEME_FILE="$GENERATED/fzf/${THEME}-${BG_MODE}.sh"
-  elif [[ -f "$GENERATED/fzf/${THEME}-${BG_MODE}.sh" ]]; then
-    _FZF_THEME_FILE="$GENERATED/fzf/${THEME}-${BG_MODE}.sh"
-  else
-    _FZF_THEME_FILE="$GENERATED/fzf/${THEME}.sh"
-  fi
-  if [[ -f "$_FZF_THEME_FILE" ]]; then
-    _fzf_color_args=$(grep -oE -- '--color=[^ )]+' "$_FZF_THEME_FILE" 2>/dev/null | tr '\n' ' ')
-    tmux set -g @fzf-url-fzf-options "--tmux center,100%,50% --multi --exit-0 --no-preview ${_fzf_color_args}" 2>/dev/null || true
-  fi
-fi
-
-# --- DELTA ---
-if [[ "$THEME_MODE" == "adaptive" ]]; then
-  DELTA_SECTION=$(yq ".${BG_MODE}.delta.section_name" "$YAML")
-else
-  DELTA_SECTION=$(yq ".delta.section_name" "$YAML")
-fi
-
-# Write active theme to a standalone include file so ~/.delta-gitconfig stays
-# chezmoi-managed and immutable.  The main config includes this via [include].
-cat > "$GENERATED/delta/delta-active.gitconfig" <<DELTA
-; Auto-generated by theme-switch — do not edit manually
-[delta]
-    features = ${DELTA_SECTION}
-DELTA
-
-# --- LAZYGIT ---
-# The pager line no longer needs runtime patching: lazygit calls delta-pager,
-# a wrapper that reads ~/.bg_mode at invocation time.
-
-if [[ "$THEME_MODE" == "adaptive" ]]; then
-  LAZYGIT_YML="$GENERATED/lazygit/${THEME}-${BG_MODE}.yml"
-elif [[ -f "$GENERATED/lazygit/${THEME}-${BG_MODE}.yml" ]]; then
-  LAZYGIT_YML="$GENERATED/lazygit/${THEME}-${BG_MODE}.yml"
-else
-  LAZYGIT_YML="$GENERATED/lazygit/${THEME}.yml"
-fi
-
-# Write active theme to a standalone overlay file loaded via LG_CONFIG_FILE,
-# so ~/.config/lazygit/config.yml stays chezmoi-managed and immutable.
-if [[ -f "$LAZYGIT_YML" ]]; then
-  cp "$LAZYGIT_YML" "$GENERATED/lazygit/lazygit-active-theme.yml"
-fi
-
-# --- WEZTERM ---
-# WezTerm has its own Lua config that watches ~/.theme_dark and ~/.theme_light
-# via wezterm.add_to_config_reload_watch_list(). Touching the current mode's
-# theme file triggers a config reload, which fires window-config-reloaded and
-# re-applies the correct color scheme via set_config_overrides().
-# This is the canonical path for WezTerm; OSC injection is supplementary.
-touch "$HOME/.theme_${BG_MODE}" 2>/dev/null || true
-
-log "Done."
+log "Theme: $THEME ($BG_MODE)"
+exit "$rc"

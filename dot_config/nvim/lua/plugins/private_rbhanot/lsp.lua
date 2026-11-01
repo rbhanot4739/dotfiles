@@ -1,17 +1,17 @@
 return {
-  {
-    "saecki/live-rename.nvim",
-    config = function()
-      require("live-rename").setup({
-        show_other_ocurrences = true,
-        use_patterns = true,
-      })
-      local live_rename = require("live-rename")
-      vim.keymap.set("n", "<leader>cr", function()
-        live_rename.rename({ insert = false, cursorpos = 0 })
-      end)
-    end,
-  },
+  -- {
+  --   "saecki/live-rename.nvim",
+  --   config = function()
+  --     require("live-rename").setup({
+  --       show_other_ocurrences = true,
+  --       use_patterns = true,
+  --     })
+  --     local live_rename = require("live-rename")
+  --     vim.keymap.set("n", "<leader>cr", function()
+  --       live_rename.rename({ insert = false, cursorpos = 0 })
+  --     end)
+  --   end,
+  -- },
   {
     "neovim/nvim-lspconfig",
     -- dependencies = { "saghen/blink.cmp" },
@@ -92,7 +92,7 @@ return {
   },
   {
     "mason-org/mason.nvim",
-    opts = { ensure_installed = { "flake8", "mypy", "cspell", "copilot-language-server", "protols" } },
+    opts = { ensure_installed = { "flake8", "mypy", "cspell", "protols" } },
   },
   {
     "stevearc/conform.nvim",
@@ -152,7 +152,7 @@ return {
 
       local cspell_config = {
         config_file_preferred_name = "cspell.json",
-        cspell_config_dirs = { "~/.config/", "/Users/rbhanot/development/work" },
+        cspell_config_dirs = { "~/.config/", "/u/bhanotr" },
         read_config_synchronously = true,
         on_add_to_dictionary = function(payload)
           os.execute(string.format("sort %s -o %s", payload.dictionary_path, payload.dictionary_path))

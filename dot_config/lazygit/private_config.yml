@@ -3,7 +3,7 @@ quitOnTopLevelReturn: true
 git:
   pagers:
     - colorArg: always
-      pager: delta-pager --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+      pager: delta --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
   commit:
     autoWrapCommitMessage: true
     autoWrapWidth: 100
@@ -163,7 +163,6 @@ keybinding:
     markCommitAsBaseForRebase: B
     tagCommit: T
     checkoutCommit: <space>
-    resetCherryPick: <c-R>
     copyCommitAttributeToClipboard: "y"
     openLogMenu: <c-l>
     openInBrowser: o

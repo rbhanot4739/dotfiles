@@ -44,6 +44,7 @@ local function is_disabled_dir(bufnr)
   return false
 end
 
+-- disable nes
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local bufnr = args.buf
@@ -52,7 +53,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.g.sidekick_nes = false
     else
       vim.lsp.inline_completion.enable(true)
-      vim.g.sidekick_nes = true
+      vim.g.sidekick_nes = false
     end
   end,
 })

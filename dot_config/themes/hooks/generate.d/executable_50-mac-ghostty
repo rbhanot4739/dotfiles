@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# macOS only. theme-generate hook: generated/ghostty/<key>.conf for every theme.
+# Runs standalone too:  THEMES_GENERATED=... hooks/generate.d/50-mac-ghostty
+set -euo pipefail
+ROOT="${THEMES_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+. "$ROOT/lib/registry.sh"
+. "$ROOT/lib/state.sh"
+
+out="$THEMES_GENERATED/ghostty"
+mkdir -p "$out"
+stage=$(mktemp -d "$out/.stage.XXXXXX")
+trap 'rm -rf "$stage"' EXIT
+
+errors=0
+keep=""
+for theme in $(registry_list); do
+  theme_meta "$theme" 2>/dev/null || { echo "ghostty hook: cannot read $theme" >&2; errors=$((errors + 1)); continue; }
+  if [ "$T_mode" = adaptive ]; then modes="dark light"; else modes="$T_mode"; fi
+  for bg in $modes; do
+    if [ "$T_mode" = adaptive ]; then key="$theme-$bg"; else key="$theme"; fi
+    if "$ROOT/adapters/ghostty" "$theme" "$bg" > "$stage/$key.conf" 2> "$stage/err"; then
+      keep="$keep
+$key.conf"
+    else
+      echo "ghostty hook: $theme ($bg): $(tr '\n' ' ' < "$stage/err")" >&2
+      errors=$((errors + 1))
+    fi
+  done
+done
+[ "$errors" -eq 0 ] || exit 1
+
+for f in "$stage"/*.conf; do mv -f "$f" "$out/${f##*/}"; done
+for f in "$out"/*.conf; do
+  [ -f "$f" ] || continue
+  case "$keep
+" in *"
+${f##*/}
+"*) ;; *) rm -f "$f" ;; esac
+done

@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# macOS only. theme-switch hook: live-update the colours of terminals that are already open.
+#
+# Ghostty/WezTerm are GUI apps without a tty; every tab/pane has a shell child that owns a
+# PTY. Writing OSC 4/10/11/12 escape sequences to those PTYs recolours the terminal.
+# We find them by walking the process tree under the Ghostty / WezTerm processes.
+#
+# Environment (all optional):
+#   THEMES_OSC_CURRENT=1       also recolour the terminal this command runs in
+#   THEMES_OSC_CALLER_TTY=1    do not skip the calling terminal's PTY
+# Test hooks: THEMES_PS_TABLE (file with "pid ppid tty" lines instead of `ps`),
+#             THEMES_TERMINAL_PIDS (root pids instead of pgrep), THEMES_TTY_PREFIX (default /dev/),
+#             THEMES_CURRENT_TTY.
+set -euo pipefail
+ROOT="${THEMES_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+. "$ROOT/lib/registry.sh"
+. "$ROOT/lib/state.sh"
+
+prefix="${THEMES_TTY_PREFIX:-/dev/}"
+
+# descendant_ttys <root-pid>   stdin: "pid ppid tty" lines; prints tty names under that pid
+descendant_ttys() {
+  awk -v root="$1" '
+    { pid[NR] = $1; ppid[NR] = $2; tty[NR] = $3; n = NR }
+    END {
+      inset[root] = 1
+      changed = 1
+      while (changed) {
+        changed = 0
+        for (i = 1; i <= n; i++)
+          if (!(pid[i] in inset) && (ppid[i] in inset)) { inset[pid[i]] = 1; changed = 1 }
+      }
+      for (i = 1; i <= n; i++)
+        if ((pid[i] in inset) && tty[i] != "" && tty[i] != "??" && tty[i] != "?" && tty[i] != "-")
+          seen[tty[i]] = 1
+      for (t in seen) print t
+    }'
+}
+
+if [ -n "${THEMES_PS_TABLE:-}" ]; then table=$(cat "$THEMES_PS_TABLE"); else table=$(ps -ax -o pid=,ppid=,tty= 2>/dev/null || true); fi
+
+roots="${THEMES_TERMINAL_PIDS:-}"
+if [ -z "$roots" ]; then
+  for app in ghostty wezterm-gui; do
+    roots="$roots $(pgrep -ix "$app" 2>/dev/null | tr '\n' ' ' || true)"
+  done
+fi
+
+current_tty="${THEMES_CURRENT_TTY:-$(tty 2>/dev/null || true)}"
+case "$current_tty" in "not a tty"*) current_tty="" ;; esac
+
+ttys=""
+for r in $roots; do
+  ttys="$ttys
+$(printf '%s\n' "$table" | descendant_ttys "$r")"
+done
+ttys=$(printf '%s\n' "$ttys" | sed '/^$/d' | sort -u)
+
+# Payload: cursor first (so it survives an interrupted write), palette, fg, bg, cursor.
+theme_load "$THEME" "$BG_MODE" colors
+theme_need foreground background cursor \
+  black red green yellow blue magenta cyan white \
+  bright_black bright_red bright_green bright_yellow bright_blue bright_magenta bright_cyan bright_white
+payload=$(printf '\033]12;%s\007' "$V_cursor")
+i=0
+for name in black red green yellow blue magenta cyan white \
+            bright_black bright_red bright_green bright_yellow bright_blue bright_magenta bright_cyan bright_white; do
+  eval "val=\$V_$name"
+  payload="$payload$(printf '\033]4;%s;%s\007' "$i" "$val")"
+  i=$((i + 1))
+done
+payload="$payload$(printf '\033]10;%s\007\033]11;%s\007\033]12;%s\007' "$V_foreground" "$V_background" "$V_cursor")"
+
+n=0
+while IFS= read -r t; do
+  [ -n "$t" ] || continue
+  dev="$prefix$t"
+  [ -w "$dev" ] || continue
+  if [ "${THEMES_OSC_CALLER_TTY:-0}" != 1 ] && [ -n "$current_tty" ] && [ "$dev" = "$current_tty" ]; then continue; fi
+  printf '%s' "$payload" >> "$dev" 2>/dev/null && n=$((n + 1)) || true
+done <<EOF2
+$ttys
+EOF2
+
+if [ "${THEMES_OSC_CURRENT:-0}" = 1 ]; then
+  if [ -n "${TMUX:-}" ]; then
+    # tmux swallows OSC; wrap in DCS passthrough (needs `allow-passthrough on`)
+    esc="${payload//$'\033'/$'\033\033'}"
+    printf '\033Ptmux;%s\033\\' "$esc"
+  else
+    printf '%s' "$payload"
+  fi
+fi
+[ "${THEMES_QUIET:-0}" = 1 ] || echo "  terminals recoloured: $n"

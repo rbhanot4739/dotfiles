@@ -1,44 +1,59 @@
 #!/usr/bin/env bash
-# Usage: fzf <theme-name> <bg-mode>
-# Emits: theme_opts=(...) zsh array to stdout
+# Usage: fzf <theme> <bg-mode> [--opts]      (bg-mode: dark|light)
+#   default : prints a sourceable `theme_opts=(--color=...)` array (bash/zsh)
+#   --opts  : prints one `--color=...` option per line, for FZF_DEFAULT_OPTS_FILE
 set -euo pipefail
 
-THEME="$1"
+THEME="${1:?usage: fzf <theme> <dark|light> [--opts]}"
 MODE="${2:-dark}"
-REGISTRY="$HOME/.config/themes/registry"
-YAML="$REGISTRY/${THEME}.yaml"
+FORMAT="${3:-array}"
+case "$MODE" in dark|light) ;; *) echo "Error: bg-mode must be dark or light" >&2; exit 2 ;; esac
+case "$FORMAT" in array|--opts) ;; *) echo "Error: unknown option: $FORMAT" >&2; exit 2 ;; esac
 
-[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+. "$(dirname "$0")/../lib/registry.sh"
+theme_load "$THEME" "$MODE" fzf
+theme_need bg bg_plus fg fg_plus hl hl_plus border header info marker pointer prompt query_fg spinner
 
-THEME_MODE=$(yq '.mode' "$YAML")
-
-yv() {
-  if [[ "$THEME_MODE" == "adaptive" ]]; then
-    yq ".${MODE}.fzf.${1}" "$YAML"
-  else
-    yq ".fzf.${1}" "$YAML"
-  fi
-}
-
-cat <<ZSH
+# Keep color keys limited to the portable subset: some older fzf builds fail hard
+# on newer keys like label/separator.
+if [ "$FORMAT" = "--opts" ]; then
+  cat <<OPTS
+--color=bg:${V_bg}
+--color=bg+:${V_bg_plus}
+--color=fg:${V_fg}
+--color=fg+:${V_fg_plus}
+--color=hl:${V_hl}
+--color=hl+:${V_hl_plus}
+--color=border:${V_border}
+--color=header:${V_header}
+--color=info:${V_info}
+--color=marker:${V_marker}
+--color=pointer:${V_pointer}
+--color=prompt:${V_prompt}
+--color=query:${V_query_fg}
+--color=spinner:${V_spinner}
+OPTS
+else
+  cat <<ZSH
 #!/bin/zsh
 
 # Keep color keys limited to the portable subset.
 # Some bundled/older fzf builds fail hard on newer keys like label/separator.
 theme_opts=(
-    --color=bg:$(yv bg)
-    --color=bg+:$(yv bg_plus)
-    --color=fg:$(yv fg)
-    --color=fg+:$(yv fg_plus)
-    --color=hl:$(yv hl)
-    --color=hl+:$(yv hl_plus)
-    --color=border:$(yv border)
-    --color=header:$(yv header)
-    --color=info:$(yv info)
-    --color=marker:$(yv marker)
-    --color=pointer:$(yv pointer)
-    --color=prompt:$(yv prompt)
-    --color=query:$(yv query_fg)
-    --color=spinner:$(yv spinner)
+    --color=bg:${V_bg}
+    --color=bg+:${V_bg_plus}
+    --color=fg:${V_fg}
+    --color=fg+:${V_fg_plus}
+    --color=hl:${V_hl}
+    --color=hl+:${V_hl_plus}
+    --color=border:${V_border}
+    --color=header:${V_header}
+    --color=info:${V_info}
+    --color=marker:${V_marker}
+    --color=pointer:${V_pointer}
+    --color=prompt:${V_prompt}
+    --color=query:${V_query_fg}
+    --color=spinner:${V_spinner}
 )
 ZSH
+fi

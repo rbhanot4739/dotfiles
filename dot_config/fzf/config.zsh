@@ -8,17 +8,9 @@ find_files_cmd="$FZF_FD_FIND_FILES_CMD"
 find_dirs_cmd="$FZF_FD_FIND_DIRS_CMD"
 export FZF_DEFAULT_COMMAND="$find_all_cmd"
 
-# Load theme once at startup.
-_fzf_theme_opts_str=""
-theme_opts=()
-source "$HOME/.config/themes/lib/resolve-theme.sh"
-_fzf_theme_file="$HOME/.config/themes/generated/fzf/${THEME}-${BG_MODE}.sh"
-if [[ -f "$_fzf_theme_file" ]]; then
-  source "$_fzf_theme_file"
-elif [[ -f "$HOME/.config/themes/generated/fzf/${THEME}.sh" ]]; then
-  source "$HOME/.config/themes/generated/fzf/${THEME}.sh"
-fi
-(( ${#theme_opts[@]} )) && _fzf_theme_opts_str="${(j: :)theme_opts}"
+# Theme colours: FZF_DEFAULT_OPTS_FILE (exported in .zprofile, rewritten by theme-switch)
+# is read by every fzf run, so a theme switch applies to new pickers without reloading
+# the shell. The options below come after it and only override label/header colours.
 
 # Shared keybinds; context-specific binds are added below.
 FZF_SHARED_KEYBINDS="\
@@ -32,7 +24,7 @@ FZF_SHARED_KEYBINDS="\
 FZF_FILE_KEYBIND_EDIT="--bind=ctrl-v:execute(nvim {})+abort"
 
 # Keep header color consistent across themes.
-export FZF_DEFAULT_OPTS="--ansi --cycle --style full --info=inline-right --height ~50% --margin 1,2 --layout=reverse --border rounded --prompt '${FZF_UNIFIED_PROMPT}' --pointer '${FZF_UNIFIED_POINTER}' --color='label:${FZF_UNIFIED_LABEL_COLOR}' ${FZF_SHARED_KEYBINDS} ${_fzf_theme_opts_str} --color='header:${FZF_UNIFIED_HEADER_COLOR}'"
+export FZF_DEFAULT_OPTS="--ansi --cycle --style full --info=inline-right --height ~50% --margin 1,2 --layout=reverse --border rounded --prompt '${FZF_UNIFIED_PROMPT}' --pointer '${FZF_UNIFIED_POINTER}' --color='label:${FZF_UNIFIED_LABEL_COLOR}' ${FZF_SHARED_KEYBINDS} --color='header:${FZF_UNIFIED_HEADER_COLOR}'"
 export FZF_COMPLETION_OPTS="${FZF_DEFAULT_OPTS}"
 export FZF_COMPLETION_PATH_OPTS="--multi --preview-window '${FZF_UNIFIED_PREVIEW_WINDOW}'"
 export FZF_COMPLETION_DIR_OPTS="--multi --preview-window '${FZF_UNIFIED_DIR_PREVIEW_WINDOW}'"
@@ -134,20 +126,13 @@ __fzf_complete_env_vars() {
 _fzf_complete_export() { __fzf_complete_env_vars "$@"; }
 _fzf_complete_unset()  { __fzf_complete_env_vars "$@"; }
 
-# fzf wrapper: re-load active theme for new pickers after theme switch.
+# fzf wrapper: shared defaults. Colours come from the theme's active.opts. It is passed
+# explicitly on every call, so shells that started before the file existed (and so have no
+# FZF_DEFAULT_OPTS_FILE) are themed too, and a deleted file cannot make fzf fail.
 fzf() {
-  local -a default_opts=(--height 60% --multi)
-  local -a theme_opts
-  source "$HOME/.config/themes/lib/resolve-theme.sh"
-  local _gen_fzf="$HOME/.config/themes/generated/fzf"
-
-  if [[ -f "${_gen_fzf}/${THEME}-${BG_MODE}.sh" ]]; then
-    set -o noglob; source "${_gen_fzf}/${THEME}-${BG_MODE}.sh"; set +o noglob
-  elif [[ -f "${_gen_fzf}/${THEME}.sh" ]]; then
-    set -o noglob; source "${_gen_fzf}/${THEME}.sh"; set +o noglob
-  fi
-
-  command fzf "${default_opts[@]}" "${theme_opts[@]}" --color="header:${FZF_UNIFIED_HEADER_COLOR}" "$@"
+  local _opts="$HOME/.config/themes/generated/fzf/active.opts"
+  [[ -f $_opts ]] || _opts=""
+  FZF_DEFAULT_OPTS_FILE="$_opts" command fzf --height 60% --multi "$@"
 }
 
 # Git pickers.

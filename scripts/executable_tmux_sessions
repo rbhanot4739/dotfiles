@@ -442,9 +442,8 @@ fzf_binds='enter:accept-or-print-query,tab:down,shift-tab:up'
 
 # Theme configuration
 theme_opts=()
-. "$HOME/.config/themes/lib/resolve-theme.sh"
-selected_theme=$THEME
-theme_file="$HOME/.config/themes/generated/fzf/${selected_theme}.sh"
+# active.sh is rewritten by theme-switch; always the current theme
+theme_file="$HOME/.config/themes/generated/fzf/active.sh"
 
 if [[ -f "$theme_file" ]]; then
   set -o noglob

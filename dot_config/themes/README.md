@@ -1,85 +1,104 @@
-# Theme System
+# Themes
 
-Unified theme manager for Ghostty, WezTerm, tmux, Neovim, fzf, delta, lazygit.
+One theme for tmux, Neovim, fzf, delta and lazygit, switched with one command.
+Works on Linux and macOS (bash 3.2 compatible, no `yq`, no daemon). On macOS two
+extra pieces are installed for Ghostty and WezTerm (see [macOS only](#macos-only)).
 
-## How It Works
+Over SSH the terminal itself (e.g. Windows Terminal) keeps its own colour scheme.
+Pick a matching scheme there; this setup themes everything that runs inside it.
 
-**State files** (source of truth):
-- `~/.bg_mode` — `dark` or `light`
-- `~/.theme_dark` / `~/.theme_light` — active theme name
+## State
 
-**Flow:**
+| File | Meaning |
+|---|---|
+| `~/.bg_mode` | `dark` or `light` |
+| `~/.theme_dark`, `~/.theme_light` | theme remembered for each mode |
+
+`registry/*.yaml` holds the colours of every theme. `theme-generate` turns the registry
+into ready-to-use snippets in `~/.config/themes/generated/`, `theme-switch` applies one.
+
 ```
-registry/*.yaml  ->  theme-generate  ->  generated/  ->  theme-switch  ->  all tools
-```
-
-Each `registry/*.yaml` holds color data for every tool. `theme-generate` compiles
-them into per-tool config snippets in `generated/`. `theme-switch` applies the
-current theme live (OSC escape sequences for terminals, tmux source-file, nvr for
-Neovim, sd/yq for delta/lazygit).
-
-Auto dark/light switching is handled by a LaunchAgent (`com.rbhanot.theme-monitor`)
-that watches macOS appearance via `bin/theme-notify` (Swift, KVO on
-`NSApp.effectiveAppearance`) and calls `theme-switch` on change.
-
-## Shell Hookup
-
-```zsh
-# .zprofile — puts theme-switch, theme-list, etc. on PATH
-[[ -d "$HOME/.config/themes/bin" ]] && export PATH="$HOME/.config/themes/bin:$PATH"
-
-# fzf_config.zsh — fzf() wrapper sources lib/resolve-theme.sh and injects theme colors
-# custom_config.zsh — ZLE widget bound to Alt+> calls theme-list
+registry/*.yaml --theme-generate--> generated/ --theme-switch--> tmux, fzf, delta, lazygit, nvim
 ```
 
-Nothing runs at shell startup. The fzf wrapper applies colors lazily per invocation.
+## Commands (on `PATH` via `.zprofile`)
 
-## Rebuild from Scratch
-
-```bash
-# 1. Compile the Swift notifier
-swiftc -framework Cocoa bin/theme-notify.swift -o bin/theme-notify
-chmod +x bin/theme-notify
-
-# 2. Regenerate all tool configs
-theme-generate
-
-# 3. Load the LaunchAgent
-launchctl load ~/Library/LaunchAgents/com.rbhanot.theme-monitor.plist
-
-# 4. Set initial state and apply
-echo "dark" > ~/.bg_mode && echo "tokyonight-night" > ~/.theme_dark
-theme-switch
+```
+theme-switch                  fzf popup listing every registry theme ( * active, + other mode )
+theme-switch <name>           switch; flips bg_mode if the theme only exists for the other mode
+theme-switch dark|light       switch mode, restoring the theme remembered for it
+theme-switch --list           plain list (for scripts)
+theme-switch --apply          re-apply the current state (after editing the registry, say)
+theme-switch --mode           small popup: dark | light (also: --mode dark|light)
+theme-generate                rebuild generated/ from the registry (all or nothing)
 ```
 
-Dependencies: `yq`, `sd`, `nvr` (neovim-remote), Xcode CLT (for swiftc).
+Key bindings: `Alt->` (tmux root binding and zsh widget) opens `theme-switch`;
+`Alt-<` (tmux) opens `theme-switch --mode`.
 
-## Adding a Theme
+`theme-switch` is quick and idempotent. Missing generated files are rebuilt on the
+way, and a stored theme that no longer exists falls back to
+`tokyonight-night` / `tokyonight-day` with a warning.
 
-```bash
-theme-import          # interactive deduped picker across tinted/gogh/iterm2/wezterm
-theme-import [name]   # import a specific theme name (source auto-fallback)
-theme-import --refresh
-theme-import --no-fzf --yes --source auto "<name>"
+## What gets updated
 
-# or manually: copy an existing registry/*.yaml, edit colors, then:
-theme-generate && theme-list
+| Target | How |
+|---|---|
+| tmux | `source-file generated/tmux/<key>.conf` into a running server (never starts one) |
+| fzf | `generated/fzf/active.opts` (read through `FZF_DEFAULT_OPTS_FILE`), `active.sh` for scripts |
+| delta | `generated/delta/delta-active.gitconfig` (included by `~/.delta-gitconfig`) |
+| lazygit | `generated/lazygit/lazygit-active-theme.yml` (loaded through `LG_CONFIG_FILE`) |
+| Neovim | every instance found by `nvr --serverlist` re-runs `Load_colorscheme()` |
+
+`<key>` is `<name>-dark|light` for adaptive themes, plain `<name>` for single-mode ones.
+
+## Hooks
+
+Executables in `hooks/generate.d/` (run by `theme-generate`) and `hooks/apply.d/`
+(run by `theme-switch`) extend the core. A hook that fails only prints a warning.
+Environment: `THEMES_ROOT`, `THEMES_REGISTRY`, `THEMES_GENERATED`; apply hooks also
+get `THEME`, `BG_MODE`, `THEME_KEY`, `THEMES_QUIET`.
+
+## macOS only
+
+Deployed only when `is_mac` (see `.chezmoiignore`): `adapters/{ghostty,wezterm}` and the
+`*-mac-*` hooks. They write `~/.config/ghostty/current-colors.conf`, WezTerm schemes
+and `~/.wezterm_themes.lua`, and recolour already open Ghostty/WezTerm windows through
+escape sequences.
+
+## Checking a switch by eye
+
+```
+theme-switch gruvbox            # then, in any shell:
+echo $FZF_DEFAULT_OPTS_FILE     # fzf: set in login shells; the fzf() wrapper does not need it
+ls | fzf                        # fzf reads the colours on every start (live)
+git diff --no-index /etc/hosts /etc/hostname | delta      # delta: live, read on every run
+git config --get-regexp '^delta\.(features|dark|light)'   # which delta section is active
+lazygit                         # lazygit reads its config only at start: restart a running one
 ```
 
-Notes:
-- Remote source indexes are cached in `~/.cache/theme-import` (default TTL: 1 day).
-- Use `--refresh` to force catalog refresh immediately.
+Only lazygit needs a restart; tmux and Neovim update immediately, fzf and delta on their next run.
 
-## Removing a Theme
+## Adding a theme
 
-```bash
-theme-remove <name>
+Copy a file in `registry/`, edit the colours (name must equal the file name), then:
+
+```
+theme-generate && theme-switch <name>
 ```
 
-## chezmoi
+## Overrides (mostly for tests)
 
-Exclude from tracking:
+`THEMES_REGISTRY`, `THEMES_GENERATED`, `THEMES_STATE_DIR` (default `$HOME`),
+`THEMES_SKIP_NVIM=1`.
+
+## Checks
+
+`dev/` is never deployed. Run by hand from this directory:
+
 ```
-dot_config/themes/generated
-dot_config/themes/bin/theme-notify
+bash dev/verify-registry.sh   bash dev/verify-adapters.sh   bash dev/verify-generate.sh
+bash dev/verify-switch.sh     bash dev/verify-mac.sh        bash dev/verify-consumers.sh
 ```
+
+All of them work in a scratch `HOME`; your real state files are never touched.

@@ -1,141 +1,148 @@
 #!/usr/bin/env bash
-# Regenerates all generated/ artifacts from registry YAMLs
-# Run this after editing any registry YAML file
+# theme-generate [--no-apply] [--quiet]
+#
+# Compiles registry/*.yaml into per-tool files under $THEMES_GENERATED
+# (default ~/.config/themes/generated):
+#
+#   fzf/<key>.sh        sourceable `theme_opts=(...)` array
+#   fzf/<key>.opts      one --color option per line (for FZF_DEFAULT_OPTS_FILE)
+#   tmux/<key>.conf     `set -g @VAR` lines
+#   lazygit/<key>.yml   gui.theme overlay
+#   delta/sections/<key>.gitconfig   one [delta "<section>"] block per theme
+#   delta/delta-themes.gitconfig     all sections concatenated
+#
+# <key> is "<name>-dark" / "<name>-light" for adaptive themes, "<name>" otherwise.
+# Everything is built in a staging directory first: if any theme fails, nothing in
+# the generated tree is touched. Active files written by theme-switch
+# (active.*, delta-active.gitconfig, lazygit-active-theme.yml) are never removed.
+#
+# Extra generators (e.g. terminal-specific ones) can drop executables into
+# hooks/generate.d/; they run after the core files, with THEMES_ROOT,
+# THEMES_REGISTRY and THEMES_GENERATED exported. A failing hook only warns.
 set -euo pipefail
 
-THEMES_DIR="$HOME/.config/themes"
-REGISTRY="$THEMES_DIR/registry"
-ADAPTERS="$THEMES_DIR/adapters"
-GENERATED="$THEMES_DIR/generated"
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SELF_DIR/../lib/registry.sh"
+. "$SELF_DIR/../lib/state.sh"
+export THEMES_ROOT THEMES_REGISTRY THEMES_GENERATED
 
-# Ensure generated dirs exist
-mkdir -p "$GENERATED"/{fzf,tmux,ghostty,delta,lazygit}
-WEZTERM_COLORS_DIR="$HOME/.config/wezterm/colors"
-mkdir -p "$WEZTERM_COLORS_DIR"
+APPLY=1
+QUIET=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-apply) APPLY=0 ;;
+    -q|--quiet) QUIET=1 ;;
+    -h|--help)  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "Usage: theme-generate [--no-apply] [--quiet]" >&2; exit 2 ;;
+  esac
+done
 
-STAMP="$GENERATED/.last-generated"
-FORCE=0
-[[ "${1:-}" == "--force" ]] && FORCE=1
+say()  { [ "$QUIET" = 1 ] || printf '%s\n' "$*"; }
+warn() { printf 'theme-generate: %s\n' "$*" >&2; }
 
-if [[ "$FORCE" -eq 0 && -f "$STAMP" ]]; then
-  newest=$(find "$REGISTRY" -name '*.yaml' -newer "$STAMP" -print -quit 2>/dev/null)
-  if [[ -z "$newest" ]]; then
-    echo "Nothing changed. Use --force to regenerate anyway."
-    exit 0
-  fi
-fi
+themes=$(registry_list)
+[ -n "$themes" ] || { echo "Error: no themes in $THEMES_REGISTRY" >&2; exit 1; }
 
-# Accumulator for delta themes gitconfig
-DELTA_OUT="$GENERATED/delta/delta-themes.gitconfig"
-echo '; vim: set filetype=gitconfig:' > "$DELTA_OUT"
-echo '' >> "$DELTA_OUT"
+mkdir -p "$THEMES_GENERATED"
+STAGE=$(mktemp -d "$THEMES_GENERATED/.stage.XXXXXX")
+trap 'rm -rf "$STAGE"' EXIT
+mkdir -p "$STAGE/fzf" "$STAGE/tmux" "$STAGE/lazygit" "$STAGE/delta/sections"
 
-process_theme() {
-  local yaml="$1"
-  local name
-  name=$(yq '.name' "$yaml")
-  local mode
-  mode=$(yq '.mode' "$yaml")
+errors=0
+nkeys=0
 
-  if [[ "$mode" == "adaptive" ]]; then
-    for bg in dark light; do
-      echo "  [adaptive] $name-$bg"
+fail() { errors=$((errors + 1)); warn "$*"; }
 
-      # fzf
-      "$ADAPTERS/fzf" "$name" "$bg" > "$GENERATED/fzf/${name}-${bg}.sh"
-
-      # tmux
-      "$ADAPTERS/tmux" "$name" "$bg" > "$GENERATED/tmux/${name}-${bg}.conf"
-
-      # ghostty
-      "$ADAPTERS/ghostty" "$name" "$bg" > "$GENERATED/ghostty/${name}-${bg}.conf"
-
-      # delta - append to combined file
-      "$ADAPTERS/delta" "$name" "$bg" >> "$DELTA_OUT"
-      echo '' >> "$DELTA_OUT"
-
-      # lazygit
-      "$ADAPTERS/lazygit" "$name" "$bg" > "$GENERATED/lazygit/${name}-${bg}.yml"
-
-      # wezterm - custom .toml (used as fallback when no built-in scheme matches)
-      "$ADAPTERS/wezterm" "$name" "$bg" > "$WEZTERM_COLORS_DIR/${name}-${bg}.toml"
-    done
-  else
-    echo "  [single]   $name ($mode)"
-
-    # fzf
-    "$ADAPTERS/fzf" "$name" "$mode" > "$GENERATED/fzf/${name}.sh"
-
-    # tmux
-    "$ADAPTERS/tmux" "$name" "$mode" > "$GENERATED/tmux/${name}.conf"
-
-    # ghostty - always include mode in filename for compatibility
-    "$ADAPTERS/ghostty" "$name" "$mode" > "$GENERATED/ghostty/${name}-${mode}.conf"
-
-    # delta
-    "$ADAPTERS/delta" "$name" "$mode" >> "$DELTA_OUT"
-    echo '' >> "$DELTA_OUT"
-
-    # lazygit
-    "$ADAPTERS/lazygit" "$name" "$mode" > "$GENERATED/lazygit/${name}-${mode}.yml"
-
-    # wezterm - custom .toml (used as fallback when no built-in scheme matches)
-    "$ADAPTERS/wezterm" "$name" "$mode" > "$WEZTERM_COLORS_DIR/${name}.toml"
+# gen <adapter> <theme> <bg-mode> <outfile> [adapter args...]
+gen() {
+  local adapter="$1" theme="$2" bg="$3" out="$4"
+  shift 4
+  if ! "$THEMES_ROOT/adapters/$adapter" "$theme" "$bg" "$@" > "$out" 2> "$STAGE/err"; then
+    fail "$theme ($bg): adapter '$adapter' failed: $(tr '\n' ' ' < "$STAGE/err")"
+    return 1
   fi
 }
 
-# Generate WezTerm themes Lua module
-WEZTERM_THEMES_LUA="$HOME/.wezterm_themes.lua"
-{
-  echo '-- Auto-generated by theme-generate — do not edit directly'
-  echo '-- Source: ~/.config/themes/registry/*.yaml'
-  echo ''
-  echo 'local M = {}'
-  echo ''
-  echo 'M.themes = {'
-} > "$WEZTERM_THEMES_LUA"
-
-for yaml in "$REGISTRY"/*.yaml; do
-  local_name=$(yq '.name' "$yaml")
-  local_mode=$(yq '.mode' "$yaml")
-
-  if [[ "$local_mode" == "adaptive" ]]; then
-    dark_scheme=$(yq '.dark.terminal.wezterm_scheme' "$yaml")
-    light_scheme=$(yq '.light.terminal.wezterm_scheme' "$yaml")
-    # Fall back to "<name>-dark" / "<name>-light" (custom .toml) if no built-in defined
-    [[ "$dark_scheme" == "null" ]]  && dark_scheme="${local_name}-dark"
-    [[ "$light_scheme" == "null" ]] && light_scheme="${local_name}-light"
-    echo "  [\"${local_name}\"] = { dark = \"${dark_scheme}\", light = \"${light_scheme}\" }," >> "$WEZTERM_THEMES_LUA"
-  else
-    scheme=$(yq '.terminal.wezterm_scheme' "$yaml")
-    # Fall back to the theme name itself (custom .toml) if no built-in defined
-    [[ "$scheme" == "null" ]] && scheme="$local_name"
-    echo "  [\"${local_name}\"] = \"${scheme}\"," >> "$WEZTERM_THEMES_LUA"
+for theme in $themes; do
+  if ! theme_meta "$theme" 2> "$STAGE/err"; then
+    fail "$theme: $(tr '\n' ' ' < "$STAGE/err")"
+    continue
   fi
+  if [ "$T_mode" = adaptive ]; then modes="dark light"; else modes="$T_mode"; fi
+  for bg in $modes; do
+    if [ "$T_mode" = adaptive ]; then key="$theme-$bg"; else key="$theme"; fi
+    nkeys=$((nkeys + 1))
+    gen fzf     "$theme" "$bg" "$STAGE/fzf/$key.sh" || true
+    gen fzf     "$theme" "$bg" "$STAGE/fzf/$key.opts" --opts || true
+    gen tmux    "$theme" "$bg" "$STAGE/tmux/$key.conf" || true
+    gen lazygit "$theme" "$bg" "$STAGE/lazygit/$key.yml" || true
+    gen delta   "$theme" "$bg" "$STAGE/delta/sections/$key.gitconfig" || true
+  done
 done
 
+if [ "$errors" -gt 0 ]; then
+  echo "theme-generate: $errors error(s); generated files left unchanged." >&2
+  exit 1
+fi
+
+# delta: one aggregate file with every section.
 {
-  echo '}'
-  echo ''
-  echo 'return M'
-} >> "$WEZTERM_THEMES_LUA"
+  echo '; vim: set filetype=gitconfig:'
+  echo
+  for f in "$STAGE"/delta/sections/*.gitconfig; do
+    cat "$f"
+    echo
+  done
+} > "$STAGE/delta-themes.gitconfig"
 
-echo "Generated: $WEZTERM_THEMES_LUA"
+# --- commit: move new files over old ones, then drop files that no longer belong ---
+is_active() {
+  case "$1" in active.*|lazygit-active-theme.yml|delta-active.gitconfig) return 0 ;; esac
+  return 1
+}
 
-# Process all themes
-echo "Processing themes..."
-for yaml in "$REGISTRY"/*.yaml; do
-  process_theme "$yaml"
+for d in fzf tmux lazygit delta/sections; do
+  mkdir -p "$THEMES_GENERATED/$d"
+  keep=""
+  for f in "$STAGE/$d"/*; do
+    name="${f##*/}"
+    keep="$keep
+$name"
+    mv -f "$f" "$THEMES_GENERATED/$d/$name"
+  done
+  for f in "$THEMES_GENERATED/$d"/*; do
+    [ -f "$f" ] || continue
+    name="${f##*/}"
+    is_active "$name" && continue
+    case "$keep
+" in *"
+$name
+"*) ;; *) rm -f "$f" ;; esac
+  done
 done
+mkdir -p "$THEMES_GENERATED/delta"
+mv -f "$STAGE/delta-themes.gitconfig" "$THEMES_GENERATED/delta/delta-themes.gitconfig"
 
-touch "$STAMP"
+say "Generated $nkeys theme variants into $THEMES_GENERATED"
 
-echo ""
-echo "Done! Generated files:"
-echo "  fzf:     $(ls "$GENERATED/fzf/" | wc -l | tr -d ' ') files"
-echo "  tmux:    $(ls "$GENERATED/tmux/" | wc -l | tr -d ' ') files"
-echo "  ghostty: $(ls "$GENERATED/ghostty/" | wc -l | tr -d ' ') files"
-echo "  delta:   $DELTA_OUT"
-echo "  lazygit: $(ls "$GENERATED/lazygit/" | wc -l | tr -d ' ') files"
-echo "  wezterm: $WEZTERM_THEMES_LUA"
-echo "  wezterm colors: $(ls "$WEZTERM_COLORS_DIR/" | wc -l | tr -d ' ') files  ($WEZTERM_COLORS_DIR)"
+# --- optional extra generators ---------------------------------------------------
+if [ -d "$THEMES_ROOT/hooks/generate.d" ]; then
+  for hook in "$THEMES_ROOT"/hooks/generate.d/*; do
+    [ -f "$hook" ] && [ -x "$hook" ] || continue
+    say "Running hook ${hook##*/}"
+    "$hook" || warn "hook ${hook##*/} failed (continuing)"
+  done
+fi
+
+# --- apply the current theme ------------------------------------------------------
+if [ "$APPLY" = 1 ]; then
+  if [ -x "$SELF_DIR/theme-switch" ]; then
+    if [ "$QUIET" = 1 ]; then
+      "$SELF_DIR/theme-switch" --apply --quiet || warn "theme-switch failed"
+    else
+      "$SELF_DIR/theme-switch" --apply || warn "theme-switch failed"
+    fi
+  else
+    say "(theme-switch is not installed yet: nothing applied)"
+  fi
+fi

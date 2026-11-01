@@ -1,6 +1,7 @@
 return {
   {
     "folke/sidekick.nvim",
+    -- nes is disablked via autocommands
     opts = {
       cli = {
         mux = {

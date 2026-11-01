@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# macOS only. theme-switch hook: WezTerm's Lua config watches ~/.theme_dark and
+# ~/.theme_light (add_to_config_reload_watch_list); touching the active mode's file
+# makes it reload and re-apply its colour scheme.
+set -euo pipefail
+touch "${THEMES_STATE_DIR:-$HOME}/.theme_${BG_MODE}" 2>/dev/null || true
+[ "${THEMES_QUIET:-0}" = 1 ] || echo "  wezterm  applied"

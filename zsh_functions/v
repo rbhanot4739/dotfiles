@@ -1,6 +1,5 @@
 #!/bin/zsh
 
-v() {
   # Opens files or directories using the default editor.
   #
   # If arguments are provided, it checks if they are files or directories.
@@ -58,4 +57,3 @@ v() {
   fi
 
   [[ ! -z $selected_files ]] && add_to_hist "${EDITOR} ${selected_files}" && ${EDITOR} "${selected_files}" || return 1
-}

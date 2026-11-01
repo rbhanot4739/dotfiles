@@ -15,7 +15,8 @@ typeset -ga FZF_FD_ARGS=()
 # Use shared builder when available so fd flags stay in one source of truth.
 if (( $+functions[_fd_shared_args] )); then
   # Rebuild exact argv safely; preserves spaces/special chars in paths/flags.
-  FZF_FD_ARGS=("${(@0)$(_fd_shared_args --follow)}")
+  FZF_FD_ARGS=(${${(@0)$(_fd_shared_args --follow)}:#})
+
 else
   # Fallback if helper wasn't sourced; keeps fd usable in partial loads.
   FZF_FD_ARGS=(--ignore-file "${FD_SHARED_IGNORE_FILE:-$HOME/.ignore}" --follow)

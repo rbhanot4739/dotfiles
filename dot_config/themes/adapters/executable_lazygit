@@ -1,41 +1,33 @@
 #!/usr/bin/env bash
-# Usage: lazygit <theme-name> <bg-mode>
-# Emits: lazygit gui.theme YAML block to stdout
+# Usage: lazygit <theme> <bg-mode>      (bg-mode: dark|light)
+# Prints a lazygit `gui.theme` YAML overlay to stdout. List values come out as
+# YAML flow lists, e.g. ["#ff9e64","bold"].
 set -euo pipefail
 
-THEME="$1"
+THEME="${1:?usage: lazygit <theme> <dark|light>}"
 MODE="${2:-dark}"
-REGISTRY="$HOME/.config/themes/registry"
-YAML="$REGISTRY/${THEME}.yaml"
+case "$MODE" in dark|light) ;; *) echo "Error: bg-mode must be dark or light" >&2; exit 2 ;; esac
 
-[[ ! -f "$YAML" ]] && { echo "Error: theme not found: $YAML" >&2; exit 1; }
+. "$(dirname "$0")/../lib/registry.sh"
+theme_load "$THEME" "$MODE" lazygit
+theme_need active_border_color inactive_border_color searching_active_border \
+  options_text_color selected_line_bg_color cherry_picked_commit_fg cherry_picked_commit_bg \
+  marked_base_commit_fg marked_base_commit_bg unstaged_changes_color default_fg_color
 
-THEME_MODE=$(yq '.mode' "$YAML")
-
-if [[ "$THEME_MODE" == "adaptive" ]]; then
-  BASE_PATH=".${MODE}.lazygit"
-else
-  BASE_PATH=".lazygit"
-fi
-
-# Use yq to restructure the lazygit block into proper gui.theme YAML
-yq "
-{
-  \"gui\": {
-    \"nerdFontsVersion\": \"3\",
-    \"theme\": {
-      \"activeBorderColor\": ${BASE_PATH}.active_border_color,
-      \"inactiveBorderColor\": ${BASE_PATH}.inactive_border_color,
-      \"searchingActiveBorderColor\": ${BASE_PATH}.searching_active_border,
-      \"optionsTextColor\": ${BASE_PATH}.options_text_color,
-      \"selectedLineBgColor\": ${BASE_PATH}.selected_line_bg_color,
-      \"cherryPickedCommitFgColor\": ${BASE_PATH}.cherry_picked_commit_fg,
-      \"cherryPickedCommitBgColor\": ${BASE_PATH}.cherry_picked_commit_bg,
-      \"markedBaseCommitFgColor\": ${BASE_PATH}.marked_base_commit_fg,
-      \"markedBaseCommitBgColor\": ${BASE_PATH}.marked_base_commit_bg,
-      \"unstagedChangesColor\": ${BASE_PATH}.unstaged_changes_color,
-      \"defaultFgColor\": ${BASE_PATH}.default_fg_color
-    }
-  }
-}
-" "$YAML"
+# nerdFontsVersion is deliberately not set here: it belongs to the main lazygit
+# config, this file is only the colour overlay.
+cat <<YAML
+gui:
+  theme:
+    activeBorderColor: ${V_active_border_color}
+    inactiveBorderColor: ${V_inactive_border_color}
+    searchingActiveBorderColor: ${V_searching_active_border}
+    optionsTextColor: ${V_options_text_color}
+    selectedLineBgColor: ${V_selected_line_bg_color}
+    cherryPickedCommitFgColor: ${V_cherry_picked_commit_fg}
+    cherryPickedCommitBgColor: ${V_cherry_picked_commit_bg}
+    markedBaseCommitFgColor: ${V_marked_base_commit_fg}
+    markedBaseCommitBgColor: ${V_marked_base_commit_bg}
+    unstagedChangesColor: ${V_unstaged_changes_color}
+    defaultFgColor: ${V_default_fg_color}
+YAML

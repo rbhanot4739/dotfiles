@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# macOS only. theme-switch hook: point Ghostty at the active colours.
+# Ghostty on macOS does not watch its config: new windows pick the file up, existing
+# windows are updated live by 60-mac-terminal-osc.
+set -euo pipefail
+ROOT="${THEMES_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+. "$ROOT/lib/registry.sh"
+. "$ROOT/lib/state.sh"
+. "$ROOT/lib/util.sh"
+
+src="$THEMES_GENERATED/ghostty/$THEME_KEY.conf"
+if [ ! -f "$src" ]; then
+  # Mac files were added after the last theme-generate: build them once.
+  "$ROOT/hooks/generate.d/50-mac-ghostty"
+fi
+[ -f "$src" ] || { echo "ghostty hook: no generated colours for $THEME_KEY" >&2; exit 1; }
+
+dir="$HOME/.config/ghostty"
+atomic_copy "$src" "$dir/current-colors.conf"
+# Touch (never create) the main config so Ghostty notices a change.
+if [ -f "$dir/config" ]; then touch "$dir/config" 2>/dev/null || true; fi
+[ "${THEMES_QUIET:-0}" = 1 ] || echo "  ghostty  applied"

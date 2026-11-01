@@ -1,4 +1,13 @@
-# Ignore backup and temporary files globally
+# ======================================================
+# Patterns match TARGET paths (as in $HOME), not source names.
+# Platform variables come from .chezmoi.toml.tmpl:
+#   is_mac, is_linux, is_work, is_linux_work
+# ======================================================
+
+
+# ------------------------------------------------------
+# Global: backup / temporary / OS junk files
+# ------------------------------------------------------
 **/*.bak
 **/*.backup
 **/*.test
@@ -9,44 +18,101 @@
 **/dot_DS_Store
 logs/
 
-# Karabiner auto-generated backups
-.config/karabiner/automatic_backups/**
 
+# ------------------------------------------------------
 # AI tool configs (project-local, not for home directory)
+# ------------------------------------------------------
 .claude
 .claude/**
 .aider*
 
+
+# ------------------------------------------------------
+# macOS only: not deployed on Linux
+# ------------------------------------------------------
 {{- if not .is_mac }}
-dot_config/ghostty
-dot_wezterm.lua
-dot_config/gh-dash
-dot_config/yazi
-dot_config/private_karabiner
+
+# Terminal emulators and other Mac apps
+.config/ghostty
+.config/ghostty/**
+.wezterm.lua
+.config/wezterm
+.config/wezterm/**
+.config/gh-dash
+.config/yazi
+.config/karabiner
+.config/karabiner/**
+
+# Homebrew bundle for macOS
+Brewfile.darwin
+
+# Themes: terminal-emulator pieces (Ghostty, WezTerm) are macOS only
+.config/themes/adapters/ghostty
+.config/themes/adapters/wezterm
+.config/themes/hooks/generate.d/50-mac-ghostty
+.config/themes/hooks/generate.d/50-mac-wezterm
+.config/themes/hooks/apply.d/50-mac-ghostty
+.config/themes/hooks/apply.d/50-mac-wezterm
+.config/themes/hooks/apply.d/60-mac-terminal-osc
+
 {{- end }}
 
 
-# Legacy theme system — superseded by ~/.config/themes/.
+# ------------------------------------------------------
+# Linux only: not deployed on macOS
+# ------------------------------------------------------
+{{- if .is_mac }}
+
+# Linuxbrew bundle
+Brewfile.linux
+
+{{- end }}
+
+
+# ------------------------------------------------------
+# Linux work boxes: no Homebrew, so no Brewfiles at all
+# ------------------------------------------------------
+{{- if .is_linux_work }}
+
+Brewfile*
+
+{{- end }}
+
+
+# ------------------------------------------------------
+# Legacy theme system, superseded by ~/.config/themes/
 # Source files kept in repo as backup; not deployed and hidden from status/diff.
+# ------------------------------------------------------
 tmux-themes
 tmux-themes/**
 fzf-themes
 fzf-themes/**
+delta-themes
+delta-themes/**
+delta-themes.gitconfig
 scripts/theme-monitor
 scripts/theme-switcher
 scripts/tmux-theme-switcher
 scripts/get-theme
-delta-themes
-delta-themes/**
-delta-themes.gitconfig
-zsh_functions/set-theme
-zsh_functions/tm_widget
 scripts/tmux_panes
 scripts/tmux_pop
+zsh_functions/set-theme
+zsh_functions/tm_widget
 
-# Theme system generated/runtime artifacts
+
+# ------------------------------------------------------
+# Theme system: generated / runtime artifacts and dev-only files
+# ------------------------------------------------------
+# Generated at runtime by theme-generate / theme-switch
 .config/themes/generated/**
-.config/themes/bin/theme-notify
 .config/ghostty/current-colors.conf
 .config/wezterm/colors/**
 .wezterm_themes.lua
+
+# Dev-only verification scripts, never deployed
+.config/themes/dev
+.config/themes/dev/**
+
+# Previous theme system, kept in the repo only as a reference for comparisons
+.config/themes-old
+.config/themes-old/**

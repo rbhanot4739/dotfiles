@@ -1,0 +1,41 @@
+# Update packages and sync Brewfiles into chezmoi
+local common="$HOME/Brewfile"
+local darwin="$HOME/Brewfile.darwin"
+
+local -a darwin_only=(
+  bitwarden-cli
+  chezmoi
+  docker
+  docker-buildx
+  docker-compose
+  fswatch
+  gemini-cli
+  tectonic
+  terminal-notifier
+)
+
+local pattern
+printf -v pattern '%s|' "${darwin_only[@]}"
+pattern="${pattern%|}"
+
+brew update && brew upgrade && brew cleanup || return 1
+
+local tmp_formula tmp_cask
+tmp_formula="$(mktemp)" || return 1
+tmp_cask="$(mktemp)" || { rm -f "$tmp_formula"; return 1; }
+trap 'rm -f "$tmp_formula" "$tmp_cask"' EXIT INT TERM
+
+brew bundle dump --file "$tmp_formula" --force --formula --no-vscode || return 1
+rg -v "^brew \"(${pattern})\"(,.*)?$" "$tmp_formula" > "$common"
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  brew bundle dump --file "$tmp_cask" --force --cask --no-vscode || return 1
+  {
+    rg "^brew \"(${pattern})\"(,.*)?$" "$tmp_formula" || true
+    echo
+    rg '^cask "' "$tmp_cask" || true
+  } > "$darwin"
+fi
+
+trap - EXIT INT TERM
+rm -f "$tmp_formula" "$tmp_cask"
